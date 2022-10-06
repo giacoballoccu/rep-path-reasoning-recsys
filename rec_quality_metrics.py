@@ -14,7 +14,8 @@ NOVELTY = "novelty"
 CFAIRNESS = "cfairness"
 PFAIRNESS = "pfairness"
 
-REC_QUALITY_METRICS = [NDCG, MMR, SERENDIPITY, COVERAGE, DIVERSITY, NOVELTY]
+REC_QUALITY_METRICS_TOPK = [NDCG, MMR, SERENDIPITY, DIVERSITY, NOVELTY] #CHECK EVERYTIME A NEW ONE IS IMPLEMENTED IF IS LOCAL O GLOBAL
+REC_QUALITY_METRICS_GLOBAL = [COVERAGE]
 FAIRNESS_METRICS = [CFAIRNESS, PFAIRNESS]
 """
 Methods
@@ -153,9 +154,20 @@ Beyond Accuracy
 """
     Catalog coverage https://dl.acm.org/doi/pdf/10.1145/2926720
 """
-def coverage(topks, n_items):
-    recommended_items = set()
-    for topk in topks.values():
-        recommended_items.union(set(topk))
-    return len(recommended_items) / n_items
+def coverage(recommended_items_by_group, n_items_in_catalog):
+    group_metric_value = {}
+    for group, item_set in recommended_items_by_group.items():
+        group_metric_value[group] = len(item_set) / n_items_in_catalog
+    return group_metric_value
 
+def serendipity_at_k():
+    pass
+
+def diversity_at_k():
+    pass
+
+def novelty_at_k():
+    pass
+
+#REC_QUALITY_METRICS = [NDCG, MMR, SERENDIPITY, COVERAGE, DIVERSITY, NOVELTY]
+#FAIRNESS_METRICS = [CFAIRNESS, PFAIRNESS]
