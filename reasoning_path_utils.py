@@ -13,15 +13,18 @@ PTC = "ptc"
 PPT = "ppt"
 PATH_QUALITY_METRICS = [LIR, SEP, PTD, LID, SED, PTC, PPT]
 
+
 def entity2plain_text(dataset_name, model_name):
     entity2name = entity2plain_text(dataset_name, model_name)
     return entity2name
 
-#(self_loop user 0) (watched movie 2408) (watched user 1953) (watched movie 277) #hop3
-#(self_loop user 0) (mention word 2408) (described_as product 1953) (self_loop product 1953) #hop2
+
+# (self_loop user 0) (watched movie 2408) (watched user 1953) (watched movie 277) #hop3
+# (self_loop user 0) (mention word 2408) (described_as product 1953) (self_loop product 1953) #hop2
 def get_linked_interaction_triple(path):
     linked_interaction_id, linked_interaction_rel, linked_interaction_type = path[1][-1], path[1][0], path[1][1]
     return linked_interaction_id, linked_interaction_rel
+
 
 def get_shared_entity_tuple(path):
     path_type = path[-1][0]
@@ -31,22 +34,27 @@ def get_shared_entity_tuple(path):
     shared_entity_id, shared_entity_type = path[-2][-1], path[-2][1]
     return shared_entity_id, shared_entity_type
 
+
 def get_path_type(path):
     path_type = path[-1][0]
-    if path_type == 'self_loop': #Handle size 3
+    if path_type == 'self_loop':  # Handle size 3
         path_type = path[-2][0]
     return path_type
 
+
 def get_path_pattern(path):
     return [path_tuple[0] for path_tuple in path[1:]]
+
 
 def get_path_types_in_kg(dataset_name):
     df_kg = pd.DataFrame(os.join(get_data_dir(dataset_name), "kg_final.txt"), sep="\t", header=True)
     return list(df_kg.kg.relations.unique())
 
+
 def get_no_path_types_in_kg(dataset_name):
     df_kg = pd.DataFrame(os.join(get_data_dir(dataset_name), "kg_final.txt"), sep="\t", header=True)
     return len(df_kg.kg.relations.unique())
+
 
 def load_LIR_matrix(self):
     lir_matrix_filepath = os.path.join(self.precomputed_folderpath, self.dataset_name, "LIR_matrix.pkl")
@@ -86,9 +94,10 @@ def load_SEP_matrix(self):
             pickle.dump(self.SEP_matrix, f)
         f.close()
 
-def get_dataset_pid2model_kg_pid(dataset_name, model_name):
-    model_data_dir = get_model_data_dir(dataset_name, model_name)
-    file = open(os.path.join(model_data_dir, "mappings/product_mappings.txt", "r")) #TODO CHECK if we want that filename
+
+def get_dataset_pid2model_kg_pid(dataset_name):
+    data_dir = get_data_dir(dataset_name)
+    file = open(os.path.join(data_dir, "mappings/product_mappings.txt", "r"))  # TODO CHECK if we want that filename
     csv_reader = csv.reader(file, delimiter='\t')
     dataset_pid2model_kg_pid = {}
     next(csv_reader, None)
@@ -97,9 +106,10 @@ def get_dataset_pid2model_kg_pid(dataset_name, model_name):
     file.close()
     return dataset_pid2model_kg_pid
 
-def get_dataset_uid2model_kg_uid(dataset_name, model_name):
-    model_data_dir = get_model_data_dir(dataset_name, model_name)
-    file = open(os.path.join(model_data_dir, "mappings/user_mappings.txt", "r"))
+
+def get_dataset_uid2model_kg_uid(dataset_name):
+    data_dir = get_data_dir(dataset_name)
+    file = open(os.path.join(data_dir, "mappings/user_mappings.txt", "r"))
     reader = csv.reader(file, delimiter="\t")
     dataset_uid2model_kg_pid = {}
     next(reader, None)
@@ -109,16 +119,17 @@ def get_dataset_uid2model_kg_uid(dataset_name, model_name):
         dataset_uid2model_kg_pid[uid_review] = uid_kg
     return dataset_uid2model_kg_pid
 
+
 def get_interaction2timestamp_map(dataset_name, model_name):
     data_dir = get_model_data_dir(dataset_name, model_name)
-    #Load if already computated
+    # Load if already computated
     metadata_filepath = os.path.join(data_dir, "time_metadata.pkl")
     if os.path.isfile(metadata_filepath):
         with open(metadata_filepath, 'rb') as f:
             user2pid_time_tuple = pickle.load(f)
         f.close()
         return user2pid_time_tuple
-    #Compute and save if not yet
+    # Compute and save if not yet
     else:
         user2pid_time_tuple = defaultdict(list)
         dataset2kg = get_dataset_pid2model_kg_pid(dataset_name)
@@ -140,6 +151,7 @@ def get_interaction2timestamp_map(dataset_name, model_name):
         f.close()
         return user2pid_time_tuple
 
+
 def generate_LIR_matrix(dataset_name, model_name):
     def normalized_ema(values):
         if max(values) == min(values):
@@ -159,7 +171,8 @@ def generate_LIR_matrix(dataset_name, model_name):
         if dataset_name in DATASETS_WITH_WORDS:
             linked_interaction_types = [PRODUCT, WORD]
         for linked_entity_type in linked_interaction_types:
-            interactions = [type_id_time for type_id_time in uid_timestamp[uid] if type_id_time[0] == linked_entity_type]
+            interactions = [type_id_time for type_id_time in uid_timestamp[uid] if
+                            type_id_time[0] == linked_entity_type]
             interactions.sort(key=lambda x: x[2])
             if len(uid_timestamp[uid]) <= 1:  # Skips users with only one review in train (can happen with lastfm)
                 continue
@@ -172,6 +185,7 @@ def generate_LIR_matrix(dataset_name, model_name):
             LIR_matrix[uid][linked_entity_type] = pid_lir
     return LIR_matrix
 
+
 def generate_SEP_matrix(dataset_name, model_name):
     def normalized_ema(values):
         if max(values) == min(values):
@@ -183,6 +197,7 @@ def generate_SEP_matrix(dataset_name, model_name):
         min_res = min(ema_vals)
         max_res = max(ema_vals)
         return [(x - min_res) / (max_res - min_res) for x in ema_vals]
+
     # Precompute entity distribution
     SEP_matrix = {}
     degrees = load_kg(dataset_name, model_name).degrees
