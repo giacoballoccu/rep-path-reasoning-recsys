@@ -29,7 +29,7 @@ class MapperPGPR(MapperBase):
         user_df = pd.read_csv(os.path.join(input_folder, "users.txt"), sep="\t")
         user_df.insert(0, "new_id", list(range(user_df.shape[0])))
         user_df = user_df[["new_id", "uid"]]
-        user_df.to_csv(os.path.join(output_folder, "users.txt.gz"),
+        user_df.to_csv(os.path.join(output_folder, "user.txt.gz"),
                        index=False,
                        sep="\t",
                        compression="gzip")
@@ -41,7 +41,7 @@ class MapperPGPR(MapperBase):
         pid2kg_df = pd.read_csv(os.path.join(input_folder, "i2kg_map.txt"), sep="\t")
         pid2kg_df.insert(0, "new_id", [str(new_id) for new_id in range(pid2kg_df.shape[0])])
         products_df = pid2kg_df[["new_id", "pid"]]
-        products_df.to_csv(os.path.join(output_folder, "products.txt.gz"),
+        products_df.to_csv(os.path.join(output_folder, "product.txt.gz"),
                            index=False,
                            sep="\t",
                            compression="gzip")
@@ -73,7 +73,7 @@ class MapperPGPR(MapperBase):
             # Save relations
             with gzip.open(os.path.join(output_folder, f"{relation_name}.txt.gz"), 'wt') as curr_rel_file:
                 writer = csv.writer(curr_rel_file, delimiter="\t")
-                for new_pid in range(len(eid2new_id[PRODUCT])):
+                for new_pid in range(len(pid2new_id.keys())):
                     writer.writerow(triplets_grouped_by_pid[str(new_pid)])
             curr_rel_file.close()
         return uid2new_id, pid2new_id
@@ -193,7 +193,7 @@ class MapperPGPR(MapperBase):
                     writer.writerow(entity_list_mapped)
             relation_file.close()
 
-        with gzip.open(output_folder + 'products.txt.gz', 'wt') as product_fileo:
+        with gzip.open(output_folder + 'product.txt.gz', 'wt') as product_fileo:
             writer = csv.writer(product_fileo, delimiter="\t")
             with open(input_folder + 'products.txt', 'r') as product_file:
                 reader = csv.reader(product_file, delimiter="\t")
@@ -202,7 +202,7 @@ class MapperPGPR(MapperBase):
             product_file.close()
         product_fileo.close()
 
-        with gzip.open(output_folder + 'users.txt.gz', 'wt') as users_fileo:
+        with gzip.open(output_folder + 'user.txt.gz', 'wt') as users_fileo:
             writer = csv.writer(users_fileo, delimiter="\t")
             with open(input_folder + 'users.txt', 'r') as users_file:
                 reader = csv.reader(users_file, delimiter="\t")

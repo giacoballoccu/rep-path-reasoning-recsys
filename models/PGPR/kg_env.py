@@ -51,9 +51,9 @@ class BatchKGEnvironment(object):
         u_p_scores = np.dot(self.embeds[USER] + self.embeds[main_relation][0], self.embeds[main_entity].T)
         self.u_p_scales = np.max(u_p_scores, axis=1)
 
-        #self.p_e_scales = {}
-        #entity_relations = KG_RELATION[dataset_str][main_entity]
-        #for relation, entity in entity_relations.items():
+        # self.p_e_scales = {}
+        # entity_relations = KG_RELATION[dataset_str][main_entity]
+        # for relation, entity in entity_relations.items():
         #    p_e_scores = np.dot(self.embeds[entity] + self.embeds[relation][0], self.embeds[main_entity].T)
         #    self.p_e_scales[entity] = np.max(p_e_scores, axis=1)
 
@@ -66,7 +66,7 @@ class BatchKGEnvironment(object):
         for pattern_id in valid_patterns:
             pattern = PATH_PATTERN[self.dataset_name][pattern_id]
             pattern = [SELF_LOOP] + [v[0] for v in pattern[1:]]  # pattern contains all relations
-            if len(pattern) == 3: #Len 3 must be normalized to 4
+            if len(pattern) == 3:  # Len 3 must be normalized to 4
                 pattern.append(SELF_LOOP)
             self.patterns.append(tuple(pattern))
 
@@ -103,8 +103,8 @@ class BatchKGEnvironment(object):
         candidate_acts = []  # list of tuples of (relation, node_type, node_id)
         visited_nodes = set([(v[1], v[2]) for v in path])
         for r in relations_nodes:
-            #if r not in KG_RELATION[self.dataset_name][curr_node_type]: continue
-            next_node_type = KG_RELATION[self.dataset_name][curr_node_type][r] # Changing according to the dataset
+            # if r not in KG_RELATION[self.dataset_name][curr_node_type]: continue
+            next_node_type = KG_RELATION[self.dataset_name][curr_node_type][r]  # Changing according to the dataset
             next_node_ids = relations_nodes[r]
             next_node_ids = [n for n in next_node_ids if (next_node_type, n) not in visited_nodes]  # filter
             candidate_acts.extend(zip([r] * len(next_node_ids), next_node_ids))
@@ -125,7 +125,7 @@ class BatchKGEnvironment(object):
 
         scores = []
         for r, next_node_id in candidate_acts:
-            next_node_type = KG_RELATION[self.dataset_name][curr_node_type][r] # Changing according to the dataset
+            next_node_type = KG_RELATION[self.dataset_name][curr_node_type][r]  # Changing according to the dataset
             if next_node_type == USER:
                 src_embed = user_embed
             elif next_node_type == main_product:
@@ -136,7 +136,7 @@ class BatchKGEnvironment(object):
 
             # This trimming may filter out target products!
             # Manually set the score of target products a very large number.
-            #if next_node_type == MOVIE and next_node_id in self._target_pids:
+            # if next_node_type == MOVIE and next_node_id in self._target_pids:
             #    score = 99999.0
             scores.append(score)
         candidate_idxs = np.argsort(scores)[-self.max_acts:]  # choose actions with larger scores
@@ -176,7 +176,7 @@ class BatchKGEnvironment(object):
         batch_state = [self._get_state(path) for path in batch_path]
         return np.vstack(batch_state)  # [bs, dim]
 
-    #MITIGATION: You can weight rewards here, pay attention to the scale since the reward are given based on
+    # MITIGATION: You can weight rewards here, pay attention to the scale since the reward are given based on
     # embeds dot prod
     def _get_reward(self, path):
         # If it is initial state or 1-hop search, reward is 0.
@@ -240,7 +240,8 @@ class BatchKGEnvironment(object):
             if relation == SELF_LOOP:
                 next_node_type = curr_node_type
             else:
-                next_node_type = KG_RELATION[self.dataset_name][curr_node_type][relation] # Changing according to the dataset
+                next_node_type = KG_RELATION[self.dataset_name][curr_node_type][
+                    relation]  # Changing according to the dataset
             self._batch_path[i].append((relation, next_node_type, next_node_id))
 
         self._done = self._is_done()  # must run before get actions, etc.
@@ -270,4 +271,3 @@ class BatchKGEnvironment(object):
             for node in path[1:]:
                 msg += ' =={}=> {}({})'.format(node[0], node[1], node[2])
             print(msg)
-

@@ -3,14 +3,14 @@ from __future__ import absolute_import, division, print_function
 import os
 import gzip
 import argparse
-#from pgpr_utils.py import *
+# from pgpr_utils.py import *
 from data_utils import Dataset
 from knowledge_graph import KnowledgeGraph
 from pgpr_utils import DATASET_DIR, save_labels, ML1M, TMP_DIR, save_dataset, load_dataset, save_kg
 
 
 def generate_labels(dataset, mode='train'):
-    review_file = '{}/{}.txt.gz'.format(DATASET_DIR[dataset], mode)
+    review_file = f"{DATASET_DIR[dataset]}/{mode}.txt.gz"
     user_products = {}  # {uid: [pid,...], ...}
     with gzip.open(review_file, 'r') as f:
         for line in f:
@@ -26,7 +26,7 @@ def generate_labels(dataset, mode='train'):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--dataset', type=str, default=ML1M, help='ML1M')
+    parser.add_argument('--dataset', type=str, default="lfm1m", help='ML1M')
     args = parser.parse_args()
 
     # Create AmazonDataset instance for dataset.

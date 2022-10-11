@@ -4,6 +4,7 @@ from collections import defaultdict, Counter
 from utils import getDF
 import csv
 
+
 def propagate_item_removal_to_kg(ml1m_movies_df, movies_to_kg_df, entities_df, kg_df):
     movies_to_kg_df_after = movies_to_kg_df[movies_to_kg_df.dataset_id.isin(ml1m_movies_df.movie_id)]
     removed_movies = movies_to_kg_df[~movies_to_kg_df.dataset_id.isin(movies_to_kg_df_after.dataset_id)]
@@ -16,11 +17,14 @@ def propagate_item_removal_to_kg(ml1m_movies_df, movies_to_kg_df, entities_df, k
     print(f"Removed {n_triplets - kg_df.shape[0]} triplets from kg_df")
     return movies_to_kg_df_after, entities_df, kg_df
 
+
 def discard_entity_with_lt_th(entities_list, th):
     return [k for k, v in Counter(entities_list).items() if v >= th]
 
+
 def discard_k_letter_categories(entities_list, k):
     return [x for x in entities_list if len(x) > k]
+
 
 def entity2plain_text(dataset, method):
     entity2plain_text_map = defaultdict(dict)
@@ -43,6 +47,7 @@ def entity2plain_text(dataset, method):
                 entity2plain_text_map[entity_type][int(local_id)] = row[-1]
     return entity2plain_text_map
 
+
 def create_kg_from_metadata(dataset):
     input_data = f'data/{dataset}/preprocessed'
     input_kg = f'data/{dataset}/kg'
@@ -59,7 +64,7 @@ def create_kg_from_metadata(dataset):
     products_file.close()
 
     metaproduct_df = metaproduct_df[metaproduct_df.asin.isin(valid_products)]
-    #Create i2kg.txt
+    # Create i2kg.txt
     products_id = metaproduct_df['asin'].unique()
     product_id2new_id = {}
     entities = {}
@@ -96,12 +101,12 @@ def create_kg_from_metadata(dataset):
                 new_rid += 1
     fo.close()
 
-    #Create kg_final.txt and e_map.txt
+    # Create kg_final.txt and e_map.txt
     entity_names = set()
     for col in columns:
         if col == 'also_view':
             entity_name = 'related_product'
-            entity_names.add(entity_name) #spaghetti
+            entity_names.add(entity_name)  # spaghetti
             entity_name = 'also_view_product'
             entity_names.add(entity_name)
         elif col == 'also_buy':
@@ -128,7 +133,8 @@ def create_kg_from_metadata(dataset):
                                                        related_product not in product_id2new_id]
                     for related_product in related_products_not_in_catalog:
                         entities[related_product] = last_id
-                        triplets.append([entities[pid], entities[related_product], relation_name2id[relation + f"_{entity_name}"]])
+                        triplets.append(
+                            [entities[pid], entities[related_product], relation_name2id[relation + f"_{entity_name}"]])
                         last_id += 1
             else:
                 curr_attributes = row[entity_name]
@@ -145,7 +151,7 @@ def create_kg_from_metadata(dataset):
                         triplets.append([entities[pid], entities[curr_attributes], relation_name2id[entity_name]])
                         last_id += 1
 
-    #Create e_map.txt
+    # Create e_map.txt
     with open(input_data + "/e_map.txt", 'w+') as fo:
         writer = csv.writer(fo, delimiter="\t")
         writer.writerow(["entity_id", "entity_url"])
@@ -153,15 +159,16 @@ def create_kg_from_metadata(dataset):
             writer.writerow([new_id, entity_id])
     fo.close()
 
-    #Create kg_final.txt
+    # Create kg_final.txt
     with open(input_data + "/kg_final.txt", 'w+') as fo:
         writer = csv.writer(fo, delimiter="\t")
-        writer.writerow(["entity_head","entity_tail","relation"])
+        writer.writerow(["entity_head", "entity_tail", "relation"])
         for triple in triplets:
             e_h, e_t, r = triple
             triple = [e_h, e_t, r]
             writer.writerow(triple)
     fo.close()
 
-#create_kg_from_metadata("cellphones")
+
+# create_kg_from_metadata("cellphones")
 entity2plain_text("ml1m", "pgpr")

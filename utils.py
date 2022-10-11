@@ -11,7 +11,7 @@ File reading and os
 """
 # Datasets
 ML1M = "ml1m"
-LFM1M = "lastfm"
+LFM1M = "lfm1m"
 
 # For future
 CELL = "cell"
@@ -20,6 +20,7 @@ CLOTH = "cloth"
 
 DATASETS = [ML1M, LFM1M]
 DATASETS_WITH_WORDS = [CELL, BEAUTY, CLOTH]
+AMAZON_DATASETS = [CELL, BEAUTY, CLOTH]
 
 TRAIN = 'train'
 TEST = 'test'
@@ -51,7 +52,8 @@ Path reasoning methods
 PGPR = 'pgpr'
 CAFE = 'cafe'
 UCPR = 'ucpr'
-PATH_REASONING_METHODS = [PGPR, UCPR, CAFE]
+MLR = 'mlr'
+PATH_REASONING_METHODS = [PGPR, UCPR, CAFE, MLR]
 
 
 def ensure_dataset_name(dataset_name):
@@ -155,11 +157,20 @@ def get_item_genre(dataset_name):
     item_genre_df = pd.read_csv(os.path.join(data_dir, "products.txt"), sep="\t", header=True)
     return dict(zip(item_genre_df.pid, item_genre_df.genre))
 
-
 def get_item_count(dataset_name):
     data_dir = get_data_dir(dataset_name)
     df_items = pd.read_csv(data_dir + "products.txt", sep="\t")
     return df_items.pid.unique().shape[0]
+
+def get_item_pop(dataset_name):
+    data_dir = get_data_dir(dataset_name)
+    df_items = pd.read_csv(data_dir + "products.txt", sep="\t")
+    return dict(zip(df_items.pid, df_items.pop_item))
+
+def get_item_provider_pop(dataset_name):
+    data_dir = get_data_dir(dataset_name)
+    df_items = pd.read_csv(data_dir + "products.txt", sep="\t")
+    return dict(zip(df_items.pid, df_items.pop_provider))
 
 
 def load_labels(dataset_name, model_name, split=TRAIN):
@@ -182,3 +193,9 @@ def load_embed(dataset_name, model_name):
     embed_file = os.path.join(get_tmp_dir, f"transe_embed.pkl")
     embeds = pickle.load(open(embed_file, 'rb'))
     return embeds
+
+def get_kb_id2dataset_id(dataset_name):
+    input_folder = get_data_dir(dataset_name)
+    eid2kg_df = pd.read_csv(os.path.join(input_folder, "i2kg_map.txt"), sep="\t")
+    eid2kg_id = dict(zip(eid2kg_df.eid, eid2kg_df.pid))
+    return eid2kg_id

@@ -8,16 +8,14 @@ from data_utils import DataLoader
 from pgpr_utils import *
 from transe_model import KnowledgeEmbedding
 
-
 logger = None
 
-def train(args):
-    dataset = load_dataset(args.dataset)
 
+def train(args, dataset):
     dataloader = DataLoader(dataset, args.batch_size)
     review_to_train = len(dataset.review.data) * args.epochs + 1
 
-    model = KnowledgeEmbedding(dataset, args).to(args.device)
+    model = KnowledgeEmbedding(args, dataloader).to(args.device)
     logger.info('Parameters:' + str([i[0] for i in model.named_parameters()]))
     optimizer = optim.SGD(model.parameters(), lr=args.lr)
     steps = 0
@@ -54,167 +52,21 @@ def train(args):
             torch.save(model.state_dict(), '{}/transe_model_sd_epoch_{}.ckpt'.format(args.log_dir, epoch))
 
 
-def extract_embeddings(args):
+def extract_embeddings(args, dataset):
     """Note that last entity embedding is of size [vocab_size+1, d]."""
     dataset_name = args.dataset
     model_file = '{}/transe_model_sd_epoch_{}.ckpt'.format(args.log_dir, args.epochs)
     print('Load embeddings', model_file)
     state_dict = torch.load(model_file, map_location=lambda storage, loc: storage)
-    if dataset_name == ML1M:
-        embeds = extract_embeddings_ml1m(state_dict)
-    elif dataset_name == LFM1M:
-        embeds = extract_embeddings_lastfm(state_dict)
-    elif dataset_name == CELL:
-        embeds = extract_embeddings_cell(state_dict)
-    else:
-        print("Embedding received a unrecognized dataset")
+    embeds = {}
+    for entity_name in dataset.entity_names:
+        embeds[entity_name] = state_dict[f'{entity_name}.weight'].cpu().data.numpy()[:-1]
+    for relation_name in dataset.relation_names:
+        embeds[relation_name] = (
+            state_dict[f'{relation_name}'].cpu().data.numpy()[0],
+            state_dict[f'{relation_name}_bias.weight'].cpu().data.numpy()
+        )
     save_embed(dataset_name, embeds)
-
-def extract_embeddings_ml1m(state_dict):
-    embeds = {
-        USER: state_dict['user.weight'].cpu().data.numpy()[:-1],  # Must remove last dummy 'user' with 0 embed.
-        PRODUCT: state_dict['product.weight'].cpu().data.numpy()[:-1],
-        ACTOR: state_dict['actor.weight'].cpu().data.numpy()[:-1],
-        DIRECTOR: state_dict['director.weight'].cpu().data.numpy()[:-1],
-        PRODUCTION_COMPANY: state_dict['production_company.weight'].cpu().data.numpy()[:-1],
-        CATEGORY: state_dict['category.weight'].cpu().data.numpy()[:-1],
-        PRODUCER: state_dict['producer.weight'].cpu().data.numpy()[:-1],
-        EDITOR: state_dict['editor.weight'].cpu().data.numpy()[:-1],
-        WRITTER: state_dict['writter.weight'].cpu().data.numpy()[:-1],
-        CINEMATOGRAPHER: state_dict['cinematographer.weight'].cpu().data.numpy()[:-1],
-        COMPOSER: state_dict['composer.weight'].cpu().data.numpy()[:-1],
-        COUNTRY: state_dict['country.weight'].cpu().data.numpy()[:-1],
-        WIKIPAGE: state_dict['wikipage.weight'].cpu().data.numpy()[:-1],
-        WATCHED: (
-            state_dict['watched'].cpu().data.numpy()[0],
-            state_dict['watched_bias.weight'].cpu().data.numpy()
-        ),
-        DIRECTED_BY: (
-            state_dict['directed_by'].cpu().data.numpy()[0],
-            state_dict['directed_by_bias.weight'].cpu().data.numpy()
-        ),
-        PRODUCED_BY_PRODUCER: (
-            state_dict['produced_by_producer'].cpu().data.numpy()[0],
-            state_dict['produced_by_producer_bias.weight'].cpu().data.numpy()
-        ),
-        PRODUCED_BY_COMPANY: (
-            state_dict['produced_by_company'].cpu().data.numpy()[0],
-            state_dict['produced_by_company_bias.weight'].cpu().data.numpy()
-        ),
-        STARRING: (
-            state_dict['starring'].cpu().data.numpy()[0],
-            state_dict['starring_bias.weight'].cpu().data.numpy()
-        ),
-        BELONG_TO: (
-            state_dict['belong_to'].cpu().data.numpy()[0],
-            state_dict['belong_to_bias.weight'].cpu().data.numpy()
-        ),
-        WROTE_BY: (
-            state_dict['wrote_by'].cpu().data.numpy()[0],
-            state_dict['wrote_by_bias.weight'].cpu().data.numpy()
-        ),
-        EDITED_BY: (
-            state_dict['edited_by'].cpu().data.numpy()[0],
-            state_dict['edited_by_bias.weight'].cpu().data.numpy()
-        ),
-        CINEMATOGRAPHY_BY: (
-            state_dict['cinematography_by'].cpu().data.numpy()[0],
-            state_dict['cinematography_by_bias.weight'].cpu().data.numpy()
-        ),
-        COMPOSED_BY: (
-            state_dict['composed_by'].cpu().data.numpy()[0],
-            state_dict['composed_by_bias.weight'].cpu().data.numpy()
-        ),
-        PRODUCED_IN: (
-            state_dict['produced_in'].cpu().data.numpy()[0],
-            state_dict['produced_in_bias.weight'].cpu().data.numpy()
-        ),
-        RELATED_TO: (
-            state_dict['related_to'].cpu().data.numpy()[0],
-            state_dict['related_to_bias.weight'].cpu().data.numpy()
-        ),
-    }
-    return embeds
-
-def extract_embeddings_lastfm(state_dict):
-    embeds = {
-        USER: state_dict['user.weight'].cpu().data.numpy()[:-1],  # Must remove last dummy 'user' with 0 embed.
-        PRODUCT: state_dict['product.weight'].cpu().data.numpy()[:-1],
-        ARTIST: state_dict['artist.weight'].cpu().data.numpy()[:-1],
-        ENGINEER: state_dict['engineer.weight'].cpu().data.numpy()[:-1],
-        RELATED_PRODUCT: state_dict['related_product.weight'].cpu().data.numpy()[:-1],
-        CATEGORY: state_dict['category.weight'].cpu().data.numpy()[:-1],
-        PRODUCER: state_dict['producer.weight'].cpu().data.numpy()[:-1],
-        FEATURED_ARTIST: state_dict['featured_artist.weight'].cpu().data.numpy()[:-1],
-
-        LISTENED: (
-            state_dict['listened'].cpu().data.numpy()[0],
-            state_dict['listened_bias.weight'].cpu().data.numpy()
-        ),
-        SANG_BY: (
-            state_dict['sang_by'].cpu().data.numpy()[0],
-            state_dict['sang_by_bias.weight'].cpu().data.numpy()
-        ),
-        FEATURED_BY: (
-            state_dict['featured_by'].cpu().data.numpy()[0],
-            state_dict['featured_by_bias.weight'].cpu().data.numpy()
-        ),
-        MIXED_BY: (
-            state_dict['mixed_by'].cpu().data.numpy()[0],
-            state_dict['mixed_by_bias.weight'].cpu().data.numpy()
-        ),
-        BELONG_TO: (
-            state_dict['belong_to'].cpu().data.numpy()[0],
-            state_dict['belong_to_bias.weight'].cpu().data.numpy()
-        ),
-        PRODUCED_BY_PRODUCER: (
-            state_dict['produced_by_producer'].cpu().data.numpy()[0],
-            state_dict['produced_by_producer_bias.weight'].cpu().data.numpy()
-        ),
-        RELATED_TO: (
-            state_dict['related_to'].cpu().data.numpy()[0],
-            state_dict['related_to_bias.weight'].cpu().data.numpy()
-        ),
-    }
-    return embeds
-
-def extract_embeddings_cell(state_dict):
-    embeds = {
-        USER: state_dict['user.weight'].cpu().data.numpy()[:-1],  # Must remove last dummy 'user' with 0 embed.
-        PRODUCT: state_dict['product.weight'].cpu().data.numpy()[:-1],
-        BRAND: state_dict['brand.weight'].cpu().data.numpy()[:-1],
-        CATEGORY: state_dict['category.weight'].cpu().data.numpy()[:-1],
-        RELATED_PRODUCT: state_dict['related_product.weight'].cpu().data.numpy()[:-1],
-        PURCHASE: (
-            state_dict['purchase'].cpu().data.numpy()[0],
-            state_dict['purchase_bias.weight'].cpu().data.numpy()
-        ),
-        PRODUCED_BY_COMPANY: (
-            state_dict['produced_by_company'].cpu().data.numpy()[0],
-            state_dict['produced_by_company_bias.weight'].cpu().data.numpy()
-        ),
-        BELONG_TO: (
-            state_dict['belong_to'].cpu().data.numpy()[0],
-            state_dict['belong_to_bias.weight'].cpu().data.numpy()
-        ),
-        ALSO_BOUGHT_P: (
-            state_dict['also_bought_product'].cpu().data.numpy()[0],
-            state_dict['also_bought_product_bias.weight'].cpu().data.numpy()
-        ),
-        ALSO_VIEWED_P: (
-            state_dict['also_viewed_product'].cpu().data.numpy()[0],
-            state_dict['also_viewed_product_bias.weight'].cpu().data.numpy()
-        ),
-        ALSO_BOUGHT_RP: (
-            state_dict['also_bought_product'].cpu().data.numpy()[0],
-            state_dict['also_bought_product_bias.weight'].cpu().data.numpy()
-        ),
-        ALSO_VIEWED_RP: (
-            state_dict['also_viewed_related_product'].cpu().data.numpy()[0],
-            state_dict['also_viewed_related_product_bias.weight'].cpu().data.numpy()
-        ),
-    }
-    return embeds
 
 def main():
     parser = argparse.ArgumentParser()
@@ -240,16 +92,15 @@ def main():
     if not os.path.isdir(args.log_dir):
         os.makedirs(args.log_dir)
 
-
     global logger
     logger = get_logger(args.log_dir + '/train_log.txt')
     logger.info(args)
 
     set_random_seed(args.seed)
-    train(args)
-    extract_embeddings(args)
+    dataset = load_dataset(args.dataset)
+    train(args, dataset)
+    extract_embeddings(args, dataset)
 
 
 if __name__ == '__main__':
     main()
-

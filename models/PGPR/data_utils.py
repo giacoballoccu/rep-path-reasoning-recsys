@@ -1,5 +1,7 @@
 from __future__ import absolute_import, division, print_function
 
+import os
+
 import numpy as np
 import gzip
 from easydict import EasyDict as edict
@@ -17,26 +19,55 @@ class Dataset(object):
         if not self.data_dir.endswith('/'):
             self.data_dir += '/'
         self.review_file = set_name + '.txt.gz'
-        self.load_entities()
-        self.load_product_relations()
+        entity_filename_edict, relation_filename_edict = self.infer_kg_structure()
+        self.entity_names, self.relation_names = list(entity_filename_edict.keys()), list(relation_filename_edict.keys())
+        self.load_entities(entity_filename_edict)
+        self.load_product_relations(relation_filename_edict)
         self.load_reviews()
+
+    #This will not work if your entities are composed by multiple words, e.g. if you name an entity related_product
+    #this script will consider as a relation, please use a single word for relations
+    def infer_kg_structure(self):
+        file_list = os.listdir(self.data_dir)
+        entity_filenames = [filename for filename in file_list if len(filename.split("_")) == 1]
+        entity_filename_edict = edict()
+        entity_names = []
+        for entity_file in entity_filenames:
+            if os.path.isdir(entity_file): continue
+            name = entity_file.split(".")[0]
+            if name in ["train", "valid", "test", "tmp"]: continue
+            entity_names.append(name)
+            entity_filename_edict[name] = entity_file
+
+        relation_filenames = [filename for filename in file_list if len(filename.split("_")) > 1]
+        relation_filename_edict = edict()
+        relation_names = []
+        for relation_file in relation_filenames:
+            name = relation_file.split(".")[0]
+            relation_names.append(name)
+            relation_filename_edict[name] = relation_file
+
+        self.relation2entity = {}
+        for rel_name in relation_names:
+            entity_name = rel_name.split("_")[-1]
+            self.relation2entity[rel_name] = entity_name
+
+        return entity_filename_edict, relation_filename_edict
 
     def _load_file(self, filename):
         with gzip.open(self.data_dir + filename, 'r') as f:
-            next(f, None)
             return [line.decode('utf-8').strip() for line in f]
 
-    def load_entities(self):
+    def load_entities(self, entity_filename_edict):
         """Load 10 global entities from data files:
         'user','movie','actor','director','producer','production_company','category','editor','writter','cinematographer'
         Create a member variable for each entity associated with attributes:
         - `vocab`: a list of string indicating entity values.
         - `vocab_size`: vocabulary size.
         """
-        entity_files = get_entity_edict(self.dataset_name)
-        for name in entity_files:
-            vocab = [x.split("\t")[0] for x in self._load_file(entity_files[name])]
-            setattr(self, name, edict(vocab=vocab, vocab_size=len(vocab)+1))
+        for name in entity_filename_edict:
+            vocab = [x.split("\t")[0] for x in self._load_file(entity_filename_edict[name])][1:] #Remove header
+            setattr(self, name, edict(vocab=vocab, vocab_size=len(vocab) + 1))
             print('Load', name, 'of size', len(vocab))
 
     def load_reviews(self):
@@ -64,26 +95,26 @@ class Dataset(object):
             rating = int(arr[2])
             timestamp = int(arr[3])
             if rating >= threshold:
-                positive_reviews+=1
+                positive_reviews += 1
             else:
-                negative_reviews+=1
+                negative_reviews += 1
             review_data.append((user_idx, product_idx, rating, timestamp))
             product_distrib[product_idx] += 1
         print(invalid_users, invalid_pid)
         self.review = edict(
-                data=review_data,
-                size=len(review_data),
-                product_distrib=product_distrib,
-                product_uniform_distrib=np.ones(self.product.vocab_size),
-                review_count=len(review_data),
-                review_distrib=np.ones(len(review_data)) #set to 1 now
+            data=review_data,
+            size=len(review_data),
+            product_distrib=product_distrib,
+            product_uniform_distrib=np.ones(self.product.vocab_size),
+            review_count=len(review_data),
+            review_distrib=np.ones(len(review_data))  # set to 1 now
         )
 
         print('Load review of size', self.review.size, 'with positive reviews=',
               positive_reviews, ' and negative reviews=',
-              negative_reviews)#, ' considered as positive the ratings >= of ', threshold)
+              negative_reviews)  # , ' considered as positive the ratings >= of ', threshold)
 
-    def load_product_relations(self):
+    def load_product_relations(self, relation_filename_edict):
         """Load 8 product -> ? relations:
         - 'directed_by': movie -> director
         - 'produced_by_company': movie->production_company,
@@ -99,38 +130,18 @@ class Dataset(object):
         - `et_vocab`: vocabulary of entity_tail (copy from entity vocab).
         - `et_distrib`: frequency of entity_tail vocab.
         """
-        if self.dataset_name == ML1M:
-            product_relations = edict(
-                    directed_by=('director_p_di.txt.gz', self.director),
-                    composed_by=('composer_p_co.txt.gz', self.composer),
-                    produced_by_company=('production_company_p_pr.txt.gz', self.production_company),
-                    produced_by_producer=('producer_p_pr.txt.gz', self.producer),
-                    produced_in=('country_p_co.txt.gz', self.country),
-                    starring=('actor_p_ac.txt.gz', self.actor),
-                    belong_to=('category_p_ca.txt.gz', self.category),
-                    edited_by=('editor_p_ed.txt.gz', self.editor),
-                    wrote_by=('writter_p_wr.txt.gz', self.writter),
-                    cinematography_by=('cinematographer_p_ci.txt.gz', self.cinematographer),
-                    related_to=('wikipage_p_wi.txt.gz', self.wikipage)
-            )
-        elif self.dataset_name == LFM1M:
-            product_relations = edict(
-                mixed_by=("engineer_p_en.txt.gz", self.engineer),
-                featured_by=("featured_artist_p_fe.txt.gz",self.featured_artist),
-                sang_by=('artist_p_ar.txt.gz', self.artist),
-                related_to=('related_product_p_re.txt.gz', self.related_product),
-                belong_to=('category_p_ca.txt.gz', self.category),
-                produced_by_producer=('producer_p_pr.txt.gz', self.producer),
-            )
-        elif self.dataset_name == CELL:
-            product_relations = edict(
-                also_bought_product=("also_buy_product_p_pr.txt.gz", self.product),
-                also_bought_related_product=("also_buy_related_product_p_re.txt.gz", self.related_product),
-                also_viewed_product=("also_view_product_p_pr.txt.gz", self.product),
-                also_viewed_related_product=("also_view_related_product_p_re.txt.gz", self.related_product),
-                belong_to=('category_p_ca.txt.gz', self.category),
-                produced_by_company=('brand_p_br.txt.gz', self.brand),
-            )
+        product_relations = edict()
+        for rel_name, rel_filename in relation_filename_edict.items():
+            entity_name = self.relation2entity[rel_name]
+            product_relations[rel_name] = (rel_filename, getattr(self, entity_name))
+        #E.g:
+        #    product_relations = edict(
+        #        belong_to=("belong_to_genre.txt.gz", self.genre),
+        #        featured_by=("featured_by_artist.txt.gz", self.artist),
+        #        mixed_by=('mixed_by_engineer.txt.gz', self.engineer),
+        #        produced_by=('produced_by_producer.txt.gz', self.producer),
+        #    )
+
 
         for name in product_relations:
             # We save information of entity_tail (et) in each relation.
@@ -138,12 +149,12 @@ class Dataset(object):
             # The i-th record of `data` variable is the entity_tail idx (i.e. product_idx=i).
             # So for each product-relation, there are always |products| records.
             relation = edict(
-                    data=[],
-                    et_vocab=product_relations[name][1].vocab, #copy of brand, catgory ... 's vocab 
-                    et_distrib= np.zeros(product_relations[name][1].vocab_size) #[1] means self.brand ..
+                data=[],
+                et_vocab=product_relations[name][1].vocab,  # copy of brand, catgory ... 's vocab
+                et_distrib=np.zeros(product_relations[name][1].vocab_size)  # [1] means self.brand ..
             )
             size = 0
-            for line in self._load_file(product_relations[name][0]): #[0] means brand_p_b.txt.gz ..
+            for line in self._load_file(product_relations[name][0]):  # [0] means brand_p_b.txt.gz ..
                 knowledge = []
                 line = line.split('\t')
                 for x in line:  # some lines may be empty
@@ -182,7 +193,8 @@ class DataLoader(object):
         batch = []
         review_idx = self.review_seq[self.cur_review_i]
         user_idx, product_idx, rating, _ = self.dataset.review.data[review_idx]
-        product_knowledge = {pr: getattr(self.dataset, pr).data[product_idx] for pr in self.product_relations} #DEFINES THE ORDER OF BATCH_IDX
+        product_knowledge = {pr: getattr(self.dataset, pr).data[product_idx] for pr in
+                             self.product_relations}  # DEFINES THE ORDER OF BATCH_IDX
 
         while len(batch) < self.batch_size:
             data = [user_idx, product_idx]
@@ -206,4 +218,3 @@ class DataLoader(object):
     def has_next(self):
         """Has next batch."""
         return self._has_next
-

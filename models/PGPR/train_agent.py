@@ -5,7 +5,7 @@ import numpy as np
 import torch
 
 with warnings.catch_warnings():
-    warnings.filterwarnings("ignore",category=DeprecationWarning)
+    warnings.filterwarnings("ignore", category=DeprecationWarning)
 import os
 import argparse
 from collections import namedtuple
@@ -19,8 +19,6 @@ from kg_env import BatchKGEnvironment
 logger = None
 
 SavedAction = namedtuple('SavedAction', ['log_prob', 'value'])
-
-
 
 
 class ActorCritic(nn.Module):
@@ -132,7 +130,8 @@ class ACDataLoader(object):
 
 
 def train(args):
-    env = BatchKGEnvironment(args.dataset, args.max_acts, max_path_len=args.max_path_len, state_history=args.state_history)
+    env = BatchKGEnvironment(args.dataset, args.max_acts, max_path_len=args.max_path_len,
+                             state_history=args.state_history)
     uids = list(env.kg(USER).keys())
     dataloader = ACDataLoader(uids, args.batch_size)
     model = ActorCritic(env.state_dim, env.act_dim, gamma=args.gamma, hidden_sizes=args.hidden).to(args.device)
@@ -183,12 +182,12 @@ def train(args):
                 total_losses, total_plosses, total_vlosses, total_entropy, total_rewards = [], [], [], [], []
 
                 logger.info(
-                        'epoch/step={:d}/{:d}'.format(epoch, step) +
-                        ' | loss={:.5f}'.format(avg_loss) +
-                        ' | ploss={:.5f}'.format(avg_ploss) +
-                        ' | vloss={:.5f}'.format(avg_vloss) +
-                        ' | entropy={:.5f}'.format(avg_entropy) +
-                        ' | reward={:.5f}'.format(avg_reward))
+                    'epoch/step={:d}/{:d}'.format(epoch, step) +
+                    ' | loss={:.5f}'.format(avg_loss) +
+                    ' | ploss={:.5f}'.format(avg_ploss) +
+                    ' | vloss={:.5f}'.format(avg_vloss) +
+                    ' | entropy={:.5f}'.format(avg_entropy) +
+                    ' | reward={:.5f}'.format(avg_reward))
         ### END of epoch ###
         if epoch % 10 == 0:
             policy_file = '{}/policy_model_epoch_{}.ckpt'.format(args.log_dir, epoch)
@@ -218,7 +217,6 @@ def main():
     os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
     args.device = torch.device('cuda:0') if torch.cuda.is_available() else 'cpu'
 
-
     args.log_dir = os.path.join(TMP_DIR[args.dataset], args.name)
     if not os.path.isdir(args.log_dir):
         os.makedirs(args.log_dir)
@@ -233,4 +231,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

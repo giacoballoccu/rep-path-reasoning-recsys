@@ -9,12 +9,12 @@ import logging
 import logging.handlers
 import numpy as np
 import csv
-#import scipy.sparse as sp
+# import scipy.sparse as sp
 import torch
 from collections import defaultdict
 
 # Dataset names.
-#from sklearn.feature_extraction.text import TfidfTransformer
+# from sklearn.feature_extraction.text import TfidfTransformer
 
 ML1M = 'ml1m'
 LFM1M = 'lfm1m'
@@ -41,8 +41,18 @@ LABELS = {
     CELL: (TMP_DIR[CELL] + '/train_label.pkl', TMP_DIR[CELL] + '/test_label.pkl')
 }
 
-#ML1M ENTITIES
+# ENTITIES/RELATIONS SHARED BY ALL DATASETS
+USER = 'user'
 PRODUCT = 'product'
+INTERACTION = {
+    ML1M: "watched",
+    LFM1M: "listened",
+    CELL: "purchase",
+}
+SELF_LOOP = 'self_loop'
+PRODUCED_BY_PRODUCER = 'produced_by_producer'
+
+# ML1M ENTITIES
 CINEMATOGRAPHER = 'cinematographer'
 PRODUCTION_COMPANY = 'production_company'
 COMPOSER = 'composer'
@@ -52,52 +62,42 @@ WIKIPAGE = 'wikipage'
 EDITOR = 'editor'
 WRITTER = 'writter'
 DIRECTOR = 'director'
+CATEGORY = 'category'
 
-#LASTFM ENTITIES
-PRODUCT = 'song'
+# LASTFM ENTITIES
 ARTIST = 'artist'
-FEATURED_ARTIST = 'featured_artist'
 ENGINEER = 'engineer'
 PRODUCER = 'producer'
-RELATED_PRODUCT = 'related_product'
+GENRE = 'genre'
 
-#CELL ENTITIES
+# CELL ENTITIES
 BRAND = 'brand'
+RPRODUCT = 'rproduct'
 
-#SHARED ENTITIES
-USER = 'user'
-CATEGORY = 'category'
-PRODUCT = 'product'
-
-#ML1M RELATIONS
-WATCHED = 'watched'
-DIRECTED_BY = 'directed_by'
+# ML1M RELATIONS
+DIRECTED_BY_DIRECTOR = 'directed_by'
 PRODUCED_BY_COMPANY = 'produced_by_company'
-STARRING = 'starring'
-EDITED_BY = 'edited_by'
-WROTE_BY = 'wrote_by'
-CINEMATOGRAPHY_BY = 'cinematography_by'
-COMPOSED_BY = 'composed_by'
-PRODUCED_IN = 'produced_in'
+STARRING_BY_ACTOR = 'starring'
+EDITED_BY_EDITOR = 'edited_by'
+WROTE_BY_WRITTER = 'wrote_by'
+CINEMATOGRAPHY_BY_CINEMATOGRAPHER = 'cinematography_by'
+COMPOSED_BY_COMPOSER = 'composed_by'
+PRODUCED_IN_COUNTRY = 'produced_in'
+BELONG_TO_CATEGORY = 'belong_to'
 
-#LASTFM RELATIONS
-LISTENED = 'listened'
-MIXED_BY = 'mixed_by'
-FEATURED_BY = 'featured_by'
-SANG_BY = 'sang_by'
+# LASTFM RELATIONS
+MIXED_BY_ENGINEER = 'mixed_by_engineer'
+FEATURED_BY_ARTIST = 'featured_by_artist'
+BELONG_TO_GENRE = 'belong_to_genre'
 
-#CELL RELATIONS
+# CELL RELATIONS
 PURCHASE = 'purchase'
 ALSO_BOUGHT_RP = 'also_bought_related_product'
 ALSO_VIEWED_RP = 'also_viewed_related_product'
 ALSO_BOUGHT_P = 'also_bought_product'
 ALSO_VIEWED_P = 'also_viewed_product'
 
-#SHARED RELATIONS
 RELATED_TO = 'related_to'
-BELONG_TO = 'belong_to'
-PRODUCED_BY_PRODUCER = 'produced_by_producer'
-SELF_LOOP = 'self_loop'
 
 RELATION_LIST = {
     ML1M: {
@@ -135,55 +135,54 @@ RELATION_LIST = {
     },
 }
 
-
 KG_RELATION = {
     ML1M: {
         USER: {
-            WATCHED: PRODUCT,
+            INTERACTION[ML1M]: PRODUCT,
         },
         ACTOR: {
-            STARRING: PRODUCT,
+            STARRING_BY_ACTOR: PRODUCT,
         },
         DIRECTOR: {
-            DIRECTED_BY: PRODUCT,
+            DIRECTED_BY_DIRECTOR: PRODUCT,
         },
         PRODUCT: {
-            WATCHED: USER,
+            INTERACTION[ML1M]: USER,
             PRODUCED_BY_COMPANY: PRODUCTION_COMPANY,
             PRODUCED_BY_PRODUCER: PRODUCER,
-            EDITED_BY: EDITOR,
-            WROTE_BY: WRITTER,
-            CINEMATOGRAPHY_BY: CINEMATOGRAPHER,
-            BELONG_TO: CATEGORY,
-            DIRECTED_BY: DIRECTOR,
-            STARRING: ACTOR,
-            COMPOSED_BY: COMPOSER,
-            PRODUCED_IN: COUNTRY,
+            EDITED_BY_EDITOR: EDITOR,
+            WROTE_BY_WRITTER: WRITTER,
+            CINEMATOGRAPHY_BY_CINEMATOGRAPHER: CINEMATOGRAPHER,
+            BELONG_TO_CATEGORY: CATEGORY,
+            DIRECTED_BY_DIRECTOR: DIRECTOR,
+            STARRING_BY_ACTOR: ACTOR,
+            COMPOSED_BY_COMPOSER: COMPOSER,
+            PRODUCED_IN_COUNTRY: COUNTRY,
             RELATED_TO: WIKIPAGE,
         },
         PRODUCTION_COMPANY: {
             PRODUCED_BY_COMPANY: PRODUCT,
         },
         COMPOSER: {
-            COMPOSED_BY: PRODUCT,
+            COMPOSED_BY_COMPOSER: PRODUCT,
         },
         PRODUCER: {
             PRODUCED_BY_PRODUCER: PRODUCT,
         },
         WRITTER: {
-            WROTE_BY: PRODUCT,
+            WROTE_BY_WRITTER: PRODUCT,
         },
         EDITOR: {
-            EDITED_BY: PRODUCT,
+            EDITED_BY_EDITOR: PRODUCT,
         },
         CATEGORY: {
-            BELONG_TO: PRODUCT,
+            BELONG_TO_CATEGORY: PRODUCT,
         },
         CINEMATOGRAPHER: {
-            CINEMATOGRAPHY_BY: PRODUCT,
+            CINEMATOGRAPHY_BY_CINEMATOGRAPHER: PRODUCT,
         },
         COUNTRY: {
-            PRODUCED_IN: PRODUCT,
+            PRODUCED_IN_COUNTRY: PRODUCT,
         },
         WIKIPAGE: {
             RELATED_TO: PRODUCT,
@@ -191,34 +190,26 @@ KG_RELATION = {
     },
     LFM1M: {
         USER: {
-            LISTENED: PRODUCT,
+            INTERACTION[LFM1M]: PRODUCT,
         },
         ARTIST: {
-            SANG_BY: PRODUCT,
+            FEATURED_BY_ARTIST: PRODUCT,
         },
         ENGINEER: {
-            MIXED_BY: PRODUCT,
+            MIXED_BY_ENGINEER: PRODUCT,
         },
         PRODUCT: {
-            LISTENED: USER,
+            INTERACTION[LFM1M]: USER,
             PRODUCED_BY_PRODUCER: PRODUCER,
-            SANG_BY: ARTIST,
-            FEATURED_BY: FEATURED_ARTIST,
-            MIXED_BY: ENGINEER,
-            BELONG_TO: CATEGORY,
-            RELATED_TO: RELATED_PRODUCT,
+            FEATURED_BY_ARTIST: ARTIST,
+            MIXED_BY_ENGINEER: ENGINEER,
+            BELONG_TO_GENRE: GENRE,
         },
         PRODUCER: {
             PRODUCED_BY_PRODUCER: PRODUCT,
         },
-        CATEGORY: {
-            BELONG_TO: PRODUCT,
-        },
-        RELATED_PRODUCT: {
-            RELATED_TO: PRODUCT,
-        },
-        FEATURED_ARTIST: {
-            FEATURED_BY: PRODUCT,
+        GENRE: {
+            BELONG_TO_GENRE: PRODUCT,
         },
     },
     CELL: {
@@ -228,9 +219,9 @@ KG_RELATION = {
         PRODUCT: {
             PURCHASE: USER,
             PRODUCED_BY_COMPANY: BRAND,
-            BELONG_TO: CATEGORY,
-            ALSO_BOUGHT_RP: RELATED_PRODUCT,
-            ALSO_VIEWED_RP: RELATED_PRODUCT,
+            BELONG_TO_CATEGORY: CATEGORY,
+            ALSO_BOUGHT_RP: RPRODUCT,
+            ALSO_VIEWED_RP: RPRODUCT,
             ALSO_BOUGHT_P: PRODUCT,
             ALSO_VIEWED_P: PRODUCT,
         },
@@ -238,59 +229,54 @@ KG_RELATION = {
             PRODUCED_BY_COMPANY: PRODUCT,
         },
         CATEGORY: {
-            BELONG_TO: PRODUCT,
+            BELONG_TO_CATEGORY: PRODUCT,
         },
-        RELATED_PRODUCT: {
+        RPRODUCT: {
             ALSO_BOUGHT_RP: PRODUCT,
             ALSO_VIEWED_RP: PRODUCT,
         }
     },
 }
 
-
-#0 is reserved to the main relation, 1 to mention
+# 0 is reserved to the main relation, 1 to mention
 PATH_PATTERN = {
     ML1M: {
-        0: ((None, USER), (WATCHED, PRODUCT), (WATCHED, USER), (WATCHED, PRODUCT)),
-        2: ((None, USER), (WATCHED, PRODUCT), (CINEMATOGRAPHY_BY, CINEMATOGRAPHER), (CINEMATOGRAPHY_BY, PRODUCT)),
-        3: ((None, USER), (WATCHED, PRODUCT), (PRODUCED_BY_COMPANY, PRODUCTION_COMPANY), (PRODUCED_BY_COMPANY, PRODUCT)),
-        4: ((None, USER), (WATCHED, PRODUCT), (COMPOSED_BY, COMPOSER), (COMPOSED_BY, PRODUCT)),
-        5: ((None, USER), (WATCHED, PRODUCT), (BELONG_TO, CATEGORY), (BELONG_TO, PRODUCT)),
-        7: ((None, USER), (WATCHED, PRODUCT), (STARRING, ACTOR), (STARRING, PRODUCT)),
-        8: ((None, USER), (WATCHED, PRODUCT), (EDITED_BY, EDITOR), (EDITED_BY, PRODUCT)),
-        9: ((None, USER), (WATCHED, PRODUCT), (PRODUCED_BY_PRODUCER, PRODUCER), (PRODUCED_BY_PRODUCER, PRODUCT)),
-        10: ((None, USER), (WATCHED, PRODUCT), (WROTE_BY, WRITTER), (WROTE_BY, PRODUCT)),
-        11: ((None, USER), (WATCHED, PRODUCT), (DIRECTED_BY, DIRECTOR), (DIRECTED_BY, PRODUCT)),
-        12: ((None, USER), (WATCHED, PRODUCT), (PRODUCED_IN, COUNTRY), (PRODUCED_IN, PRODUCT)),
-        #13: ((None, USER), (WATCHED, PRODUCT), (RELATED_TO, WIKIPAGE), (RELATED_TO, PRODUCT)),
+        0: ((None, USER), (INTERACTION[ML1M], PRODUCT), (INTERACTION[ML1M], USER), (INTERACTION[ML1M], PRODUCT)),
+        2: ((None, USER), (INTERACTION[ML1M], PRODUCT), (CINEMATOGRAPHY_BY_CINEMATOGRAPHER, CINEMATOGRAPHER), (CINEMATOGRAPHY_BY_CINEMATOGRAPHER, PRODUCT)),
+        3: ((None, USER), (INTERACTION[ML1M], PRODUCT), (PRODUCED_BY_COMPANY, PRODUCTION_COMPANY), (PRODUCED_BY_COMPANY, PRODUCT)),
+        4: ((None, USER), (INTERACTION[ML1M], PRODUCT), (COMPOSED_BY_COMPOSER, COMPOSER), (COMPOSED_BY_COMPOSER, PRODUCT)),
+        5: ((None, USER), (INTERACTION[ML1M], PRODUCT), (BELONG_TO_CATEGORY, CATEGORY), (BELONG_TO_CATEGORY, PRODUCT)),
+        7: ((None, USER), (INTERACTION[ML1M], PRODUCT), (STARRING_BY_ACTOR, ACTOR), (STARRING_BY_ACTOR, PRODUCT)),
+        8: ((None, USER), (INTERACTION[ML1M], PRODUCT), (EDITED_BY_EDITOR, EDITOR), (EDITED_BY_EDITOR, PRODUCT)),
+        9: ((None, USER), (INTERACTION[ML1M], PRODUCT), (PRODUCED_BY_PRODUCER, PRODUCER), (PRODUCED_BY_PRODUCER, PRODUCT)),
+        10: ((None, USER), (INTERACTION[ML1M], PRODUCT), (WROTE_BY_WRITTER, WRITTER), (WROTE_BY_WRITTER, PRODUCT)),
+        11: ((None, USER), (INTERACTION[ML1M], PRODUCT), (DIRECTED_BY_DIRECTOR, DIRECTOR), (DIRECTED_BY_DIRECTOR, PRODUCT)),
+        12: ((None, USER), (INTERACTION[ML1M], PRODUCT), (PRODUCED_IN_COUNTRY, COUNTRY), (PRODUCED_IN_COUNTRY, PRODUCT)),
+        # 13: ((None, USER), (INTERACTION[ML1M, PRODUCT), (RELATED_TO, WIKIPAGE), (RELATED_TO, PRODUCT)),
     },
     LFM1M: {
-        0: ((None, USER), (LISTENED, PRODUCT), (LISTENED, USER), (LISTENED, PRODUCT)),
-        2: ((None, USER), (LISTENED, PRODUCT), (BELONG_TO, CATEGORY), (BELONG_TO, PRODUCT)),
-        3: ((None, USER), (LISTENED, PRODUCT), (RELATED_TO, RELATED_PRODUCT), (RELATED_TO, PRODUCT)),
-        4: ((None, USER), (LISTENED, PRODUCT), (SANG_BY, ARTIST), (SANG_BY, PRODUCT)),
-        5: ((None, USER), (LISTENED, PRODUCT), (MIXED_BY, ENGINEER), (MIXED_BY, PRODUCT)),
-        6: ((None, USER), (LISTENED, PRODUCT), (PRODUCED_BY_PRODUCER, PRODUCER), (PRODUCED_BY_PRODUCER, PRODUCT)),
-        #10: ((None, USER), (LISTENED, PRODUCT), (FEATURED_BY, FEATURED_ARTIST), (FEATURED_BY, PRODUCT)),
+        0: ((None, USER), (INTERACTION[LFM1M], PRODUCT), (INTERACTION[LFM1M], USER), (INTERACTION[LFM1M], PRODUCT)),
+        2: ((None, USER), (INTERACTION[LFM1M], PRODUCT), (BELONG_TO_GENRE, GENRE), (BELONG_TO_GENRE, PRODUCT)),
+        4: ((None, USER), (INTERACTION[LFM1M], PRODUCT), (FEATURED_BY_ARTIST, ARTIST), (FEATURED_BY_ARTIST, PRODUCT)),
+        5: ((None, USER), (INTERACTION[LFM1M], PRODUCT), (MIXED_BY_ENGINEER, ENGINEER), (MIXED_BY_ENGINEER, PRODUCT)),
+        6: ((None, USER), (INTERACTION[LFM1M], PRODUCT), (PRODUCED_BY_PRODUCER, PRODUCER), (PRODUCED_BY_PRODUCER, PRODUCT)),
     },
     CELL: {
         0: ((None, USER), (PURCHASE, PRODUCT), (PURCHASE, USER), (PURCHASE, PRODUCT)),
-        2: ((None, USER), (PURCHASE, PRODUCT), (BELONG_TO, CATEGORY), (BELONG_TO, PRODUCT)),
+        2: ((None, USER), (PURCHASE, PRODUCT), (BELONG_TO_CATEGORY, CATEGORY), (BELONG_TO_CATEGORY, PRODUCT)),
         3: ((None, USER), (PURCHASE, PRODUCT), (PRODUCED_BY_COMPANY, BRAND), (PRODUCED_BY_COMPANY, PRODUCT)),
         4: ((None, USER), (PURCHASE, PRODUCT), (ALSO_BOUGHT_P, PRODUCT)),
         5: ((None, USER), (PURCHASE, PRODUCT), (ALSO_VIEWED_P, PRODUCT)),
-        6: ((None, USER), (PURCHASE, PRODUCT), (ALSO_BOUGHT_RP, RELATED_PRODUCT), (ALSO_BOUGHT_RP, PRODUCT)),
-        10: ((None, USER), (PURCHASE, PRODUCT), (ALSO_VIEWED_RP, RELATED_PRODUCT), (ALSO_VIEWED_RP, PRODUCT)),
+        6: ((None, USER), (PURCHASE, PRODUCT), (ALSO_BOUGHT_RP, RPRODUCT), (ALSO_BOUGHT_RP, PRODUCT)),
+        10: ((None, USER), (PURCHASE, PRODUCT), (ALSO_VIEWED_RP, RPRODUCT), (ALSO_VIEWED_RP, PRODUCT)),
     }
 }
 
-
 MAIN_PRODUCT_INTERACTION = {
-    ML1M: (PRODUCT, WATCHED),
-    LFM1M: (PRODUCT, LISTENED),
+    ML1M: (PRODUCT, INTERACTION[ML1M]),
+    LFM1M: (PRODUCT, INTERACTION[LFM1M]),
     CELL: (PRODUCT, PURCHASE)
 }
-
 
 
 def get_entities(dataset_name):
@@ -380,10 +366,10 @@ def load_embed(dataset):
     embed = pickle.load(open(embed_file, 'rb'))
     return embed
 
-#Receive paths in form (score, prob, [path]) return the last relationship
+
+# Receive paths in form (score, prob, [path]) return the last relationship
 def get_path_pattern(path):
     return path[-1][-1][0]
-
 
 
 def get_pid_to_kgid_mapping(dataset_name):
@@ -407,8 +393,8 @@ def get_pid_to_kgid_mapping(dataset_name):
 def get_entity_edict(dataset_name):
     if dataset_name == ML1M:
         entity_files = edict(
-            user='users.txt.gz',
-            product='products.txt.gz',
+            user='user.txt.gz',
+            product='product.txt.gz',
             actor='actor.txt.gz',
             composer='composer.txt.gz',
             director='director.txt.gz',
@@ -423,8 +409,8 @@ def get_entity_edict(dataset_name):
         )
     elif dataset_name == LFM1M:
         entity_files = edict(
-            user='users.txt.gz',
-            product='products.txt.gz',
+            user='user.txt.gz',
+            product='product.txt.gz',
             artist='artist.txt.gz',
             featured_artist='featured_artist.txt.gz',
             engineer='engineer.txt.gz',
@@ -434,8 +420,8 @@ def get_entity_edict(dataset_name):
         )
     elif dataset_name == CELL:
         entity_files = edict(
-            user='users.txt.gz',
-            product='products.txt.gz',
+            user='user.txt.gz',
+            product='product.txt.gz',
             related_product='related_product.txt.gz',
             brand='brand.txt.gz',
             category='category.txt.gz',
@@ -456,6 +442,7 @@ def get_validation_pids(dataset_name):
     valid_file.close()
     return validation_pids
 
+
 def get_uid_to_kgid_mapping(dataset_name):
     dataset_uid2kg_uid = {}
     with open(DATASET_DIR[dataset_name] + "/entities/mappings/user.txt", 'r') as file:
@@ -468,6 +455,7 @@ def get_uid_to_kgid_mapping(dataset_name):
             dataset_uid2kg_uid[uid_review] = uid_kg
     return dataset_uid2kg_uid
 
+
 def save_kg(dataset, kg):
     kg_file = TMP_DIR[dataset] + '/kg.pkl'
     pickle.dump(kg, open(kg_file, 'wb'))
@@ -478,6 +466,7 @@ def load_kg(dataset):
     # CHANGED
     kg = pickle.load(open(kg_file, 'rb'))
     return kg
+
 
 def shuffle(arr):
     for i in range(len(arr) - 1, 0, -1):

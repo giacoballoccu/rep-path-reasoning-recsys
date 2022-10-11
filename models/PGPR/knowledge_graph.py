@@ -14,7 +14,6 @@ class KnowledgeGraph(object):
         self._clean()
         self.top_matches = None
 
-
     def _load_entities(self, dataset):
         print('Load entities...')
         num_nodes = 0
@@ -194,6 +193,7 @@ class KnowledgeGraph(object):
 
 '''
 
+
 def check_test_path(dataset_str, kg):
     # Check if there exists at least one path for any user-product in test set.
     test_user_products = load_labels(dataset_str, 'test')
@@ -205,4 +205,3 @@ def check_test_path(dataset_str, kg):
                 count += len(tmp_path)
             if count == 0:
                 print(uid, pid)
-
