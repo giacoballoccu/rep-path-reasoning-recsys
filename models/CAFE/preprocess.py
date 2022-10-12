@@ -30,12 +30,7 @@ def compute_top100_items(dataset):
     embeds = load_embed(dataset)
     user_embed = embeds[USER]
     product_embed = embeds[PRODUCT]
-    if dataset == ML1M:
-        purchase_embed, purchase_bias = embeds[WATCHED]
-    elif dataset == LFM1M:
-        purchase_embed, purchase_bias = embeds[LISTENED]
-    else:
-        purchase_embed, purchase_bias = embeds[PURCHASE]
+    purchase_embed, purchase_bias = embeds[INTERACTION[dataset]]
     scores = np.dot(user_embed + purchase_embed, product_embed.T)
     user_products = np.argsort(scores, axis=1)  # From worst to best
     best100 = user_products[:, -100:][:, ::-1]
