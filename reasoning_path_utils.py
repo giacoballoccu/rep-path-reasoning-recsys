@@ -56,48 +56,54 @@ def get_no_path_types_in_kg(dataset_name):
     return len(df_kg.kg.relations.unique())
 
 
-def load_LIR_matrix(self):
-    lir_matrix_filepath = os.path.join(self.precomputed_folderpath, self.dataset_name, "LIR_matrix.pkl")
-    lir_words_matrix_filepath = os.path.join(self.precomputed_folderpath, self.dataset_name, "LIR_matrix_words.pkl")
+def load_LIR_matrix(dataset_name):
+    data_dir = get_data_dir(dataset_name)
+    lir_matrix_filepath = os.path.join(data_dir, "LIR_matrix.pkl")
+    lir_words_matrix_filepath = os.path.join(data_dir, "LIR_matrix_words.pkl")
+
     if os.path.isfile(lir_matrix_filepath):
         print("Loading pre-computed LIR-matrix")
         with open(lir_matrix_filepath, 'rb') as f:
-            self.LIR_matrix = pickle.load(f)
+            LIR_matrix = pickle.load(f)
         f.close()
 
-        if self.dataset_name != "ml1m" and self.dataset_name != "lastfm":
-            with open(lir_words_matrix_filepath, 'rb') as f:
-                self.LIR_matrix_words = pickle.load(f)
-            f.close()
+        if dataset_name in DATASETS_WITH_WORDS:
+            pass
+            #with open(lir_words_matrix_filepath, 'rb') as f:
+            #    LIR_matrix_words = pickle.load(f)
+            #f.close()
     else:
         print("Generating LIR-matrix")
-        self.generate_LIR_matrix()
-        with open(os.path.join(self.precomputed_folderpath, self.dataset_name, 'LIR_matrix.pkl'), 'wb') as f:
-            pickle.dump(self.LIR_matrix, f)
+        LIR_matrix = generate_LIR_matrix(dataset_name)
+        with open(lir_matrix_filepath, 'wb') as f:
+            pickle.dump(LIR_matrix, f)
         f.close()
-        with open(os.path.join(self.precomputed_folderpath, self.dataset_name, 'LIR_matrix_words.pkl'), 'wb') as f:
-            pickle.dump(self.LIR_matrix_words, f)
-        f.close()
+        if dataset_name in DATASETS_WITH_WORDS:
+            pass
+            #with open(lir_words_matrix_filepath, 'wb') as f:
+            #    pickle.dump(LIR_matrix_words, f)
+            #f.close()
+    return LIR_matrix
 
-
-def load_SEP_matrix(self):
-    sep_matrix_filepath = os.path.join(self.precomputed_folderpath, self.dataset_name, "SEP_matrix.pkl")
+def load_SEP_matrix(dataset_name):
+    data_dir = get_data_dir(dataset_name)
+    sep_matrix_filepath = os.path.join(data_dir, "SEP_matrix.pkl")
     if os.path.isfile(sep_matrix_filepath):
         print("Loading pre-computed SEP-matrix")
         with open(sep_matrix_filepath, 'rb') as f:
-            self.SEP_matrix = pickle.load(f)
+            SEP_matrix = pickle.load(f)
         f.close()
     else:
         print("Generating SEP-matrix")
-        self.generate_SEP_matrix()
-        with open(os.path.join(self.precomputed_folderpath, self.dataset_name, 'SEP_matrix.pkl'), 'wb') as f:
-            pickle.dump(self.SEP_matrix, f)
+        SEP_matrix = generate_SEP_matrix()
+        with open(sep_matrix_filepath, 'wb') as f:
+            pickle.dump(SEP_matrix, f)
         f.close()
+    return SEP_matrix
 
-
-def get_dataset_pid2model_kg_pid(dataset_name):
-    data_dir = get_data_dir(dataset_name)
-    file = open(os.path.join(data_dir, "mappings/product_mappings.txt", "r"))  # TODO CHECK if we want that filename
+def get_dataset_id2model_kg_id(dataset_name, model_name, what="user"):
+    model_data_dir = get_model_data_dir(model_name, dataset_name)
+    file = open(os.path.join(model_data_dir, f"mappings/{what}_mappings.txt", "r"))
     csv_reader = csv.reader(file, delimiter='\t')
     dataset_pid2model_kg_pid = {}
     next(csv_reader, None)
@@ -107,21 +113,8 @@ def get_dataset_pid2model_kg_pid(dataset_name):
     return dataset_pid2model_kg_pid
 
 
-def get_dataset_uid2model_kg_uid(dataset_name):
-    data_dir = get_data_dir(dataset_name)
-    file = open(os.path.join(data_dir, "mappings/user_mappings.txt", "r"))
-    reader = csv.reader(file, delimiter="\t")
-    dataset_uid2model_kg_pid = {}
-    next(reader, None)
-    for row in reader:
-        uid_review = row[1]
-        uid_kg = int(row[0])
-        dataset_uid2model_kg_pid[uid_review] = uid_kg
-    return dataset_uid2model_kg_pid
-
-
 def get_interaction2timestamp_map(dataset_name, model_name):
-    data_dir = get_model_data_dir(dataset_name, model_name)
+    data_dir = get_data_dir(dataset_name)
     # Load if already computated
     metadata_filepath = os.path.join(data_dir, "time_metadata.pkl")
     if os.path.isfile(metadata_filepath):
@@ -132,14 +125,14 @@ def get_interaction2timestamp_map(dataset_name, model_name):
     # Compute and save if not yet
     else:
         user2pid_time_tuple = defaultdict(list)
-        dataset2kg = get_dataset_pid2model_kg_pid(dataset_name)
+        dataset2kg_pid = get_dataset_id2model_kg_id(dataset_name, model_name, "product")
         file = open(os.path.join(data_dir, "train.txt"), 'r')
         csv_reader = csv.reader(file, delimiter=' ')
-        uid_mapping = get_dataset_uid2model_kg_uid(dataset_name)
+        uid_mapping = get_dataset_id2model_kg_id(dataset_name, model_name, "user")
         for row in csv_reader:
             uid = uid_mapping[row[0]]
             pid = row[1]
-            pid_model_kg = dataset2kg[pid]
+            pid_model_kg = dataset2kg_pid[pid]
             timestamp = int(row[3])
             user2pid_time_tuple[uid].append((PRODUCT, pid_model_kg, timestamp))
             if dataset_name in DATASETS_WITH_WORDS:

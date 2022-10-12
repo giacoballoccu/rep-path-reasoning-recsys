@@ -48,73 +48,7 @@ def ndcg_at_k(hit_list, k, method=0):
         return 0.
     return dcg_at_k(hit_list, k, method) / dcg_max
 
-
-def measure_rec_quality(path_data):
-    # Evaluate only the attributes that have been chosen and are avaiable in the chosen dataset
-    flags = path_data.sens_attribute_flags
-    attribute_list = get_attribute_list(path_data.dataset_name, flags)
-    metrics_names = ["ndcg", "hr", "recall", "precision", "mmr"]
-    metrics = edict()
-    for metric in metrics_names:
-        metrics[metric] = {"Overall": []}
-        for values in attribute_list.values():
-            if len(attribute_list) == 1: break
-            attribute_to_name = values[1]
-            for _, name in attribute_to_name.items():
-                metrics[metric][name] = []
-
-    topk_matches = path_data.user_product_topk
-    test_labels = path_data.test_labels
-
-    test_user_idxs = list(test_labels.keys())
-    invalid_users = []
-    for uid in test_user_idxs:
-        if uid not in topk_matches: continue
-        if len(topk_matches[uid]) < 10:
-            invalid_users.append(uid)
-            continue
-        pred_list, rel_set = topk_matches[uid], test_labels[uid]
-        if len(pred_list) == 0:
-            continue
-
-        k = 0
-        hit_num = 0.0
-        hit_list = []
-        for pid in pred_list:
-            k += 1
-            if pid in rel_set:
-                hit_num += 1
-                hit_list.append(1)
-            else:
-                hit_list.append(0)
-
-        ndcg = ndcg_at_k(hit_list, k)
-        recall = hit_num / len(rel_set)
-        precision = hit_num / len(pred_list)
-        hit = 1.0 if hit_num > 0.0 else 0.0
-        mmr = MMR(hit_list, k)
-        # f1 = (2*precision*recall)/(precision+recall)
-        # Based on attribute
-        for attribute in attribute_list.keys():
-            if uid not in attribute_list[attribute][0]: continue
-            attr_value = attribute_list[attribute][0][uid]
-            if attr_value not in attribute_list[attribute][
-                1]: continue  # Few users may have the attribute missing (LASTFM)
-            attr_name = attribute_list[attribute][1][attr_value]
-            metrics["ndcg"][attr_name].append(ndcg)
-            metrics["recall"][attr_name].append(recall)
-            metrics["precision"][attr_name].append(precision)
-            metrics["hr"][attr_name].append(hit)
-            metrics["mmr"][attr_name].append(mmr)
-            # metric["f1"][attr_name].append(f1)
-        metrics["ndcg"]["Overall"].append(ndcg)
-        metrics["recall"]["Overall"].append(recall)
-        metrics["precision"]["Overall"].append(precision)
-        metrics["hr"]["Overall"].append(hit)
-        metrics["mmr"]["Overall"].append(mmr)
-        # metrics["f1"]["Overall"].append(f1)
-    return metrics
-
+"""
 
 def print_rec_metrics(dataset_name, flags, metrics):
     attribute_list = get_attribute_list(dataset_name, flags)
@@ -133,7 +67,7 @@ def print_rec_metrics(dataset_name, flags, metrics):
                 print("{}: {:.3f}".format(metric_name, np.array(groups_values[attribute]).mean()), end=" | ")
             print("")
     print("\n")
-
+"""#TODO
 
 def print_rec_quality_metrics(avg_metrics):
     print("\n***---Recommandation Quality---***")
@@ -186,7 +120,7 @@ def novelty_at_k(topk_items, pid2popularity):
     novelty_items_topk = [1 - pid2popularity[pid] for pid in topk_items]
     return np.mean(novelty_items_topk)
 
-def exposure_pfairness(topk_items, pid2provider_popularity)
+def exposure_pfairness(topk_items, pid2provider_popularity):
     exposure_providers_topk = [pid2provider_popularity[pid] for pid in topk_items]
     return np.mean(exposure_providers_topk)
 
@@ -198,9 +132,9 @@ def consumer_fairness(metrics_distrib, avg_metrics):
     for metric, group_values in avg_metrics.items():
         if len(group_values) == 2:
             group1, group2 = list(group_values.keys())
-            statistically_significant = statistical_test(metrics_distrib[metric][group1], metrics_distrib[metric][group2])
+            #statistically_significant = statistical_test(metrics_distrib[metric][group1], metrics_distrib[metric][group2]) TODO
             fairness_metrics[CFAIRNESS][metric] = (group1, group2, avg_metrics[metric][group1] -
-                                                   avg_metrics[metric][group2], statistically_significant)
+                                                   avg_metrics[metric][group2],) #statistically_significant) TODO
         if len(group_values) > 2:
             pairwise_diffs = []
             for group1 in group_values.keys():

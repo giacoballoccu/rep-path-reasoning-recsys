@@ -129,8 +129,8 @@ class TopkReasoningPaths:
 
 
 def pathfy(dataset_name, uid_paths):
-    LIR_matrix = load_LIR_matrix()
-    SEP_matrix = load_SEP_matrix()
+    LIR_matrix = load_LIR_matrix(dataset_name)
+    SEP_matrix = load_SEP_matrix(dataset_name)
     topk_reasoning_paths = {}
     for uid, path_triplets in uid_paths.items():
         curr_reasoning_paths = []
