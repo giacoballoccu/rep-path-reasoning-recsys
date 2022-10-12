@@ -11,7 +11,6 @@ from functools import reduce
 from kg_env import BatchKGEnvironment
 from train_agent import ActorCritic
 from pgpr_utils import *
-from extract_predicted_paths import *
 
 
 def evaluate(dataset_name, topk_matches, test_user_products):
