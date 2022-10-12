@@ -6,8 +6,7 @@ import numpy as np
 import gzip
 from easydict import EasyDict as edict
 import random
-from pgpr_utils import get_knowledge_derived_relations, DATASET_DIR, \
-    get_pid_to_kgid_mapping, get_uid_to_kgid_mapping, get_entity_edict, ML1M, LFM1M, CELL
+from pgpr_utils import get_knowledge_derived_relations, DATASET_DIR
 
 
 class Dataset(object):
@@ -20,7 +19,8 @@ class Dataset(object):
             self.data_dir += '/'
         self.review_file = set_name + '.txt.gz'
         entity_filename_edict, relation_filename_edict = self.infer_kg_structure()
-        self.entity_names, self.relation_names = list(entity_filename_edict.keys()), list(relation_filename_edict.keys())
+        #Other relation names doesn't contain the main interaction
+        self.entity_names, self.other_relation_names = list(entity_filename_edict.keys()), list(relation_filename_edict.keys())
         self.load_entities(entity_filename_edict)
         self.load_product_relations(relation_filename_edict)
         self.load_reviews()
