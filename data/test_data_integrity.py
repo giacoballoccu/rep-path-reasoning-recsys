@@ -17,19 +17,22 @@ def test_dataset_integrity(dataset_name):
 
     entity_df = pd.read_csv(f"{dataset_name}/preprocessed/e_map.txt", sep="\t", names=["eid", "name", "entity"]).iloc[1:, :]
     entity_item = entity_df[entity_df.entity.isin(i2kg_df.entity)]
+    other_entities = entity_df[~entity_df.entity.isin(i2kg_df.entity)]
     if entity_item.shape[0] != i2kg_df.shape[0]:
         print("missing items in e_map")
 
-    triplets_df = pd.read_csv(f"{dataset_name}/preprocessed/kg_final.txt", sep="\t")
+    triplets_df = pd.read_csv(f"{dataset_name}/preprocessed/kg_final.txt", sep="\t", dtype="object")
     triplets_df_check = triplets_df[triplets_df.entity_tail.isin(entity_item)]
     if triplets_df_check.shape[0] > 0:
         print("Triplets contain corrupted triplets with a item as tail")
 
-
+    x = triplets_df[triplets_df.entity_tail.isin(other_entities)]
+    if triplets_df.shape[0] != x.shape[0]:
+        print("Triplets contain corrupted triplets with a not existing entity tail")
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--data', type=str, default="ml1m", help='One of {ML1M, LFM1M}')
+    parser.add_argument('--data', type=str, default="lfm1m", help='One of {ML1M, LFM1M}')
     args = parser.parse_args()
 
     test_dataset_integrity(args.data)
