@@ -20,7 +20,7 @@ class KnowledgeEmbedding(nn.Module):
         self.l2_lambda = args.l2_lambda
 
         self.dataset_name = args.dataset
-        self.relation_names = dataloader.dataset.relation_names
+        self.relation_names = dataloader.dataset.other_relation_names
         self.entity_names = dataloader.dataset.entity_names
         self.relation2entity = dataloader.dataset.relation2entity
 
@@ -53,7 +53,7 @@ class KnowledgeEmbedding(nn.Module):
             et="product",
             et_distrib=self._make_distrib(getattr(dataset, "review").product_uniform_distrib)
         )
-        for relation_name in dataset.relation_names:
+        for relation_name in dataset.other_relation_names:
             value = edict(
                 et=dataset.relation2entity[relation_name],
                 et_distrib=self._make_distrib(getattr(dataset, relation_name).et_distrib)

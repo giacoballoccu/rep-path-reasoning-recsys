@@ -61,7 +61,11 @@ def extract_embeddings(args, dataset):
     embeds = {}
     for entity_name in dataset.entity_names:
         embeds[entity_name] = state_dict[f'{entity_name}.weight'].cpu().data.numpy()[:-1]
-    for relation_name in dataset.relation_names:
+    embeds[INTERACTION[dataset_name]] = (
+        state_dict[INTERACTION[dataset_name]].cpu().data.numpy()[0],
+        state_dict[f'{INTERACTION[dataset_name]}_bias.weight'].cpu().data.numpy()
+    )
+    for relation_name in dataset.other_relation_names:
         embeds[relation_name] = (
             state_dict[f'{relation_name}'].cpu().data.numpy()[0],
             state_dict[f'{relation_name}_bias.weight'].cpu().data.numpy()

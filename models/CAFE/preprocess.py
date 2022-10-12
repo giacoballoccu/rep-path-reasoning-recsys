@@ -15,7 +15,8 @@ def load_kg_embedding(dataset: str):
     embeds = dict()
     # Load entity embeddings
     for entity in ENTITY_LIST[dataset]:
-        embeds[entity] = state_dict[entity + '.weight'].cpu().data.numpy()[:-1]   # remove last dummy embed with 0 values.
+        embeds[entity] = state_dict[entity + '.weight'].cpu().data.numpy()[
+                         :-1]  # remove last dummy embed with 0 values.
         print(f'>>> {entity}: {embeds[entity].shape}')
     for rel in RELATION_LIST[dataset]:
         embeds[rel] = (

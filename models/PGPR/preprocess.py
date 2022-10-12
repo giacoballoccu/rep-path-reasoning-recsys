@@ -3,6 +3,9 @@ from __future__ import absolute_import, division, print_function
 import os
 import gzip
 import argparse
+
+import pandas as pd
+
 # from pgpr_utils.py import *
 from data_utils import Dataset
 from knowledge_graph import KnowledgeGraph
@@ -49,6 +52,7 @@ def main():
     # ========== BEGIN ========== #
     print('Generate', args.dataset, 'train/test labels.')
     generate_labels(args.dataset, 'train')
+    generate_labels(args.dataset, 'valid')
     generate_labels(args.dataset, 'test')
     # =========== END =========== #
 

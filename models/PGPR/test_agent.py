@@ -52,22 +52,6 @@ def evaluate(dataset_name, topk_matches, test_user_products):
             else:
                 hit_list.append(0)
 
-        # old
-        # dcg = 0.0
-        # hit_num = 0.0
-        # for i in range(len(pred_list)):
-        #    if pred_list[i] in rel_set:
-        #        dcg += 1. / (log(i + 2) / log(2))
-        #        hit_num += 1
-        ## idcg
-        # idcg = 0.0
-        # for i in range(min(len(rel_set), len(pred_list))):
-        #    idcg += 1. / (log(i + 2) / log(2))
-        # ndcg_other = dcg / idcg
-        # recall = hit_num / len(rel_set)
-        # precision = hit_num / len(pred_list)
-        # hit = 1.0 if hit_num > 0.0 else 0.0
-
         ndcg = ndcg_at_k(hit_list, k)
         recall = hit_num / len(rel_set)
         precision = hit_num / len(pred_list)
@@ -189,8 +173,44 @@ def predict_paths(policy_file, path_file, args):
     predicts = {'paths': all_paths, 'probs': all_probs}
     pickle.dump(predicts, open(path_file, 'wb'))
 
+def save_output(dataset_name, pred_paths):
+    if not os.path.isdir("../../results/"):
+        os.makedirs("../../results/")
 
-def evaluate_paths(dataset_name, path_file, train_labels, test_labels, exp_property=None):
+    extracted_path_dir = "../../results/" + dataset_name
+    if not os.path.isdir(extracted_path_dir):
+        os.makedirs(extracted_path_dir)
+
+    extracted_path_dir = extracted_path_dir + "/pgpr"
+    if not os.path.isdir(extracted_path_dir):
+        os.makedirs(extracted_path_dir)
+
+    print("Normalizing items scores...")
+    # Get min and max score to performe normalization between 0 and 1
+    score_list = []
+    for uid, pid in pred_paths.items():
+        for pid, path_list in pred_paths[uid].items():
+            for path in path_list:
+                score_list.append(float(path[0]))
+    min_score = min(score_list)
+    max_score = max(score_list)
+
+    print("Saving pred_paths...")
+    for uid in pred_paths.keys():
+        curr_pred_paths = pred_paths[uid]
+        for pid in curr_pred_paths.keys():
+            curr_pred_paths_for_pid = curr_pred_paths[pid]
+            for i, curr_path in enumerate(curr_pred_paths_for_pid):
+                path_score = pred_paths[uid][pid][i][0]
+                path_prob = pred_paths[uid][pid][i][1]
+                path = pred_paths[uid][pid][i][2]
+                new_path_score = (float(path_score) - min_score) / (max_score - min_score)
+                pred_paths[uid][pid][i] = (new_path_score, path_prob, path)
+    with open(extracted_path_dir + "/pred_paths.pkl", 'wb') as pred_paths_file:
+        pickle.dump(pred_paths, pred_paths_file)
+    pred_paths_file.close()
+
+def extract_paths(dataset_name, path_file, train_labels, valid_labels, test_labels):
     embeds = load_embed(args.dataset)
     user_embeds = embeds[USER]
     main_entity, main_relation = MAIN_PRODUCT_INTERACTION[dataset_name]
@@ -202,7 +222,6 @@ def evaluate_paths(dataset_name, path_file, train_labels, test_labels, exp_prope
     # 1) Get all valid paths for each user, compute path score and path probability.
     results = pickle.load(open(path_file, 'rb'))
     pred_paths = {uid: {} for uid in test_labels}
-    counter_total, counter_affected = 0, 0
 
     for path, probs in zip(results['paths'], results['probs']):
         if path[-1][1] != product:
@@ -211,26 +230,22 @@ def evaluate_paths(dataset_name, path_file, train_labels, test_labels, exp_prope
         if uid not in pred_paths:
             continue
         pid = path[-1][2]
+
+        if uid in valid_labels and pid in valid_labels[uid]:
+            continue
+        if pid in train_labels[uid]:
+            continue
         if pid not in pred_paths[uid]:
             pred_paths[uid][pid] = []
-
-        path_score = scores[uid][
-            pid]  # path_score = (0.85 * scores[uid][pid]) + ((1-0.85) * SEP_matrix[path[2][1]][path[2][-1]])
+        path_score = scores[uid][pid]
         path_prob = reduce(lambda x, y: x * y, probs)
         pred_paths[uid][pid].append((path_score, path_prob, path))
-    if not os.path.isdir("../../results/"):
-        os.makedirs("../../results/")
 
-    extracted_path_dir = "../../results/" + args.dataset
-    if not os.path.isdir(extracted_path_dir):
-        os.makedirs(extracted_path_dir)
 
-    extracted_path_dir = extracted_path_dir + "/pgpr"
-    if not os.path.isdir(extracted_path_dir):
-        os.makedirs(extracted_path_dir)
+    save_output(dataset_name, pred_paths)
+    return pred_paths, scores
 
-    save_pred_paths(extracted_path_dir, pred_paths, train_labels)
-
+def evaluate_paths(dataset_name, pred_paths, emb_scores, train_labels, test_labels):
     # 2) Pick best path for each user-product pair, also remove pid if it is in train set.
     best_pred_paths = {}
     for uid in pred_paths:
@@ -266,7 +281,7 @@ def evaluate_paths(dataset_name, path_file, train_labels, test_labels, exp_prope
         # add up to 10 pids if not enough
         if args.add_products and len(top10_pids) < 10:
             train_pids = set(train_labels[uid])
-            cand_pids = np.argsort(scores[uid])
+            cand_pids = np.argsort(emb_scores[uid])
             for cand_pid in cand_pids[::-1]:
                 if cand_pid in train_pids or cand_pid in top10_pids:
                     continue
@@ -277,9 +292,6 @@ def evaluate_paths(dataset_name, path_file, train_labels, test_labels, exp_prope
         pred_labels[uid] = top10_pids[::-1]  # change order to from smallest to largest!
         pred_paths_top10[uid] = top10_paths[::-1]
 
-    # Save pred_labels and pred_explaination for assesment and reranking
-    # save_pred_labels(extracted_path_dir, pred_labels)
-    # save_pred_explainations(extracted_path_dir, pred_paths_top10, pred_labels)
     evaluate(dataset_name, pred_labels, test_labels)
 
 
@@ -298,12 +310,15 @@ def test(args):
     path_file = args.log_dir + '/policy_paths_epoch{}.pkl'.format(args.epochs)
 
     train_labels = load_labels(args.dataset, 'train')
+    valid_labels = load_labels(args.dataset, 'valid')
     test_labels = load_labels(args.dataset, 'test')
     # kg = load_kg(args.dataset)
     if args.run_path:
         predict_paths(policy_file, path_file, args)
+    if args.save_paths or args.run_eval():
+        pred_paths, scores = extract_paths(args.dataset, path_file, train_labels, valid_labels, test_labels)
     if args.run_eval:
-        evaluate_paths(args.dataset, path_file, train_labels, test_labels)
+        evaluate_paths(args.dataset, pred_paths, scores, train_labels, test_labels)
 
 
 if __name__ == '__main__':
@@ -319,10 +334,11 @@ if __name__ == '__main__':
     parser.add_argument('--gamma', type=float, default=0.99, help='reward discount factor.')
     parser.add_argument('--state_history', type=int, default=1, help='state history length')
     parser.add_argument('--hidden', type=int, nargs='*', default=[512, 256], help='number of samples')
-    parser.add_argument('--add_products', type=boolean, default=False, help='Add predicted products up to 10')
-    parser.add_argument('--topk', type=list, nargs='*', default=[25, 50, 1], help='number of samples')
+    parser.add_argument('--add_products', type=boolean, default=True, help='Add predicted products up to 10')
+    parser.add_argument('--topk', type=list, nargs='*', default=[25, 5, 1], help='number of samples')
     parser.add_argument('--run_path', type=boolean, default=True, help='Generate predicted path? (takes long time)')
-    parser.add_argument('--run_eval', type=boolean, default=True, help='Run evaluation?')
+    parser.add_argument('--run_eval', type=boolean, default=False, help='Run evaluation?')
+    parser.add_argument('--save_paths', type=boolean, default=True, help='Save paths')
     args = parser.parse_args()
 
     os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu

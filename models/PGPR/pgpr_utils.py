@@ -36,9 +36,9 @@ TMP_DIR = {
 
 # Label files.
 LABELS = {
-    ML1M: (TMP_DIR[ML1M] + '/train_label.pkl', TMP_DIR[ML1M] + '/test_label.pkl'),
-    LFM1M: (TMP_DIR[LFM1M] + '/train_label.pkl', TMP_DIR[LFM1M] + '/test_label.pkl'),
-    CELL: (TMP_DIR[CELL] + '/train_label.pkl', TMP_DIR[CELL] + '/test_label.pkl')
+    ML1M: (TMP_DIR[ML1M] + '/train_label.pkl', TMP_DIR[ML1M] + '/valid_label.pkl', TMP_DIR[ML1M] + '/test_label.pkl'),
+    LFM1M: (TMP_DIR[LFM1M] + '/train_label.pkl', TMP_DIR[LFM1M] + '/valid_label.pkl', TMP_DIR[LFM1M] + '/test_label.pkl'),
+    CELL: (TMP_DIR[CELL] + '/train_label.pkl', TMP_DIR[CELL] + '/valid_label.pkl', TMP_DIR[CELL] + '/test_label.pkl')
 }
 
 # ENTITIES/RELATIONS SHARED BY ALL DATASETS
@@ -335,20 +335,23 @@ def load_dataset(dataset):
 def save_labels(dataset, labels, mode='train'):
     if mode == 'train':
         label_file = LABELS[dataset][0]
-    elif mode == 'test':
+    elif mode == 'valid':
         label_file = LABELS[dataset][1]
+    elif mode == 'test':
+        label_file = LABELS[dataset][2]
     else:
         raise Exception('mode should be one of {train, test}.')
     with open(label_file, 'wb') as f:
         pickle.dump(labels, f)
-
+    f.close()
 
 def load_labels(dataset, mode='train'):
     if mode == 'train':
         label_file = LABELS[dataset][0]
-        # CHANGED
-    elif mode == 'test':
+    elif mode == 'valid':
         label_file = LABELS[dataset][1]
+    elif mode == 'test':
+        label_file = LABELS[dataset][2]
     else:
         raise Exception('mode should be one of {train, test}.')
     user_products = pickle.load(open(label_file, 'rb'))
