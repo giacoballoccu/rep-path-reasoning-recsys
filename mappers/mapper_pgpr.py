@@ -8,9 +8,12 @@ class MapperPGPR(MapperBase):
     ''''''
     def __init__(self, args):
         super().__init__(args)
-        ratings_uid2new_id, ratings_pid2new_id = self.map_to_PGPR()
+        self.map_to_PGPR()
         self.get_splits()
-        self.write_split_PGPR(ratings_uid2new_id, ratings_pid2new_id)
+        self.write_split_PGPR()
+        self.mapping_folder = os.path.join(get_model_data_dir(args.model, args.data), "mappings")
+        ensure_dir(self.mapping_folder)
+        self.write_uid_pid_mappings()
 
     def map_to_PGPR(self):
         dataset_name = self.dataset_name
@@ -35,7 +38,7 @@ class MapperPGPR(MapperBase):
                        sep="\t",
                        compression="gzip")
 
-        uid2new_id = dict(zip([str(uid) for uid in list(user_df.uid)], user_df.new_id))
+        self.ratings_uid2new_id = dict(zip([str(uid) for uid in list(user_df.uid)], user_df.new_id))
 
         # Save products entities
         eid2new_id = {}
@@ -46,7 +49,7 @@ class MapperPGPR(MapperBase):
                            index=False,
                            sep="\t",
                            compression="gzip")
-        pid2new_id = dict(zip([str(pid) for pid in list(products_df.pid)], products_df.new_id))
+        self.ratings_pid2new_id = dict(zip([str(pid) for pid in list(products_df.pid)], products_df.new_id))
         eid2new_id[PRODUCT] = dict(zip(pid2kg_df.eid, pid2kg_df.new_id))
 
         # Get external entities by relation and save them
@@ -74,27 +77,12 @@ class MapperPGPR(MapperBase):
             # Save relations
             with gzip.open(os.path.join(output_folder, f"{relation_name}.txt.gz"), 'wt') as curr_rel_file:
                 writer = csv.writer(curr_rel_file, delimiter="\t")
-                for new_pid in range(len(pid2new_id.keys())):
+                for new_pid in range(len(self.ratings_pid2new_id.keys())):
                     writer.writerow(triplets_grouped_by_pid[str(new_pid)])
             curr_rel_file.close()
 
-        return uid2new_id, pid2new_id
 
-    def get_splits(self):
-        input_dir = get_data_dir(self.dataset_name)
-        self.train, self.valid, self.test = {}, {}, {}
-        for set in ["train", "valid", "test"]:
-            with open(os.path.join(input_dir, f"{set}.txt"), 'r') as set_file:
-                curr_set = getattr(self, set)
-                reader = csv.reader(set_file, delimiter="\t")
-                for row in reader:
-                    uid, pid, interaction, time = row
-                    if uid not in curr_set:
-                        curr_set[uid] = []
-                    curr_set[uid].append((pid, time))
-            set_file.close()
-
-    def write_split_PGPR(self, ratings_uid2new_id, ratings_pid2new_id):
+    def write_split_PGPR(self):
         dataset_name = self.dataset_name
         #if dataset_name in AMAZON_DATASETS:
         #    map_to_PGPR_amazon(dataset_name)
@@ -105,9 +93,19 @@ class MapperPGPR(MapperBase):
                 writer = csv.writer(set_file, delimiter="\t")
                 set_values = getattr(self, set)
                 for uid, pid_time_tuples in set_values.items():
-                    uid = ratings_uid2new_id[uid]
+                    uid = self.ratings_uid2new_id[uid]
                     for pid, time in pid_time_tuples:
-                        pid = ratings_pid2new_id[pid]
+                        pid = self.ratings_pid2new_id[pid]
                         writer.writerow([uid, pid, 1, time])
             set_file.close()
+
+
+    def write_uid_pid_mappings(self):
+        ratings_uid2new_id_df = pd.DataFrame(list(zip(self.ratings_uid2new_id.keys(), self.ratings_uid2new_id.values())),
+                                             columns=["rating_id", "new_id"])
+        ratings_uid2new_id_df.to_csv(os.path.join(self.mapping_folder, "user_mapping.txt"), sep="\t", index=False)
+
+        ratings_pid2new_id_df = pd.DataFrame(list(zip(self.ratings_pid2new_id.keys(), self.ratings_pid2new_id.values())),
+                                             columns=["rating_id", "new_id"])
+        ratings_pid2new_id_df.to_csv(os.path.join(self.mapping_folder, "product_mapping.txt"), sep="\t", index=False)
 

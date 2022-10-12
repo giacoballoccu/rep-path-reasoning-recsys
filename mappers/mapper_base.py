@@ -11,7 +11,7 @@ class MapperBase(object):
         self.train_size = args.train_size
         self.test_size = 1 - args.train_size - args.valid_size
         print(f"Creating data/{self.dataset_name}/preprocessed/{self.model_name}/ filesystem")
-
+    """
     def time_based_train(self):
         train_size = self.train_size
         dataset_name, model_name = self.dataset_name, self.model_name
@@ -39,6 +39,20 @@ class MapperBase(object):
             train[uid] = pid_time_tuples[:train_end]
 
         return train
+    """
+    def get_splits(self):
+        input_dir = get_data_dir(self.dataset_name)
+        self.train, self.valid, self.test = {}, {}, {}
+        for set in ["train", "valid", "test"]:
+            with open(os.path.join(input_dir, f"{set}.txt"), 'r') as set_file:
+                curr_set = getattr(self, set)
+                reader = csv.reader(set_file, delimiter="\t")
+                for row in reader:
+                    uid, pid, interaction, time = row
+                    if uid not in curr_set:
+                        curr_set[uid] = []
+                    curr_set[uid].append((pid, time))
+            set_file.close()
 
     def time_based_train_test_split(self, ratings_uid2new_id, ratings_pid2new_id):
         train_size, valid_size, test_size = self.train_size, self.valid_size, self.test_size
