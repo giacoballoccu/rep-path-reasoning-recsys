@@ -174,10 +174,10 @@ def get_item_provider_pop(dataset_name):
 
 
 def load_labels(dataset_name, model_name, split=TRAIN):
-    if split != TRAIN or split != TEST:
+    if split != TRAIN and split != TEST:
         raise Exception('mode should be one of {train, test}.')
-    get_tmp_dir = get_data_dir(dataset_name, model_name)
-    label_path = os.path.join(get_tmp_dir, f"{split}.pkl")
+    tmp_dir = get_tmp_dir(dataset_name, model_name)
+    label_path = os.path.join(tmp_dir, f"{split}_label.pkl")
     user_products = pickle.load(open(label_path, 'rb'))
     return user_products
 
@@ -189,8 +189,8 @@ def load_kg(dataset_name, model_name):
 
 
 def load_embed(dataset_name, model_name):
-    get_tmp_dir = get_data_dir(dataset_name, model_name)
-    embed_file = os.path.join(get_tmp_dir, f"transe_embed.pkl")
+    tmp_dir = get_tmp_dir(dataset_name, model_name)
+    embed_file = os.path.join(tmp_dir, f"transe_embed.pkl")
     embeds = pickle.load(open(embed_file, 'rb'))
     return embeds
 
