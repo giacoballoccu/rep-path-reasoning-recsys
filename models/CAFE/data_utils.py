@@ -39,7 +39,7 @@ class OnlinePathLoader:
         self.mpath_ids = list(range(len(self.kg.metapaths)))  # metapath IDs
         self.topk = topk
         self.topk_user_products = load_user_products(dataset, 'pos')[:, :self.topk]
-        assert self.num_users+1 == self.topk_user_products.shape[0]
+        assert self.num_users + 1 == self.topk_user_products.shape[0]
         self.batch_size = batch_size
         self.data_size = self.num_users * len(self.mpath_ids) * self.topk
         self.total_steps = int(self.data_size / self.batch_size)
@@ -308,7 +308,7 @@ if __name__ == '__main__':
     parser.add_argument('--batch_size', type=int, default=128, help='batch size')
     args = parser.parse_args()
 
-    #test_replay_memory()
-    #test_kgmask(args)
-    #test_online_path_loader(args)
+    # test_replay_memory()
+    # test_kgmask(args)
+    # test_online_path_loader(args)
     test_online_path_loader_with_mpsplit(args)

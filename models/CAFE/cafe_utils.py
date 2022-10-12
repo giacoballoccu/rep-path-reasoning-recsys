@@ -28,7 +28,7 @@ TMP_DIR = {
 }
 
 LABEL_FILE = {
-    ML1M: (DATA_DIR[ML1M] + '/train.txt.gz',  DATA_DIR[ML1M] + '/test.txt.gz'),
+    ML1M: (DATA_DIR[ML1M] + '/train.txt.gz', DATA_DIR[ML1M] + '/test.txt.gz'),
     LFM1M: (DATA_DIR[LFM1M] + '/train.txt.gz', DATA_DIR[LFM1M] + '/test.txt.gz'),
     CELL: (DATA_DIR[CELL] + '/train.txt.gz', DATA_DIR[CELL] + '/test.txt.gz'),
 }
@@ -69,7 +69,7 @@ def parse_args():
 
     # This is model directory.
     args.log_dir = f'{TMP_DIR[args.dataset]}/{args.name}'
-    
+
     # This is the checkpoint name of the trained neural-symbolic model.
     args.symbolic_model = f'{args.log_dir}/symbolic_model_epoch{args.epochs}.ckpt'
 
@@ -111,7 +111,7 @@ def load_kg(dataset):
     return kg
 
 
-def save_kg(dataset,  kg):
+def save_kg(dataset, kg):
     kg_file = TMP_DIR[dataset] + '/kg.pkl'
     pickle.dump(kg, open(kg_file, 'wb'))
     print(f'File is saved to "{os.path.abspath(kg_file)}".')
@@ -131,7 +131,7 @@ def save_user_products(dataset, up, up_type='pos'):
     print(f'File is saved to "{os.path.abspath(up_file)}".')
 
 
-def load_labels(dataset,  mode='train'):
+def load_labels(dataset, mode='train'):
     if mode == 'train':
         label_file = LABEL_FILE[dataset][0]
     elif mode == 'test':

@@ -7,106 +7,100 @@ import gzip
 from cafe_utils import DATA_DIR
 
 ML1M = "ml1m"
-LASTFM = "lfm1m"
+LFM1M = "lfm1m"
 CELL = "cellphones"
 
-# ENTITY TYPES ML1M
+# ENTITIES/RELATIONS SHARED BY ALL DATASETS
+USER = 'user'
 PRODUCT = 'product'
-ACTOR = 'actor'
-DIRECTOR = 'director'
+INTERACTION = {
+    ML1M: "watched",
+    LFM1M: "listened",
+    CELL: "purchase",
+}
+SELF_LOOP = 'self_loop'
+PRODUCED_BY_PRODUCER = 'produced_by_producer'
 PRODUCER = 'producer'
-PRODUCTION_COMPANY = 'production_company'
+
+# ML1M ENTITIES
+CINEMATOGRAPHER = 'cinematographer'
+PRODCOMPANY = 'prodcompany'
+COMPOSER = 'composer'
+CATEGORY = 'category'
+ACTOR = 'actor'
+COUNTRY = 'country'
+WIKIPAGE = 'wikipage'
 EDITOR = 'editor'
 WRITTER = 'writter'
-CINEMATOGRAPHER = 'cinematographer'
-COMPOSER = 'composer'
-COUNTRY = 'country'
-USER = 'user'
-CATEGORY = 'category'
-WIKIPAGE = 'wikipage'
-FEATURED_ARTIST = 'featured_artist'
-BRAND = 'brand'
-# ENTITY TYPES LASTFM
+DIRECTOR = 'director'
+
+# LFM1M ENTITIES
 ARTIST = 'artist'
 ENGINEER = 'engineer'
-CATEGORY = 'category'
-PRODUCER = 'producer'
-RELATED_PRODUCT = 'related_product'
-USER = 'user'
+GENRE = 'genre'
+
+# CELL ENTITIES
+BRAND = 'brand'
+RPRODUCT = 'rproduct'
+
+# ML1M RELATIONS
+DIRECTED_BY_DIRECTOR = 'directed_by_director'
+PRODUCED_BY_COMPANY = 'produced_by_prodcompany'
+STARRED_BY_ACTOR = 'starred_by_actor'
+RELATED_TO_WIKIPAGE = 'related_to_wikipage'
+EDITED_BY_EDITOR = 'edited_by_editor'
+WROTE_BY_WRITTER = 'wrote_by_writter'
+CINEMATOGRAPHY_BY_CINEMATOGRAPHER = 'cinematography_by_cinematographer'
+COMPOSED_BY_COMPOSER = 'composed_by_composer'
+PRODUCED_IN_COUNTRY = 'produced_in_country'
+BELONG_TO_CATEGORY = 'belong_to_category'
+
+# LFM1M RELATIONS
+MIXED_BY_ENGINEER = 'mixed_by_engineer'
+FEATURED_BY_ARTIST = 'featured_by_artist'
+BELONG_TO_GENRE = 'belong_to_genre'
+
 
 ENTITY_LIST = {
-    ML1M: [PRODUCT, ACTOR, DIRECTOR, PRODUCTION_COMPANY, EDITOR, WRITTER, CINEMATOGRAPHER, COMPOSER, COUNTRY, USER, CATEGORY, PRODUCER, WIKIPAGE],
-    LASTFM: [PRODUCT, FEATURED_ARTIST, ARTIST, ENGINEER, CATEGORY, PRODUCER, RELATED_PRODUCT, USER],
-    CELL: [PRODUCT, BRAND, CATEGORY, RELATED_PRODUCT, USER],
+    ML1M: [USER, PRODUCT, ACTOR, DIRECTOR, PRODCOMPANY, EDITOR, WRITTER, CINEMATOGRAPHER, COMPOSER, COUNTRY,
+           CATEGORY, PRODUCER, WIKIPAGE],
+    LFM1M: [USER, PRODUCT, ARTIST, ENGINEER, GENRE, PRODUCER],
+    CELL: [PRODUCT, BRAND, GENRE, RPRODUCT, USER],
 }
 
-# RELATIONS ML1M
-BELONG_TO = 'belong_to'
-PRODUCED_BY_PRODUCER = 'produced_by_producer'
-WATCHED = 'watched'
-DIRECTED_BY = 'directed_by'
-PRODUCED_BY_COMPANY = 'produced_by_company'
-STARRING = 'starring'
-EDITED_BY = 'edited_by'
-WROTE_BY = 'wrote_by'
-CINEMATOGRAPHY_BY = 'cinematography_by'
-COMPOSED_BY = 'composed_by'
-PRODUCED_IN = 'produced_in'
 
-# RELATIONS LASTFM
-LISTENED = 'listened'
-BELONG_TO = 'belong_to'
-FEATURED_BY = 'featured_by'
-MIXED_BY = 'mixed_by'
-PRODUCED_BY = 'produced_by'
-SANG_BY = 'sang_by'
-RELATED_TO = 'related_to'
-PURCHASE = 'purchase'
-ALSO_BOUGHT_RP = 'also_bought_related_product'
-ALSO_VIEWED_RP = 'also_viewed_related_product'
-ALSO_BOUGHT_P = 'also_bought_product'
-ALSO_VIEWED_P = 'also_viewed_product'
-
-#RELATIONS CELL
-PURCHASE = 'purchase'
 RELATION_LIST = {
-    ML1M: [BELONG_TO, PRODUCED_BY_PRODUCER, WATCHED, DIRECTED_BY, PRODUCED_BY_COMPANY, STARRING,
-             EDITED_BY, WROTE_BY, CINEMATOGRAPHY_BY, COMPOSED_BY, PRODUCED_IN, RELATED_TO],
-    LASTFM: [BELONG_TO, FEATURED_BY, MIXED_BY, PRODUCED_BY_PRODUCER, SANG_BY, RELATED_TO, LISTENED],
-    CELL: [PURCHASE, BELONG_TO, PRODUCED_BY_COMPANY, ALSO_VIEWED_P, ALSO_BOUGHT_P, ALSO_BOUGHT_RP, ALSO_VIEWED_RP]
+    ML1M: [INTERACTION[ML1M], BELONG_TO_CATEGORY, PRODUCED_BY_PRODUCER, DIRECTED_BY_DIRECTOR,
+           PRODUCED_BY_COMPANY, STARRED_BY_ACTOR, EDITED_BY_EDITOR, WROTE_BY_WRITTER,
+           CINEMATOGRAPHY_BY_CINEMATOGRAPHER, COMPOSED_BY_COMPOSER, PRODUCED_IN_COUNTRY,
+           RELATED_TO_WIKIPAGE],
+    LFM1M: [INTERACTION[LFM1M], BELONG_TO_GENRE, FEATURED_BY_ARTIST, MIXED_BY_ENGINEER, PRODUCED_BY_PRODUCER],
+    #CELL: [INTERACTION[CELL], BELONG_TO_CATEGORY, PRODUCED_BY_COMPANY, ALSO_VIEWED_P, ALSO_BOUGHT_P, ALSO_BOUGHT_RP, ALSO_VIEWED_RP]
 }
 # REVERSED RELATIONS
 REV_PREFIX = 'rev_'
-REV_BELONG_TO = REV_PREFIX + 'belong_to'
-REV_PRODUCED_BY_PRODUCER = REV_PREFIX + 'produced_by'
-REV_WATCHED = REV_PREFIX + 'watched'
-REV_DIRECTED_BY = REV_PREFIX + 'directed_by'
-REV_PRODUCED_BY_COMPANY = REV_PREFIX + 'produced_by_company'
-REV_STARRING = REV_PREFIX + 'starring'
-REV_EDITED_BY = REV_PREFIX + 'edited_by'
-REV_WROTE_BY = REV_PREFIX + 'wrote_by'
-REV_CINEMATOGRAPHY = REV_PREFIX + 'cinematography'
-REV_COMPOSED_BY = REV_PREFIX + 'composed_by'
-REV_PRODUCED_IN = REV_PREFIX + 'produced_in'
+REV_PRODUCED_BY_PRODUCER = REV_PREFIX + PRODUCED_BY_PRODUCER
+REV_INTERACTION = {
+    ML1M: REV_PREFIX + "watched",
+    LFM1M: REV_PREFIX + "listened",
+    CELL: REV_PREFIX + "purchase",
+}
+# REVERSED RELATIONS ML1M
+REV_DIRECTED_BY_DIRECTOR = REV_PREFIX + DIRECTED_BY_DIRECTOR
+REV_PRODUCED_BY_COMPANY = REV_PREFIX + PRODUCED_BY_COMPANY
+REV_STARRED_BY_ACTOR = REV_PREFIX + STARRED_BY_ACTOR
+REV_RELATED_TO_WIKIPAGE = REV_PREFIX + RELATED_TO_WIKIPAGE
+REV_EDITED_BY_EDITOR = REV_PREFIX + EDITED_BY_EDITOR
+REV_WROTE_BY_WRITTER = REV_PREFIX + WROTE_BY_WRITTER
+REV_CINEMATOGRAPHY_BY_CINEMATOGRAPHER = REV_PREFIX + CINEMATOGRAPHY_BY_CINEMATOGRAPHER
+REV_COMPOSED_BY_COMPOSER = REV_PREFIX + COMPOSED_BY_COMPOSER
+REV_PRODUCED_IN_COUNTRY = REV_PREFIX + PRODUCED_IN_COUNTRY
+REV_BELONG_TO_CATEGORY = REV_PREFIX + BELONG_TO_CATEGORY
 
-# REV RELATIONS LASTFM
-REV_BELONG_TO = REV_PREFIX + 'belong_to'
-REV_FEATURED_BY = REV_PREFIX + 'featured_by'
-REV_MIXED_BY = REV_PREFIX + 'mixed_by'
-REV_PRODUCED_BY = REV_PREFIX + 'produced_by'
-REV_SANG_BY = REV_PREFIX + 'sang_by'
-REV_RELATED_TO = REV_PREFIX + 'related_to'
-
-
-REV_PURCHASE = REV_PREFIX + 'purchase'
-REV_ALSO_BOUGHT_RP = REV_PREFIX + 'also_bought_related_product'
-REV_ALSO_VIEWED_RP = REV_PREFIX + 'also_viewed_related_product'
-REV_ALSO_BOUGHT_P = REV_PREFIX + 'also_bought_product'
-REV_ALSO_VIEWED_P = REV_PREFIX + 'also_viewed_product'
-
-SELF_LOOP = 'self_loop'
-
-
+#REVERSED RELATIONS LFM1M
+REV_MIXED_BY_ENGINEER = REV_PREFIX + MIXED_BY_ENGINEER
+REV_FEATURED_BY_ARTIST = REV_PREFIX + FEATURED_BY_ARTIST
+REV_BELONG_TO_GENRE = REV_PREFIX + BELONG_TO_GENRE
 
 class MyKnowledgeGraph:
     def __init__(self, dataset):
@@ -124,11 +118,10 @@ class MyKnowledgeGraph:
         id2entity = {}
         num_entities = 0
         with gzip.open(entity_file, "rb") as f:
+            next(f) #skip header
             for i, line in enumerate(f):
                 # Format: [entity_global_id]\t[entity_type]_[entity_local_id]\t[entity_value]
                 cells = line.decode().strip().split("\t")
-                if i == 0:
-                    continue
                 global_id = int(cells[0])
                 entity_eid = cells[1].rsplit("_", maxsplit=1)
                 entity, eid = entity_eid[0], int(entity_eid[1])
@@ -156,10 +149,13 @@ class MyKnowledgeGraph:
         num_triples = 0
         invalid = 0
         with gzip.open(triple_file, "rb") as f:
+            next(f) #skip header
             for line in f:
                 # Format: [head_entity_global_id]\t[relation_global_id]\t[tail_entity_global_id]
                 cells = line.decode().strip().split("\t")
                 head_ent, hid = id2entity[int(cells[0])]
+                if cells[1] == "17309":
+                    print("")
                 rel = id2rel[int(cells[1])]
                 tail_ent, tid = id2entity[int(cells[2])]
 
@@ -167,7 +163,11 @@ class MyKnowledgeGraph:
                 if rel not in self.relation_info:
                     self.relation_info[rel] = (head_ent, tail_ent)
                 else:
-                    assert self.relation_info[rel] == (head_ent, tail_ent)
+                    pass
+                    #if self.relation_info[rel] != (head_ent, tail_ent):
+                    #    invalid+=1
+                    #    continue
+                    #assert self.relation_info[rel] == (head_ent, tail_ent) t
 
                 # Add edge.                
                 if rel not in self.G[head_ent][hid]:
@@ -188,11 +188,11 @@ class MyKnowledgeGraph:
                         mp.append((None, head_ent))
                     else:
                         pass
-                        #assert mp[-1][1] == head_ent
+                        # assert mp[-1][1] == head_ent
                     mp.append((rel, tail_ent))
                 self.metapaths.append(mp)
         print(f'>>> {len(self.metapaths)} rules are loaded.')
-        # print(self.metapaths)
+        print(self.metapaths)
 
     def __call__(self, eh_type, eh_id=None, relation=None):
         return self.get(eh_type, eh_id, relation)
@@ -208,7 +208,6 @@ class MyKnowledgeGraph:
         if relation is not None:
             data = data[relation] if relation in data else []
         return data
-
 
     def sample_noise_path(self, metapath, user_id):
         path = [(None, USER, user_id)]
@@ -264,7 +263,7 @@ class MyKnowledgeGraph:
 
         def _rev_rel(rel):
             if rel.startswith(REV_PREFIX):
-                return rel[len(REV_PREFIX) :]
+                return rel[len(REV_PREFIX):]
             return REV_PREFIX + rel
 
         # Backward BFS.
@@ -326,7 +325,7 @@ class MyKnowledgeGraph:
 
         def _rev_rel(rel):
             if rel.startswith(REV_PREFIX):
-                return rel[len(REV_PREFIX) :]
+                return rel[len(REV_PREFIX):]
             return REV_PREFIX + rel
 
         # Backward BFS (e.g. e4--e5--e6).
@@ -392,6 +391,7 @@ class MyKnowledgeGraph:
                     next_ids = np.random.choice(next_ids, size=sample_size, replace=False).tolist()
                 tmp_ids.extend(next_ids)
             forward_ids = tmp_ids
+
         # cnt = len([_ for i in forward_ids if i == target_id])
         # return cnt
         # forward_ids, forward_counts = np.unique(forward_ids, return_counts=True)
@@ -399,7 +399,7 @@ class MyKnowledgeGraph:
 
         def _rev_rel(rel):
             if rel.startswith(REV_PREFIX):
-                return rel[len(REV_PREFIX) :]
+                return rel[len(REV_PREFIX):]
             return REV_PREFIX + rel
 
         # Backward BFS (e.g. e4--e5--e6).
