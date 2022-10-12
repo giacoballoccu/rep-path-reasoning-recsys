@@ -8,10 +8,11 @@ import os
 from rec_quality_metrics import *
 from reasoning_path import *
 
+
 def load_pred_paths(args):
     result_folder = get_result_dir(args.data, args.model)
     pred_paths_path = os.path.join(result_folder, 'pred_paths.pkl')
-    with open(pred_paths_path) as pred_paths_file:
+    with open(pred_paths_path, 'rb') as pred_paths_file:
         pred_paths = pickle.load(pred_paths_file)
     pred_paths_file.close()
     return pred_paths
@@ -24,18 +25,18 @@ def statistical_test(distrib1, distrib2):
 def topk_from_paths(args, train_labels, test_labels):
     k = args.k
     dataset_name = args.data
-    embeds = load_embed(args.dataset)
+    embeds = load_embed(dataset_name, args.model)
     user_embeds = embeds[USER]
-    main_entity, main_relation = MAIN_INTERACTION[dataset_name]
+    main_relation = MAIN_INTERACTION[dataset_name]
     interaction_embeds = embeds[main_relation][0]
-    item_embeds = embeds[main_entity]
+    item_embeds = embeds[PRODUCT]
     scores = np.dot(user_embeds + interaction_embeds, item_embeds.T)
 
     # {uid: {pid: [(path_score, path_prob, path), ..., ], ..., }, ..., }
     pred_paths = load_pred_paths(args)
 
     # 2) Pick best path for each user-product pair, also remove pid if it is in train set.
-    best_pred_paths = {}
+    best_pred_paths = defaultdict(list)
     for uid in pred_paths:
         train_pids = set(train_labels[uid])
         best_pred_paths[uid] = []
@@ -66,14 +67,14 @@ def topk_from_paths(args, train_labels, test_labels):
                 if cand_pid in train_pids or cand_pid in topk_pids:
                     continue
                 topk_pids.append(cand_pid)
-                topk_paths.append((None,None,None))  # Placeholder for no explanation
+                topk_paths.append((None, None, None))  # Placeholder for no explanation
                 if len(topk_pids) >= 10:
                     break
         # end of add
         pred_labels[uid] = topk_pids[::-1]  # change order to from smallest to largest!
         pred_paths_topk[uid] = topk_paths[::-1]
 
-    pred_paths_topk = pathfy(pred_paths_topk)
+    pred_paths_topk = pathfy(dataset_name, pred_paths_topk)
     evaluate(args, pred_labels, test_labels, pred_paths_topk)
 
 
@@ -90,9 +91,18 @@ def evaluate_rec_quality(args, topk_items, test_labels):
     avg_rec_quality_metrics = {metric: {group: defaultdict(int) for group in groups} for metric in
                                REC_QUALITY_METRICS_TOPK}
 
-    # Used to compute coverage
+    # Coverage
     n_items_in_catalog = get_item_count(dataset_name)
     recommended_items_by_group = {group: set() for group in groups}
+
+    #Novelty
+    pid2popularity = get_item_pop(dataset_name)
+
+    #Provider Exposure Fairness
+    pid2provider_popularity = get_item_provider_pop(dataset_name)
+
+    #Diversity
+    pid2genre = get_item_genre(dataset_name)
 
     # Storage for results if saving to csv is specified (used for plotitng)
     distributions_rows = []
@@ -114,14 +124,16 @@ def evaluate_rec_quality(args, topk_items, test_labels):
         for metric in REC_QUALITY_METRICS_TOPK:
             if metric == NDCG:
                 metric_value = ndcg_at_k(hits, k)
-            elif metric == MMR:
+            if metric == MMR:
                 metric_value = MMR(hits, k)
-            elif metric == SERENDIPITY:
+            if metric == SERENDIPITY:
                 pass
-            elif metric == DIVERSITY:
-                pass
-            elif metric == NOVELTY:
-                pass
+            if metric == DIVERSITY:
+                metric_value = diversity_at_k(topk, pid2genre)
+            if metric == NOVELTY:
+                metric_value = novelty_at_k(topk, pid2popularity)
+            if metric == PFAIRNESS:
+                metric_value = exposure_pfairness(topk, pid2provider_popularity)
             rec_quality_metrics[metric][gender].append(metric_value)
             rec_quality_metrics[metric][age].append(metric_value)
             rec_quality_metrics[metric][OVERALL].append(metric_value)
@@ -133,8 +145,7 @@ def evaluate_rec_quality(args, topk_items, test_labels):
         recommended_items_by_group[age].add(topk)
         recommended_items_by_group[OVERALL].add(topk)
 
-    # Compute global metrics
-    rec_quality_metrics[COVERAGE] = coverage(recommended_items_by_group, n_items_in_catalog)
+
 
     # Save as csv if specified
     if args.save_distribs:
@@ -149,6 +160,13 @@ def evaluate_rec_quality(args, topk_items, test_labels):
         avg_rec_quality_metrics[metric][group] = avg_value
         if args.save_avgs:
             avgs_rows.append([dataset_name, args.model, group, metric, metric_value])
+
+    # Compute global metrics
+    for metric in REC_QUALITY_METRICS_GLOBAL:
+        if metric == CFAIRNESS:
+            avg_rec_quality_metrics[CFAIRNESS] = consumer_fairness(rec_quality_metrics, avg_rec_quality_metrics)
+        if metric == COVERAGE:
+            avg_rec_quality_metrics[metric] = coverage(recommended_items_by_group, n_items_in_catalog)
 
     # Print results
     print_rec_quality_metrics(avg_rec_quality_metrics)
@@ -219,7 +237,7 @@ def evaluate_path_quality(args, topk_paths):
                 avgs_rows.append([dataset_name, args.model, group, metric, metric_value])
 
         # Print results
-        print_path_quality_metrics(avg_path_quality_metrics)
+        #print_path_quality_metrics(avg_path_quality_metrics) TODO
 
         # Save as csv if specified
         if args.save_avgs:
@@ -229,29 +247,14 @@ def evaluate_path_quality(args, topk_paths):
 
         return path_quality_metrics, avg_path_quality_metrics
 
-def evaluate_fairness_metrics(args, metrics_distrib, avg_metrics):
-    fairness_metrics = {}
-
-    # Compute consumer fairness
-    fairness_metrics[CFAIRNESS] = {}
-    for metric, group_values in avg_metrics.items():
-        group1, group2 = list(group_values.keys())
-        statistically_significant = statistical_test(metrics_distrib[metric][group1], metrics_distrib[metric][group2])
-        fairness_metrics[CFAIRNESS][metric] = (group1, group2, avg_metrics[metric][group1] -
-                                               avg_metrics[metric][group2], statistically_significant)
-
-    # Compute provider fairness
-    # TODO
-
-
 def evaluate(args, topk_items, test_labels, topk_paths=None):
     # NDCG, MMR, SERENDIPITY, COVERAGE, DIVERSITY, NOVELTY
     if args.evaluate_rec_quality:
         rec_quality_metrics, avg_rec_quality_metrics = evaluate_rec_quality(args, topk_items, test_labels)
 
     # CFairness, PFairness for rec quality
-    if args.evaluate_rec_quality_fairness:
-        evaluate_fairness_metrics(args, rec_quality_metrics, avg_rec_quality_metrics)
+    #if args.evaluate_rec_quality_fairness: TODO
+    #    evaluate_fairness_metrics(args, rec_quality_metrics, avg_rec_quality_metrics)
 
     """
      Evaluate path quality
@@ -263,16 +266,19 @@ def evaluate(args, topk_items, test_labels, topk_paths=None):
 
         # CFairness, PFairness for path quality
         if args.evaluate_path_quality_fairness:
-            evaluate_fairness_metrics(args, path_quality_metric, avg_path_quality_metrics)
+            pass
+            #evaluate_fairness_metrics(args, path_quality_metric, avg_path_quality_metrics) TODO
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--model', type=str, default=PGPR, help='which model to evaluate')
-    parser.add_argument('--data', type=str, default=ML1M, help='which dataset evaluate')
+    parser.add_argument('--data', type=str, default=LFM1M, help='which dataset evaluate')
     parser.add_argument('--create_topk', type=bool, default=True,
                         help='whether to create the topk from predicted paths or not')
     parser.add_argument('--k', type=int, default=10, help='size of the topk')
+    parser.add_argument('--add_products', default=True, type=bool,
+                        help='whether to fill the top-k (if there are less predicted path) with items that have no explanation path')
     parser.add_argument('--evaluate_rec_quality', default=True, type=bool,
                         help='whether to evaluate rec quality of predicted topk')
     parser.add_argument('--evaluate_path_quality', default=True, type=bool,
@@ -286,9 +292,8 @@ def main():
 
     results_dir = get_result_dir(args.data, args.model)
 
-    train_labels = load_labels(args.dataset,
-                               'train')  # TODO: STANDARDIZE KGAT E CO TO CREATE A TMP FOLDER WITH THIS STUFF
-    test_labels = load_labels(args.dataset, 'test')
+    train_labels = load_labels(args.data, args.model, 'train')  # TODO: STANDARDIZE KGAT E CO TO CREATE A TMP FOLDER WITH THIS STUFF
+    test_labels = load_labels(args.data, args.model,  'test')
 
     if args.create_topk:
         topk_from_paths(args, train_labels, test_labels)
