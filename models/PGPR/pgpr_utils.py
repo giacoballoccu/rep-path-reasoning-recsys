@@ -51,23 +51,23 @@ INTERACTION = {
 }
 SELF_LOOP = 'self_loop'
 PRODUCED_BY_PRODUCER = 'produced_by_producer'
+PRODUCER = 'producer'
 
 # ML1M ENTITIES
 CINEMATOGRAPHER = 'cinematographer'
-PRODUCTION_COMPANY = 'production_company'
+PRODCOMPANY = 'prodcompany'
 COMPOSER = 'composer'
+CATEGORY = 'category'
 ACTOR = 'actor'
 COUNTRY = 'country'
 WIKIPAGE = 'wikipage'
 EDITOR = 'editor'
 WRITTER = 'writter'
 DIRECTOR = 'director'
-CATEGORY = 'category'
 
 # LASTFM ENTITIES
 ARTIST = 'artist'
 ENGINEER = 'engineer'
-PRODUCER = 'producer'
 GENRE = 'genre'
 
 # CELL ENTITIES
@@ -75,15 +75,16 @@ BRAND = 'brand'
 RPRODUCT = 'rproduct'
 
 # ML1M RELATIONS
-DIRECTED_BY_DIRECTOR = 'directed_by'
-PRODUCED_BY_COMPANY = 'produced_by_company'
-STARRING_BY_ACTOR = 'starring'
-EDITED_BY_EDITOR = 'edited_by'
-WROTE_BY_WRITTER = 'wrote_by'
-CINEMATOGRAPHY_BY_CINEMATOGRAPHER = 'cinematography_by'
-COMPOSED_BY_COMPOSER = 'composed_by'
-PRODUCED_IN_COUNTRY = 'produced_in'
-BELONG_TO_CATEGORY = 'belong_to'
+DIRECTED_BY_DIRECTOR = 'directed_by_director'
+PRODUCED_BY_COMPANY = 'produced_by_prodcompany'
+STARRING_BY_ACTOR = 'starred_by_actor'
+RELATED_TO_WIKIPAGE = 'related_to_wikipage'
+EDITED_BY_EDITOR = 'edited_by_editor'
+WROTE_BY_WRITTER = 'wrote_by_writter'
+CINEMATOGRAPHY_BY_CINEMATOGRAPHER = 'cinematography_by_cinematographer'
+COMPOSED_BY_COMPOSER = 'composed_by_composer'
+PRODUCED_IN_COUNTRY = 'produced_in_country'
+BELONG_TO_CATEGORY = 'belong_to_category'
 
 # LASTFM RELATIONS
 MIXED_BY_ENGINEER = 'mixed_by_engineer'
@@ -97,43 +98,7 @@ ALSO_VIEWED_RP = 'also_viewed_related_product'
 ALSO_BOUGHT_P = 'also_bought_product'
 ALSO_VIEWED_P = 'also_viewed_product'
 
-RELATED_TO = 'related_to'
 
-RELATION_LIST = {
-    ML1M: {
-        0: "http://dbpedia.org/ontology/CINEMATOGRAPHY_BY",
-        1: "http://dbpedia.org/property/productionCompanies",
-        2: "http://dbpedia.org/property/composer",
-        3: "http://purl.org/dc/terms/subject",
-        4: "http://dbpedia.org/ontology/openingFilm",
-        5: "http://www.w3.org/2000/01/rdf-schema",
-        6: "http://dbpedia.org/property/story",
-        7: "http://dbpedia.org/ontology/series",
-        8: "http://www.w3.org/1999/02/22-rdf-syntax-ns",
-        9: "http://dbpedia.org/ontology/basedOn",
-        10: "http://dbpedia.org/ontology/starring",
-        11: "http://dbpedia.org/ontology/country",
-        12: "http://dbpedia.org/ontology/wikiPageWikiLink",
-        13: "http://purl.org/linguistics/gold/hypernym",
-        14: "http://dbpedia.org/ontology/editing",
-        15: "http://dbpedia.org/property/producers",
-        16: "http://dbpedia.org/property/allWriting",
-        17: "http://dbpedia.org/property/notableWork",
-        18: "http://dbpedia.org/ontology/director",
-        19: "http://dbpedia.org/ontology/award",
-    },
-    LFM1M: {
-        0: "http://rdf.freebase.com/ns/common.topic.notable_types",
-        1: "http://rdf.freebase.com/ns/music.recording.releases",
-        2: "http://rdf.freebase.com/ns/music.recording.artist",
-        3: "http://rdf.freebase.com/ns/music.recording.engineer",
-        4: "http://rdf.freebase.com/ns/music.recording.producer",
-        5: "http://rdf.freebase.com/ns/music.recording.canonical_version",
-        6: "http://rdf.freebase.com/ns/music.recording.song",
-        7: "http://rdf.freebase.com/ns/music.single.versions",
-        8: "http://rdf.freebase.com/ns/music.recording.featured_artists",
-    },
-}
 
 KG_RELATION = {
     ML1M: {
@@ -148,7 +113,7 @@ KG_RELATION = {
         },
         PRODUCT: {
             INTERACTION[ML1M]: USER,
-            PRODUCED_BY_COMPANY: PRODUCTION_COMPANY,
+            PRODUCED_BY_COMPANY: PRODCOMPANY,
             PRODUCED_BY_PRODUCER: PRODUCER,
             EDITED_BY_EDITOR: EDITOR,
             WROTE_BY_WRITTER: WRITTER,
@@ -158,9 +123,9 @@ KG_RELATION = {
             STARRING_BY_ACTOR: ACTOR,
             COMPOSED_BY_COMPOSER: COMPOSER,
             PRODUCED_IN_COUNTRY: COUNTRY,
-            RELATED_TO: WIKIPAGE,
+            RELATED_TO_WIKIPAGE: WIKIPAGE,
         },
-        PRODUCTION_COMPANY: {
+        PRODCOMPANY: {
             PRODUCED_BY_COMPANY: PRODUCT,
         },
         COMPOSER: {
@@ -185,7 +150,7 @@ KG_RELATION = {
             PRODUCED_IN_COUNTRY: PRODUCT,
         },
         WIKIPAGE: {
-            RELATED_TO: PRODUCT,
+            RELATED_TO_WIKIPAGE: PRODUCT,
         }
     },
     LFM1M: {
@@ -243,7 +208,7 @@ PATH_PATTERN = {
     ML1M: {
         0: ((None, USER), (INTERACTION[ML1M], PRODUCT), (INTERACTION[ML1M], USER), (INTERACTION[ML1M], PRODUCT)),
         2: ((None, USER), (INTERACTION[ML1M], PRODUCT), (CINEMATOGRAPHY_BY_CINEMATOGRAPHER, CINEMATOGRAPHER), (CINEMATOGRAPHY_BY_CINEMATOGRAPHER, PRODUCT)),
-        3: ((None, USER), (INTERACTION[ML1M], PRODUCT), (PRODUCED_BY_COMPANY, PRODUCTION_COMPANY), (PRODUCED_BY_COMPANY, PRODUCT)),
+        3: ((None, USER), (INTERACTION[ML1M], PRODUCT), (PRODUCED_BY_COMPANY, PRODCOMPANY), (PRODUCED_BY_COMPANY, PRODUCT)),
         4: ((None, USER), (INTERACTION[ML1M], PRODUCT), (COMPOSED_BY_COMPOSER, COMPOSER), (COMPOSED_BY_COMPOSER, PRODUCT)),
         5: ((None, USER), (INTERACTION[ML1M], PRODUCT), (BELONG_TO_CATEGORY, CATEGORY), (BELONG_TO_CATEGORY, PRODUCT)),
         7: ((None, USER), (INTERACTION[ML1M], PRODUCT), (STARRING_BY_ACTOR, ACTOR), (STARRING_BY_ACTOR, PRODUCT)),
@@ -252,7 +217,7 @@ PATH_PATTERN = {
         10: ((None, USER), (INTERACTION[ML1M], PRODUCT), (WROTE_BY_WRITTER, WRITTER), (WROTE_BY_WRITTER, PRODUCT)),
         11: ((None, USER), (INTERACTION[ML1M], PRODUCT), (DIRECTED_BY_DIRECTOR, DIRECTOR), (DIRECTED_BY_DIRECTOR, PRODUCT)),
         12: ((None, USER), (INTERACTION[ML1M], PRODUCT), (PRODUCED_IN_COUNTRY, COUNTRY), (PRODUCED_IN_COUNTRY, PRODUCT)),
-        # 13: ((None, USER), (INTERACTION[ML1M, PRODUCT), (RELATED_TO, WIKIPAGE), (RELATED_TO, PRODUCT)),
+        13: ((None, USER), (INTERACTION[ML1M], PRODUCT), (RELATED_TO_WIKIPAGE, WIKIPAGE), (RELATED_TO_WIKIPAGE, PRODUCT)),
     },
     LFM1M: {
         0: ((None, USER), (INTERACTION[LFM1M], PRODUCT), (INTERACTION[LFM1M], USER), (INTERACTION[LFM1M], PRODUCT)),
@@ -391,45 +356,6 @@ def get_pid_to_kgid_mapping(dataset_name):
             dataset_pid2kg_pid[int(row[0])] = int(row[1])
     file.close()
     return dataset_pid2kg_pid
-
-
-def get_entity_edict(dataset_name):
-    if dataset_name == ML1M:
-        entity_files = edict(
-            user='user.txt.gz',
-            product='product.txt.gz',
-            actor='actor.txt.gz',
-            composer='composer.txt.gz',
-            director='director.txt.gz',
-            producer='producer.txt.gz',
-            production_company='production_company.txt.gz',
-            category='category.txt.gz',
-            country='country.txt.gz',
-            editor='editor.txt.gz',
-            writter='writter.txt.gz',
-            cinematographer='cinematographer.txt.gz',
-            wikipage='wikipage.txt.gz',
-        )
-    elif dataset_name == LFM1M:
-        entity_files = edict(
-            user='user.txt.gz',
-            product='product.txt.gz',
-            artist='artist.txt.gz',
-            featured_artist='featured_artist.txt.gz',
-            engineer='engineer.txt.gz',
-            producer='producer.txt.gz',
-            category='category.txt.gz',
-            related_product='related_product.txt.gz',
-        )
-    elif dataset_name == CELL:
-        entity_files = edict(
-            user='user.txt.gz',
-            product='product.txt.gz',
-            related_product='related_product.txt.gz',
-            brand='brand.txt.gz',
-            category='category.txt.gz',
-        )
-    return entity_files
 
 
 def get_validation_pids(dataset_name):

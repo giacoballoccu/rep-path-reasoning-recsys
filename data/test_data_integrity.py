@@ -11,6 +11,10 @@ def test_dataset_integrity(dataset_name):
     if i2kg_df.shape[0] != products_df.shape[0]:
         print("i2kg/product len missmatch")
 
+    interactions_df = pd.read_csv(f"{dataset_name}/preprocessed/ratings.txt", sep="\t")
+    if interactions_df[~interactions_df.pid.isin(i2kg_df.pid)].shape[0] > 0:
+        print("Ratings contain interactions that involve a removed product or user")
+
     entity_df = pd.read_csv(f"{dataset_name}/preprocessed/e_map.txt", sep="\t", names=["eid", "name", "entity"]).iloc[1:, :]
     entity_item = entity_df[entity_df.entity.isin(i2kg_df.entity)]
     if entity_item.shape[0] != i2kg_df.shape[0]:
