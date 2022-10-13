@@ -2,7 +2,9 @@ import argparse
 from utils import *
 from mappers.mapper_pgpr import MapperPGPR
 from mappers.mapper_cafe import MapperCAFE
+from mappers.mapper_ucpr import MapperUCPR
 from mappers.mapper_kgat import MapperKGAT
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--data', type=str, default=LFM1M, help='One of {ML1M, LFM1M}')
@@ -16,9 +18,11 @@ def main():
     elif args.model == CAFE:
         MapperCAFE(args)
     elif args.model == UCPR:
-        pass
+        MapperUCPR(args)
     elif args.model == KGAT:
         MapperKGAT(args)
+    elif args.model == MLR:
+        pass
 
 
 if __name__ == '__main__':
