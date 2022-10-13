@@ -100,12 +100,3 @@ class MapperPGPR(MapperBase):
             set_file.close()
 
 
-    def write_uid_pid_mappings(self):
-        ratings_uid2new_id_df = pd.DataFrame(list(zip(self.ratings_uid2new_id.keys(), self.ratings_uid2new_id.values())),
-                                             columns=["rating_id", "new_id"])
-        ratings_uid2new_id_df.to_csv(os.path.join(self.mapping_folder, "user_mapping.txt"), sep="\t", index=False)
-
-        ratings_pid2new_id_df = pd.DataFrame(list(zip(self.ratings_pid2new_id.keys(), self.ratings_pid2new_id.values())),
-                                             columns=["rating_id", "new_id"])
-        ratings_pid2new_id_df.to_csv(os.path.join(self.mapping_folder, "product_mapping.txt"), sep="\t", index=False)
-
