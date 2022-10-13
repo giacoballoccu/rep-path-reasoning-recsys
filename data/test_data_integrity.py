@@ -4,7 +4,7 @@ import pandas as pd
 
 def test_dataset_integrity(dataset_name):
     i2kg_filepath = f"{dataset_name}/preprocessed/i2kg_map.txt"
-    i2kg_df = pd.read_csv(i2kg_filepath, sep="\t")
+    i2kg_df = pd.read_csv(i2kg_filepath, sep="\t", dtype="object")
     if i2kg_df.shape[0] != i2kg_df.pid.unique().shape[0]:
         print("i2kg contains duplicates")
         drop_i2kg_map_duplicates(i2kg_filepath, i2kg_df)
@@ -16,7 +16,7 @@ def test_dataset_integrity(dataset_name):
         drop_products_not_in_i2kg(products_filepath, products_df, i2kg_df)
 
     interactions_filepath = f"{dataset_name}/preprocessed/ratings.txt"
-    interactions_df = pd.read_csv(interactions_filepath, sep="\t")
+    interactions_df = pd.read_csv(interactions_filepath, sep="\t", dtype="object")
     if interactions_df[~interactions_df.pid.isin(i2kg_df.pid)].shape[0] > 0:
         print("Ratings contain interactions that involve a removed product or user")
         remove_interactions_with_removed_product(interactions_filepath, interactions_df, i2kg_df)
@@ -39,12 +39,20 @@ def test_dataset_integrity(dataset_name):
     assert other_entities.shape[0] + entity_item.shape[0] == entity_df.shape[0]
 
     kg_final_filename = f"{dataset_name}/preprocessed/kg_final.txt"
-    triplets_df = pd.read_csv(kg_final_filename, sep="\t", dtype="object")
+    triplets_df = pd.read_csv(kg_final_filename, sep="\t", dtype="object",)
+
+    triplets_with_removed_head = triplets_df[~triplets_df.entity_head.isin(i2kg_df.eid)]
+    print(triplets_with_removed_head.entity_head.unique().shape[0])
+    print(triplets_with_removed_head.shape[0], triplets_df.shape[0])
+    if triplets_with_removed_head.shape[0] > 0:
+        triplets_df = triplets_df[triplets_df.entity_head.isin(i2kg_df.eid)]
+        triplets_df.to_csv(kg_final_filename, sep="\t", index=False)
+
     cleaned_triplets = triplets_df[~triplets_df.entity_tail.isin(entity_item.eid)]
     print(triplets_df.shape[0], cleaned_triplets.shape[0])
     if triplets_df.shape[0] != cleaned_triplets.shape[0]:
-        cleaned_triplets.to_csv(kg_final_filename, sep="\t", index=False)
         print("Triplets contain corrupted triplets with a item as tail")
+        cleaned_triplets.to_csv(kg_final_filename, sep="\t", index=False)
 
     cleaned_triplets = triplets_df[triplets_df.entity_tail.isin(other_entities.eid)]
     if triplets_df.shape[0] != cleaned_triplets.shape[0]:
@@ -52,7 +60,6 @@ def test_dataset_integrity(dataset_name):
         print(f"Removed {triplets_df.shape[0] - cleaned_triplets.shape[0]} corrupted triplets")
 
 def drop_triplets_with_corrupted_tail(kg_final_filename, cleaned_triplets):
-    print("Triplets contain corrupted triplets with a not existing entity tail")
     cleaned_triplets.to_csv(kg_final_filename, sep="\t", index=False)
 
 def drop_i2kg_map_duplicates(i2kg_filepath, i2kg_df):
