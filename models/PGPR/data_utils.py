@@ -33,9 +33,9 @@ class Dataset(object):
         entity_filename_edict = edict()
         entity_names = []
         for entity_file in entity_filenames:
-            if os.path.isdir(entity_file): continue
+            if os.path.isdir(os.path.join(self.data_dir, entity_file)): continue
             name = entity_file.split(".")[0]
-            if name in ["train", "valid", "test", "tmp"]: continue
+            if name in ["train", "valid", "test"]: continue
             entity_names.append(name)
             entity_filename_edict[name] = entity_file
 
