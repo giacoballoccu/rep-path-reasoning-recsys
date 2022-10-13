@@ -18,7 +18,6 @@ from data_utils import KGMask
 from symbolic_model import SymbolicNetwork, create_symbolic_model
 from cafe_utils import *
 
-
 logger = None
 
 
@@ -58,8 +57,6 @@ def infer_paths(args):
         pickle.dump(predicts, f)
 
 
-
-
 def dcg_at_k(r, k, method=1):
     """Score is discounted cumulative gain (dcg)
     Relevance is positive real values.  Can use binary
@@ -89,6 +86,7 @@ def ndcg_at_k(r, k, method=1):
     if not dcg_max:
         return 0.
     return dcg_at_k(r, k, method) / dcg_max
+
 
 def evaluate_with_insufficient_pred(topk_matches, test_user_products):
     """Compute metrics for predicted recommendations.
@@ -226,11 +224,11 @@ class MetaProgramExecutor(object):
 
     def collect_results(self, program):
         entities, results = [], []
-        #entities.append(program.root.entity)
+        # entities.append(program.root.entity)
         queue = program.root.get_children()
         while len(queue) > 0:
             node = queue.pop(0)
-            #entities.append(node.entity)
+            # entities.append(node.entity)
             queue.extend(node.get_children())
             if not node.has_children():
                 results.extend(node.data['paths'])
@@ -276,7 +274,7 @@ class NeuralProgramLayout(object):
             self.mp2id[simple_mp] = mpid
         # self.root = None
         # self.initialize()
-        
+
         self.root = TreeNode(0, USER, None)
         for mp in metapaths:
             node = self.root
@@ -292,6 +290,7 @@ class NeuralProgramLayout(object):
         Args:
             path_count: dict with key=mpid, value=int
         """
+
         def _postorder_update(node, parent_rels):
             if not node.has_children():
                 mpid = self.mp2id[tuple(parent_rels)]
@@ -303,7 +302,7 @@ class NeuralProgramLayout(object):
                 _postorder_update(child, parent_rels + [child.relation])
                 max_sample_size = max(max_sample_size, child.sample_size)
                 if child.sample_size > 0:
-                    #min_pos_sample_size = min(max_sample_size, child.sample_size)
+                    # min_pos_sample_size = min(max_sample_size, child.sample_size)
                     min_pos_sample_size = min(min_pos_sample_size, child.sample_size)
 
             # Update current node sampling size.
@@ -367,6 +366,7 @@ def create_heuristic_program(metapaths, raw_paths_with_scores, prior_count, samp
     program_layout.update_by_path_count(norm_count)
     return program_layout
 
+
 def save_pred_paths(dataset, pred_paths):
     if not os.path.isdir("../../results/"):
         os.makedirs("../../results/")
@@ -385,11 +385,12 @@ def save_pred_paths(dataset, pred_paths):
         pickle.dump(pred_paths, pred_paths_file)
     pred_paths_file.close()
 
+
 def run_program(args):
     kg = load_kg(args.dataset)
     kg_mask = KGMask(kg)
 
-    train_labels = load_labels(args.dataset,  'train')
+    train_labels = load_labels(args.dataset, 'train')
     test_labels = load_labels(args.dataset, 'test')
     path_counts = load_path_count(args.dataset)  # Training path freq
     with open(args.infer_path_data, 'rb') as f:
@@ -411,14 +412,15 @@ def run_program(args):
             for i in range(len(r[-1])):
                 path.append(r[-1][i])
                 path.append(r[2][i])
-                path.append(r[0][i+1])
-                if i == len(r[-1])-1: continue
+                path.append(r[0][i + 1])
+                if i == len(r[-1]) - 1: continue
             pred_paths_istances.append([r[0][0], r[0][-1], np.mean(r[1][-1]), np.mean(r[1]), path])
         tmp = sorted(tmp, key=lambda x: x[1], reverse=True)[:10]
 
         pred_labels[uid] = [t[0] for t in tmp]
         pbar.update(1)
-    with open("/home/gballoccu/Desktop/RecSys22-Tutorial/Hands-On/results/ml1m/cafe" + "/red_labels.pkl", 'wb') as pred_paths_file:
+    with open("/home/gballoccu/Desktop/RecSys22-Tutorial/Hands-On/results/ml1m/cafe" + "/red_labels.pkl",
+              'wb') as pred_paths_file:
         pickle.dump(pred_labels, pred_paths_file)
     pred_paths_file.close()
     save_pred_paths(args.dataset, pred_paths_istances)
@@ -440,6 +442,7 @@ def main():
         for i in range(1):
             logger.info(i + 1)
             run_program(args)
+
 
 if __name__ == '__main__':
     main()

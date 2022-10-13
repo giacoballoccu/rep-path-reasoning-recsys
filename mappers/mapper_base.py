@@ -11,6 +11,7 @@ class MapperBase(object):
         self.train_size = args.train_size
         self.test_size = 1 - args.train_size - args.valid_size
         print(f"Creating data/{self.dataset_name}/preprocessed/{self.model_name}/ filesystem")
+
     """
     def time_based_train(self):
         train_size = self.train_size
@@ -54,6 +55,7 @@ class MapperBase(object):
                     curr_set[uid].append((pid, time))
             set_file.close()
 
+    """
     def time_based_train_test_split(self, ratings_uid2new_id, ratings_pid2new_id):
         train_size, valid_size, test_size = self.train_size, self.valid_size, self.test_size
         dataset_name, model_name = self.dataset_name, self.model_name
@@ -85,3 +87,12 @@ class MapperBase(object):
             train[uid], valid[uid], test[uid] = pid_time_tuples[:train_end], pid_time_tuples[train_end:valid_end], pid_time_tuples[valid_end:]
 
         return train, valid, test
+    """
+    def write_uid_pid_mappings(self):
+        ratings_uid2new_id_df = pd.DataFrame(list(zip(self.ratings_uid2new_id.keys(), self.ratings_uid2new_id.values())),
+                                             columns=["rating_id", "new_id"])
+        ratings_uid2new_id_df.to_csv(os.path.join(self.mapping_folder, "user_mapping.txt"), sep="\t", index=False)
+
+        ratings_pid2new_id_df = pd.DataFrame(list(zip(self.ratings_pid2new_id.keys(), self.ratings_pid2new_id.values())),
+                                             columns=["rating_id", "new_id"])
+        ratings_pid2new_id_df.to_csv(os.path.join(self.mapping_folder, "product_mapping.txt"), sep="\t", index=False)

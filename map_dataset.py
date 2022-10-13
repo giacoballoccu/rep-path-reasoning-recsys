@@ -3,6 +3,7 @@ from utils import *
 from mappers.mapper_pgpr import MapperPGPR
 from mappers.mapper_cafe import MapperCAFE
 from mappers.mapper_ucpr import MapperUCPR
+from mappers.mapper_kgat import MapperKGAT
 
 def main():
     parser = argparse.ArgumentParser()
@@ -18,6 +19,8 @@ def main():
         MapperCAFE(args)
     elif args.model == UCPR:
         MapperUCPR(args)
+    elif args.model == KGAT:
+        MapperKGAT(args)
     elif args.model == MLR:
         pass
 
