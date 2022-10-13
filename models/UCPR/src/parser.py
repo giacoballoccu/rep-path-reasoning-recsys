@@ -62,11 +62,13 @@ def parse_args():
     parser.add_argument('--l2_weight', type=float, default=1e-6, help='weight of the l2 regularization term')
 
     parser.add_argument('--sam_type',  type=str, default='alet', help='number of negative samples.')
-    parser.add_argument('--add_products', type=boolean, default=False, help='add_products')
+
     parser.add_argument('--topk', type=int, nargs='*', default=[10, 10, 1], help='number of samples')
     parser.add_argument('--topk_list', type=int, nargs='*', default=[1, 10, 100, 100], help='number of samples')
     parser.add_argument('--run_path', type=boolean, default=True, help='Generate predicted path? (takes long time)')
     parser.add_argument('--run_eval', type=boolean, default=True, help='Run evaluation?')
+    parser.add_argument('--save_paths', type=boolean, default=True, help='Save paths')
+
 
     parser.add_argument('--pretest', type=int, default=0, help='pretest')
 
@@ -88,7 +90,11 @@ def parse_args():
     parser.add_argument('--KGE_pretrained', type=int, default=0, help='KGE_pretrained')
     parser.add_argument('--load_pt_emb_size', type=int, default=0, help='core number')
     parser.add_argument('--user_o', type=int, default=0, help='user_o')
-    
+    parser.add_argument('--add_products', type=boolean, default=True, help='Add predicted products up to 10')
+
+
+
+
     args = parser.parse_args()
     args.gpu = str(args.gpu)
 
@@ -128,6 +134,7 @@ def parse_args():
     print(args.envir)
         # if args.KGE_pretrained == True: args.embed_size = 50
 
+    '''
     if args.dataset in [BEAUTY_CORE, CELL_CORE, CLOTH_CORE]: 
         args.topk = [10, 15, 1]
         args.topk_list = [1, 10, 150, 100]
@@ -148,9 +155,11 @@ def parse_args():
     elif args.dataset == AZ_BOOK_CORE:
         args.topk = [8, 2, 6]
         args.topk_list =  [1, 8, 16, 96]
+    '''
+    args.topk = [25, 5, 1]
 
 
-    #args.topk_string = ', '.join([str(k) for k in args.topk])
+    args.topk_string = ', '.join([str(k) for k in args.topk])
     args.topk_string = ""
     if args.model in ['lstm', 'state_history']:
         args.non_sampling = True

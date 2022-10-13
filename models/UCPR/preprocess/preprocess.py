@@ -53,6 +53,7 @@ def main():
     # ========== BEGIN ========== #
     print('Generate', args.dataset, 'train/test labels.')
     generate_labels(args.dataset, 'train')
+    generate_labels(args.dataset, 'valid')
     generate_labels(args.dataset, 'test')
     # =========== END =========== #
 

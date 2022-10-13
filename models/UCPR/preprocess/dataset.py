@@ -25,7 +25,7 @@ class Dataset(object):
         #Other relation names doesn't contain the main interaction
         self.entity_names, self.other_relation_names = list(entity_filename_edict.keys()), list(relation_filename_edict.keys())
         #self.relation_names =  self.other_relation_names + [INTERACTION[self.dataset_name] ]
-        print(self.relation_names)
+        
         self.load_entities(entity_filename_edict)
         self.load_product_relations(relation_filename_edict)
         self.load_reviews()

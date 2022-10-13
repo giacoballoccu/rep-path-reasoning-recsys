@@ -28,12 +28,12 @@ CLOTH_CORE = 'cloth'
 # retro compatiblity 
 MOVIE_CORE = 'ml1m'
 AZ_BOOK_CORE = 'book'
-
+MODEL = 'ucpr'
 # Dataset directories.
 DATASET_DIR = {
-    ML1M: f'../../data/{ML1M}/preprocessed/ucpr',
-    LFM1M: f'../../data/{LFM1M}/preprocessed/ucpr',
-    CELL: f'../../data/{CELL}/preprocessed/ucpr'
+    ML1M: f'../../data/{ML1M}/preprocessed/{MODEL}',
+    LFM1M: f'../../data/{LFM1M}/preprocessed/{MODEL}',
+    CELL: f'../../data/{CELL}/preprocessed/{MODEL}'
 }
 
 # Model result directories.
@@ -43,51 +43,48 @@ TMP_DIR = {
     CELL: f'{DATASET_DIR[CELL]}/tmp',
 }
 
-LOG_DIR = {
-    ML1M: f'../../results/{ML1M}',
-    LFM1M: f'../../results/{LFM1M}',
-    CELL: f'../../results/{CELL}',
-}
+LOG_DIR = f'../../results/{MODEL}'
 
+TRANSE_HPARAMS_FILE = f'{LOG_DIR}/transe_{MODEL}_hparams_file.json'
+HPARAMS_DIR_FILE = f'{LOG_DIR}/{MODEL}_hparams_file.json'
+
+LOG_DATASET_DIR = {
+    ML1M: f'{LOG_DIR}/{ML1M}/',
+    LFM1M: f'{LOG_DIR}/{LFM1M}',
+    CELL: f'{LOG_DIR}/{MODEL}/{CELL}',
+}
 SAVE_MODEL_DIR = {
-    ML1M: f'{LOG_DIR[ML1M]}/save/{ML1M}',
-    LFM1M: f'{LOG_DIR[LFM1M]}/save/{LFM1M}',
-    CELL: f'{LOG_DIR[CELL]}/save/{CELL}',
+    ML1M: f'{LOG_DATASET_DIR[ML1M]}/save/{ML1M}',
+    LFM1M: f'{LOG_DATASET_DIR[LFM1M]}/save/{LFM1M}',
+    CELL: f'{LOG_DATASET_DIR[CELL]}/save/{CELL}',
 }
 
 
 EVALUATION = {
-    ML1M: f'{LOG_DIR[ML1M]}/eva_pre/{ML1M}',
-    LFM1M: f'{LOG_DIR[LFM1M]}/eva_pre/{LFM1M}',
-    CELL: f'{LOG_DIR[CELL]}/eva_pre/{CELL}',
+    ML1M: f'{LOG_DATASET_DIR[ML1M]}/eva_pre/{ML1M}',
+    LFM1M: f'{LOG_DATASET_DIR[LFM1M]}/eva_pre/{LFM1M}',
+    CELL: f'{LOG_DATASET_DIR[CELL]}/eva_pre/{CELL}',
 }
 
 EVALUATION_2 = {
-    ML1M: f'{LOG_DIR[ML1M]}/eval/{ML1M}',
-    LFM1M: f'{LOG_DIR[LFM1M]}/eval/{LFM1M}',
-    CELL: f'{LOG_DIR[CELL]}/eval/{CELL}',
+    ML1M: f'{LOG_DATASET_DIR[ML1M]}/eval/{ML1M}',
+    LFM1M: f'{LOG_DATASET_DIR[LFM1M]}/eval/{LFM1M}',
+    CELL: f'{LOG_DATASET_DIR[CELL]}/eval/{CELL}',
 }
 
 CASE_ST = {
-    ML1M: f'{LOG_DIR[ML1M]}/case_st/{ML1M}',
-    LFM1M: f'{LOG_DIR[LFM1M]}/case_st/{LFM1M}',
-    CELL: f'{LOG_DIR[CELL]}/case_st/{CELL}',
+    ML1M: f'{LOG_DATASET_DIR[ML1M]}/case_st/{ML1M}',
+    LFM1M: f'{LOG_DATASET_DIR[LFM1M]}/case_st/{LFM1M}',
+    CELL: f'{LOG_DATASET_DIR[CELL]}/case_st/{CELL}',
 }
 
 TEST = {
-    ML1M: f'{LOG_DIR[ML1M]}/test/{ML1M}',
-    LFM1M: f'{LOG_DIR[LFM1M]}/test/{LFM1M}',
-    CELL: f'{LOG_DIR[CELL]}/test/{CELL}',
+    ML1M: f'{LOG_DATASET_DIR[ML1M]}/test/{ML1M}',
+    LFM1M: f'{LOG_DATASET_DIR[LFM1M]}/test/{LFM1M}',
+    CELL: f'{LOG_DATASET_DIR[CELL]}/test/{CELL}',
 }
 
 
-
-# Label files.
-LABELS = {
-    ML1M: (TMP_DIR[ML1M] + '/train_label.pkl', TMP_DIR[ML1M] + '/test_label.pkl'),
-    LFM1M: (TMP_DIR[LFM1M] + '/train_label.pkl', TMP_DIR[LFM1M] + '/test_label.pkl'),
-    CELL: (TMP_DIR[CELL] + '/train_label.pkl', TMP_DIR[CELL] + '/test_label.pkl')
-}
 
 # Label files.
 LABELS = {

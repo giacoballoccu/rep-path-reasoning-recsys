@@ -200,18 +200,18 @@ def train(args):
 
 if __name__ == '__main__':
     args = parse_args()
-    #''' 
-    for x in dir(args):
-        print(x)
+    os.makedirs(LOG_DIR, exist_ok=True)
+    with open(f'{HPARAMS_FILE}', 'w') as f:
+        import json
+        import copy
+        args_dict = dict()
+        for x,y in copy.deepcopy(args._get_kwargs()):
+            args_dict[x] = y
+        if 'device' in args_dict:
+            del args_dict['device']
+        json.dump(args_dict,f)
 
-    with open('params_file.txt', 'w') as f:
-        f.write('{')
-        for x,y in args._get_kwargs():
-            f.write(f'{x} : {y},\n')
-        f.write('}')
-    #'''
-    
-    '''
+
     args.training = 1
     args.training = (args.training == 1)
         
@@ -225,4 +225,3 @@ if __name__ == '__main__':
 
     para_env(args)
     train(args)
-    '''
