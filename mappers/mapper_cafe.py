@@ -121,6 +121,8 @@ class MapperCAFE(MapperBase):
 
         # Collecting external entities
         kg_df = pd.read_csv(os.path.join(input_folder, "kg_final.txt"), sep="\t")
+        assert kg_df.entity_tail.isnull().sum() == 0
+        assert kg_df.entity_head.isnull().sum() == 0
         for rid, entity_name in rid2entity_name.items():
             unique_entities_by_type = list(kg_df[kg_df.relation == rid].entity_tail.unique())
             entity_by_type_df = pd.DataFrame(unique_entities_by_type, columns=["old_eid"])
@@ -169,7 +171,7 @@ class MapperCAFE(MapperBase):
 
         # Insert user interaction triplets to triplets_df
         triplets_df = triplets_df.append \
-            (pd.DataFrame(interaction_triplets, columns=["entity_head", "relation", "entity_tail"]))
+            (pd.DataFrame(interaction_triplets, columns=["entity_head", "relation", "entity_tail"], dtype="int64"))
 
         old_eid2global_id = {}
         # Products
@@ -180,7 +182,12 @@ class MapperCAFE(MapperBase):
         for rid, entity_name in rid2entity_name.items():
             unique_entities_by_type = list(kg_df[kg_df.relation == rid].entity_tail.unique())
             entity_by_type_df = pd.DataFrame(unique_entities_by_type, columns=["old_eid"])
+            before_merge = entity_by_type_df.shape[0]
             entity_by_type_df = pd.merge(entity_by_type_df, external_entities_df, on="old_eid")
+            if entity_by_type_df.old_eid.isnull().sum() > 0:
+                entity_by_type_df.dropna(axis=0, inplace=True)
+            after_merge = entity_by_type_df.shape[0]
+            assert before_merge == after_merge
             old_eid2global_id[entity_name] = dict(zip(entity_by_type_df.old_eid, entity_by_type_df.global_id))
 
         # Insert other entities to kg_triplets df
