@@ -83,9 +83,6 @@ class Dataset(object):
         """
         review_data = []  # (user_idx, product_idx, rating out of 5, timestamp)
         product_distrib = np.zeros(self.product.vocab_size)
-        positive_reviews = 0
-        negative_reviews = 0
-        threshold = 3
         invalid_users = 0
         invalid_pid = 0
         for line in self._load_file(self.review_file):
@@ -94,13 +91,9 @@ class Dataset(object):
             product_idx = int(arr[1])
             rating = int(arr[2])
             timestamp = int(arr[3])
-            if rating >= threshold:
-                positive_reviews += 1
-            else:
-                negative_reviews += 1
             review_data.append((user_idx, product_idx, rating, timestamp))
             product_distrib[product_idx] += 1
-        print(invalid_users, invalid_pid)
+        print(f"Invalid users: {invalid_users}, invalid items: {invalid_pid}")
         self.review = edict(
             data=review_data,
             size=len(review_data),
@@ -110,9 +103,7 @@ class Dataset(object):
             review_distrib=np.ones(len(review_data))  # set to 1 now
         )
 
-        print('Load review of size', self.review.size, 'with positive reviews=',
-              positive_reviews, ' and negative reviews=',
-              negative_reviews)  # , ' considered as positive the ratings >= of ', threshold)
+        print('Load review of size', self.review.size)
 
     def load_product_relations(self, relation_filename_edict):
         """Load 8 product -> ? relations:
