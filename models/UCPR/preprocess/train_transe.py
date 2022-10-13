@@ -90,20 +90,7 @@ def main():
     parser.add_argument('--embed_size', type=int, default=100, help='knowledge embedding size.')
     parser.add_argument('--num_neg_samples', type=int, default=5, help='number of negative samples.')
     parser.add_argument('--steps_per_checkpoint', type=int, default=200, help='Number of steps for checkpoint.')
-    parser.add_argument("--wandb", action="store_true", help="If passed, will log to Weights and Biases.")
-    parser.add_argument(
-        "--wandb_entity",
-        required="--wandb" in sys.argv,
-        type=str,
-        help="Entity name to push to the wandb logged data, in case args.wandb is specified.",
-    )                 
-    '''    
-    if args.wandb:
-        import wandb
-        wandb.init(project=STORAGE_DIR,
-                       entity=args.wandb_entity)    
-        wandb.config = vars(args)
-    '''
+
 
     args = parser.parse_args()
     os.makedirs(LOG_DIR, exist_ok=True)

@@ -2,6 +2,7 @@ from __future__ import absolute_import, division, print_function
 
 import os
 import argparse
+import json
 from math import log
 from datetime import datetime
 from tqdm import tqdm
@@ -18,12 +19,13 @@ import time
 import pickle
 import gc
 import json
+from easydict import EasyDict as edict
 import itertools
 from UCPR.utils import *
 from UCPR.src.model.get_model.get_model import *
 from UCPR.src.parser import parse_args
 from UCPR.src.para_setting import parameter_path, parameter_path_th
-
+import collections
 def dcg_at_k(r, k, method=1):
     r = np.asfarray(r)[:k]
     if r.size:
@@ -44,12 +46,9 @@ def ndcg_at_k(r, k, method=1):
 
 
 def save_output(dataset_name, pred_paths):
-    if not os.path.isdir(LOG_DIR[dataset_name]):
-        os.makedirs(LOG_DIR[dataset_name])
-    extracted_path_dir = LOG_DIR[dataset_name]
-    extracted_path_dir = extracted_path_dir + "/ucpr"
-    if not os.path.isdir(extracted_path_dir):
-        os.makedirs(extracted_path_dir)
+    if not os.path.isdir(SAVE_MODEL_DIR[dataset_name]):
+        os.makedirs(SAVE_MODEL_DIR[dataset_name])
+    extracted_path_dir = SAVE_MODEL_DIR[dataset_name]
 
     print("Normalizing items scores...")
     # Get min and max score to performe normalization between 0 and 1
@@ -93,16 +92,20 @@ def evaluate(topk_matches, test_user_products, no_skip_user):
     ndcgs = []
 
     test_user_idxs = list(test_user_products.keys())
+    x = defaultdict(int)
     rel_size = []
     for uid in test_user_idxs:
         if uid not in topk_matches or len(topk_matches[uid]) < 10:
+            x['a'] +=1
             invalid_users.append(uid)
             continue
         pred_list, rel_set = topk_matches[uid][::-1], test_user_products[uid]
 
         if uid not in no_skip_user:
+            x['b'] += 1
             continue
         if len(pred_list) == 0:
+            x['c'] +=1
             continue
         rel_size.append(len(rel_set))
         k = 0
@@ -115,7 +118,7 @@ def evaluate(topk_matches, test_user_products, no_skip_user):
                 hit_list.append(1)
             else:
                 hit_list.append(0)
-
+        #print(k, len(hit_list), collections.Counter(hit_list))
         ndcg = ndcg_at_k(hit_list, k)
         recall = hit_num / len(rel_set)
         precision = hit_num / len(pred_list)
@@ -125,7 +128,7 @@ def evaluate(topk_matches, test_user_products, no_skip_user):
         metrics.hr.append(hit)
         metrics.recall.append(recall)
         metrics.precision.append(precision)
-
+    #print(x)
     avg_metrics = edict(
         ndcg=[],
         hr=[],
@@ -140,6 +143,9 @@ def evaluate(topk_matches, test_user_products, no_skip_user):
         print("Overall for noOfUser={}, {}={:.4f}".format(n_users, metric,
                                                           avg_metric_value))
         print("\n")
+
+    with open(TEST_METRICS_FILE, 'w') as f:
+        json.dump(metrics,f)
 
     return avg_metrics.precision, avg_metrics.recall, avg_metrics.ndcg, avg_metrics.hr,\
              invalid_users
@@ -186,7 +192,7 @@ def batch_beam_search(args, env, model, uids, device, topk=[25, 5, 1]):
             probs, _ = model((state_tensor[0],state_tensor[1], next_enti_emb, next_action_emb, actmask_tensor))
         except:
             probs, _ = model((state_tensor, batch_next_action_emb, actmask_tensor))  # Tensor of [bs, act_dim]
- 
+        
         probs = probs + actmask_tensor.float()  # In order to differ from masked actions
         
         topk_probs, topk_idxs = torch.topk(probs, topk[hop], dim=1)  # LongTensor of [bs, k]
@@ -232,7 +238,7 @@ def predict_paths(args, policy_file, path_file, train_labels, test_labels, prete
     print('Predicting paths...')
         
     env = KG_Env(args, args.dataset, args.max_acts, max_path_len=args.max_path_len, state_history=args.state_history)
-
+    print(policy_file)
     pretrain_sd = torch.load(policy_file)
     model = Memory_Model(args, env.user_triplet_set, env.rela_2_index, 
                             env.act_dim, gamma=args.gamma, hidden_sizes=args.hidden).to(args.device)
@@ -292,11 +298,17 @@ def get_validation_pids(dataset_name):
 def extract_paths(dataset_name, path_file, train_labels, valid_labels, test_labels):
     embeds = load_embed(dataset_name)
     
-    main_interaction, main_product = MAIN_PRODUCT_INTERACTION[dataset_name]
+    main_product, main_interaction = MAIN_PRODUCT_INTERACTION[dataset_name]
     user_embeds = embeds[USER]
     purchase_embeds = embeds[main_interaction][0]
     product_embeds = embeds[main_product]#[0]
+    print(user_embeds.shape)
+    print(purchase_embeds.shape)
+    print(product_embeds[0].shape)
+    print(product_embeds.shape)
+
     scores = np.dot(user_embeds + purchase_embeds, product_embeds.T)
+    print(scores.shape)
     validation_pids = get_validation_pids(dataset_name)
     # 1) Get all valid paths for each user, compute path score and path probability.
     results = pickle.load(open(path_file, 'rb'))
@@ -307,37 +319,56 @@ def extract_paths(dataset_name, path_file, train_labels, valid_labels, test_labe
     for path, probs in zip(results['paths'], results['probs']):
         uid = path[0][2]
         no_skip_user[uid] = 1
-
-    for path, probs in zip(results['paths'], results['probs']):
+    print(results.keys())
+    x = defaultdict(int)
+    for idx, (path, probs) in enumerate(zip(results['paths'], results['probs'])):
+        #print(probs, path)
+        #print()
+        #print(idx, end=' ')
+        #print(path, path[-1][1], main_product )
         if path[-1][1] != main_product:
+            #print('a')
+            x['a'] += 1
             continue
         uid = path[0][2]
         if uid not in total_pre_user_num:
             total_pre_user_num[uid] = len(total_pre_user_num)
+            x['b'] += 1
+            #print('b')
         if uid not in pred_paths:
+            #print('c')
+            x['c'] += 1
             continue
         pid = path[-1][2]
         if uid in valid_labels and pid in valid_labels[uid]:
+            #print('d')
+            x['d'] += 1
             continue
         if pid in train_labels[uid]:
+            #print('e')
+            x['e'] += 1
             continue        
         if pid not in pred_paths[uid]:
+            #print('f')
+            x['f'] += 1
             pred_paths[uid][pid] = []
 
         path_score = scores[uid][pid]
         path_prob = reduce(lambda x, y: x * y, probs)
         pred_paths[uid][pid].append((path_score, path_prob, path))
+    print(x)
+    #print(pred_paths)
     save_output(dataset_name, pred_paths)
     return pred_paths, scores
 
 
-def evaluate_paths(topk,dataset_name, pred_paths, emb_scores, train_labels, 
+def evaluate_paths(topk,dataset_name, pred_paths, scores, train_labels, 
             test_labels, args, path_file, pretest=1):
    # train_labels, test_labels, args, path_file,  pretest=pretest):
     
     '''    
     embeds = load_embed(args.dataset)
-    main_interaction, main_product = MAIN_PRODUCT_INTERACTION[args.dataset]
+    main_product, main_interaction = MAIN_PRODUCT_INTERACTION[args.dataset]
     user_embeds = embeds[USER]
     purchase_embeds = embeds[main_interaction][0]
     product_embeds = embeds[main_product]#[0]
@@ -432,10 +463,9 @@ def evaluate_paths(topk,dataset_name, pred_paths, emb_scores, train_labels,
                 if len(top10_pids) >= 10:
                     break
 
-
-        pred_labels[uid] = top_k_pids[::-1]  # change order to from smallest to largest!
-        total_pro_num += len(top_k_pids)
-
+        pred_labels[uid] = top10_pids[::-1]  # change order to from smallest to largest!
+        pred_paths_top10[uid] = top10_paths[::-1]
+        #print(uid, len(pred_labels[uid]), pred_labels[uid])
     results = pickle.load(open(path_file, 'rb'))
     pred_paths = {uid: {} for uid in test_labels}
     total_pre_user_num = {}
@@ -480,9 +510,9 @@ def test(args, train_labels, valid_labels, test_labels, best_recall, pretest = 1
     print('start predict')
 
 
-    policy_file = args.save_model_dir + '/policy_model_epoch_{}.ckpt'.format(args.eva_epochs)
+    policy_file = args.save_model_dir + '/policy_model_epoch_{}.ckpt'.format(35)#args.eva_epochs)
     path_file = args.save_model_dir + '/' + 'pre' + str(pretest) + 'policy_paths_epoch{}_{}.pkl'.format(args.eva_epochs, args.topk_string)
-
+    print(policy_file)
 
     #if args.dataset in [BEAUTY_CORE, CELL_CORE, CLOTH_CORE]: 
     #sort_by_2 = 'prob'
@@ -497,7 +527,7 @@ def test(args, train_labels, valid_labels, test_labels, best_recall, pretest = 1
     if args.save_paths or args.run_eval():
         pred_paths, scores = extract_paths(args.dataset, path_file, train_labels, valid_labels, test_labels)
     if args.run_eval:
-        evaluate_paths(TOP_N_LOGGING,args.dataset, pred_paths, emb_scores,
+        evaluate_paths(TOP_N_LOGGING,args.dataset, pred_paths, scores,
                         train_labels, test_labels, args, path_file, pretest=pretest)
 
     '''    

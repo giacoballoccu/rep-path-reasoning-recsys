@@ -66,17 +66,17 @@ def parameter_path(args):
 
     log_dir_fodder = f'{args.name}_g_aiu_{args.att_core}_{args.item_core}_{args.user_core}'
 
-    args.log_dir = '{}/{}/{}'.format(EVALUATION_2[args.dataset], args.model, log_dir_fodder)
+    args.log_dir = '{}/{}'.format(EVALUATION_2[args.dataset], args.model)
     if not os.path.isdir(args.log_dir):
         os.makedirs(args.log_dir)
 
-    args.save_model_dir = '{}/{}/{}'.format(SAVE_MODEL_DIR[args.dataset], args.model, log_dir_fodder)
+    args.save_model_dir = '{}/{}'.format(SAVE_MODEL_DIR[args.dataset], args.model)
     if not os.path.isdir(args.save_model_dir):
         os.makedirs(args.save_model_dir)
 
     log_dir_fodder_rw = f'g_aiu_0_{args.item_core}_{args.user_core}'
 
-    args.pretrained_dir = '{}/{}/{}'.format(EVALUATION[args.dataset], 'pretrained', log_dir_fodder_rw)
+    args.pretrained_dir = '{}/{}'.format(EVALUATION[args.dataset], 'pretrained')
     if not os.path.isdir(args.pretrained_dir):
         os.makedirs(args.pretrained_dir)
 

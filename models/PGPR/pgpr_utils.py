@@ -31,6 +31,7 @@ DATASET_DIR = {
 
 
 LOG_DIR = f'../../results/{MODEL}'
+TEST_METRICS_FILE = f'{LOG_DIR}/{MODEL}_test.json'
 LOG_DATASET_DIR = {
     ML1M: f'{LOG_DIR}/{ML1M}/',
     LFM1M: f'{LOG_DIR}/{LFM1M}',

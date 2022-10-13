@@ -44,9 +44,9 @@ TMP_DIR = {
 }
 
 LOG_DIR = f'../../results/{MODEL}'
-
+TEST_METRICS_FILE = f'{LOG_DIR}/{MODEL}_test.json'
 TRANSE_HPARAMS_FILE = f'{LOG_DIR}/transe_{MODEL}_hparams_file.json'
-HPARAMS_DIR_FILE = f'{LOG_DIR}/{MODEL}_hparams_file.json'
+HPARAMS_FILE = f'{LOG_DIR}/{MODEL}_hparams_file.json'
 
 LOG_DATASET_DIR = {
     ML1M: f'{LOG_DIR}/{ML1M}/',
@@ -54,34 +54,34 @@ LOG_DATASET_DIR = {
     CELL: f'{LOG_DIR}/{MODEL}/{CELL}',
 }
 SAVE_MODEL_DIR = {
-    ML1M: f'{LOG_DATASET_DIR[ML1M]}/save/{ML1M}',
-    LFM1M: f'{LOG_DATASET_DIR[LFM1M]}/save/{LFM1M}',
-    CELL: f'{LOG_DATASET_DIR[CELL]}/save/{CELL}',
+    ML1M: f'{LOG_DATASET_DIR[ML1M]}/save',
+    LFM1M: f'{LOG_DATASET_DIR[LFM1M]}/save',
+    CELL: f'{LOG_DATASET_DIR[CELL]}/save',
 }
 
 
 EVALUATION = {
-    ML1M: f'{LOG_DATASET_DIR[ML1M]}/eva_pre/{ML1M}',
-    LFM1M: f'{LOG_DATASET_DIR[LFM1M]}/eva_pre/{LFM1M}',
-    CELL: f'{LOG_DATASET_DIR[CELL]}/eva_pre/{CELL}',
+    ML1M: f'{LOG_DATASET_DIR[ML1M]}/eva_pre',
+    LFM1M: f'{LOG_DATASET_DIR[LFM1M]}/eva_pre',
+    CELL: f'{LOG_DATASET_DIR[CELL]}/eva_pre',
 }
 
 EVALUATION_2 = {
-    ML1M: f'{LOG_DATASET_DIR[ML1M]}/eval/{ML1M}',
-    LFM1M: f'{LOG_DATASET_DIR[LFM1M]}/eval/{LFM1M}',
-    CELL: f'{LOG_DATASET_DIR[CELL]}/eval/{CELL}',
+    ML1M: f'{LOG_DATASET_DIR[ML1M]}/eval',
+    LFM1M: f'{LOG_DATASET_DIR[LFM1M]}/eval',
+    CELL: f'{LOG_DATASET_DIR[CELL]}/eval',
 }
 
 CASE_ST = {
-    ML1M: f'{LOG_DATASET_DIR[ML1M]}/case_st/{ML1M}',
-    LFM1M: f'{LOG_DATASET_DIR[LFM1M]}/case_st/{LFM1M}',
-    CELL: f'{LOG_DATASET_DIR[CELL]}/case_st/{CELL}',
+    ML1M: f'{LOG_DATASET_DIR[ML1M]}/case_st',
+    LFM1M: f'{LOG_DATASET_DIR[LFM1M]}/case_st',
+    CELL: f'{LOG_DATASET_DIR[CELL]}/case_st',
 }
 
 TEST = {
-    ML1M: f'{LOG_DATASET_DIR[ML1M]}/test/{ML1M}',
-    LFM1M: f'{LOG_DATASET_DIR[LFM1M]}/test/{LFM1M}',
-    CELL: f'{LOG_DATASET_DIR[CELL]}/test/{CELL}',
+    ML1M: f'{LOG_DATASET_DIR[ML1M]}/test',
+    LFM1M: f'{LOG_DATASET_DIR[LFM1M]}/test',
+    CELL: f'{LOG_DATASET_DIR[CELL]}/test',
 }
 
 

@@ -5,6 +5,7 @@ import argparse
 from math import log
 import numpy as np
 import torch
+import json
 from easydict import EasyDict as edict
 from tqdm import tqdm
 from functools import reduce
@@ -62,14 +63,22 @@ def evaluate(dataset_name, topk_matches, test_user_products):
         metrics.recall.append(recall)
         metrics.precision.append(precision)
 
+    avg_metrics = edict(
+        ndcg=[],
+        hr=[],
+        precision=[],
+        recall=[],
+    )
     print("Average test set size: ", np.array(rel_size).mean())
     for metric, values in metrics.items():
+        avg_metrics[metric] = np.mean(values)
         avg_metric_value = np.mean(values) * 100 if metric == "ndcg_other" else np.mean(values)
         n_users = len(values)
         print("Overall for noOfUser={}, {}={:.4f}".format(n_users, metric,
                                                           avg_metric_value))
         print("\n")
-
+    with open(TEST_METRICS_FILE, 'w') as f:
+        json.dump(metrics,f)
 
 def dcg_at_k(r, k, method=1):
     r = np.asfarray(r)[:k]

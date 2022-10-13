@@ -23,6 +23,7 @@ DATA_DIR = {
 LOG_DIR = f'../../results/{MODEL}'
 TRANSE_HPARAMS_FILE = f'{LOG_DIR}/transe_{MODEL}_hparams_file.json'
 HPARAMS_FILE = f'{LOG_DIR}/{MODEL}_hparams_file.json'
+TEST_METRICS_FILE = f'{LOG_DIR}/{MODEL}_test.json'
 
 LOG_DATASET_DIR = {
     ML1M: f'{LOG_DIR}/{ML1M}/',

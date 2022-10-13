@@ -12,7 +12,8 @@ import math
 from tqdm import tqdm
 import torch
 from torch.nn import functional as F
-
+import json
+from easydict import EasyDict as edict
 from my_knowledge_graph import *
 from data_utils import KGMask
 from symbolic_model import SymbolicNetwork, create_symbolic_model
@@ -94,6 +95,13 @@ def evaluate_with_insufficient_pred(topk_matches, test_user_products):
         topk_matches: a list or dict of product ids ordered by largest to smallest scores
     """
     # Compute metrics
+
+    metrics = edict(
+        ndcg=[],
+        hr=[],
+        precision=[],
+        recall=[],
+    )
     precisions, recalls, ndcgs, hits, our_ndcgs = [], [], [], [], []
     test_user_idxs = list(test_user_products.keys())
     for uid in test_user_idxs:
@@ -132,9 +140,17 @@ def evaluate_with_insufficient_pred(topk_matches, test_user_products):
         precisions.append(precision)
         hits.append(hit)
 
+        metrics.ndcg.append(ndcg)
+        metrics.recall.append(recall)
+        metrics.precision.append(precision)
+        metrics.hit.append(hit)
+
+
     our_ndcg = np.mean(our_ndcgs)
     our_recall = np.mean(recalls)
 
+    with open(TEST_METRICS_FILE, 'w') as f:
+        json.dump(metrics,f)
     print(f"Our ndcg: {our_ndcg}, Our recall: {our_recall}")
     avg_precision = np.mean(precisions) * 100
     avg_recall = our_recall * 100
