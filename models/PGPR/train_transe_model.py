@@ -89,6 +89,19 @@ def main():
     parser.add_argument('--steps_per_checkpoint', type=int, default=200, help='Number of steps for checkpoint.')
     args = parser.parse_args()
 
+
+    os.makedirs(LOG_DIR, exist_ok=True)
+    with open(f'{TRANSE_HPARAMS_FILE}', 'w') as f:
+        import json
+        import copy
+        args_dict = dict()
+        for x,y in copy.deepcopy(args._get_kwargs()):
+            args_dict[x] = y
+        if 'device' in args_dict:
+            del args_dict['device']
+        json.dump(args_dict,f)
+
+
     os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
     args.device = torch.device('cuda:0') if torch.cuda.is_available() else 'cpu'
     print(TMP_DIR[args.dataset])
@@ -96,6 +109,8 @@ def main():
     if not os.path.isdir(args.log_dir):
         os.makedirs(args.log_dir)
 
+
+     
     global logger
     logger = get_logger(args.log_dir + '/train_log.txt')
     logger.info(args)
@@ -104,7 +119,7 @@ def main():
     dataset = load_dataset(args.dataset)
     train(args, dataset)
     extract_embeddings(args, dataset)
-
+    
 
 if __name__ == '__main__':
     main()

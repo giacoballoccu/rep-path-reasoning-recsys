@@ -20,13 +20,25 @@ ML1M = 'ml1m'
 LFM1M = 'lfm1m'
 CELL = 'cellphones'
 
+MODEL = 'pgpr'
+
 # Dataset directories.
 DATASET_DIR = {
-    ML1M: f'../../data/{ML1M}/preprocessed/pgpr',
-    LFM1M: f'../../data/{LFM1M}/preprocessed/pgpr',
-    CELL: f'../../data/{CELL}/preprocessed/pgpr'
+    ML1M: f'../../data/{ML1M}/preprocessed/{MODEL}',
+    LFM1M: f'../../data/{LFM1M}/preprocessed/{MODEL}',
+    CELL: f'../../data/{CELL}/preprocessed/{MODEL}'
 }
 
+
+LOG_DIR = f'../../results/{MODEL}'
+LOG_DATASET_DIR = {
+    ML1M: f'{LOG_DIR}/{ML1M}/',
+    LFM1M: f'{LOG_DIR}/{LFM1M}',
+    CELL: f'{LOG_DIR}/{MODEL}/{CELL}',
+}
+
+TRANSE_HPARAMS_FILE = f'{LOG_DIR}/transe_{MODEL}_hparams_file.json'
+HPARAMS_FILE = f'{LOG_DIR}/{MODEL}_hparams_file.json'
 # Model result directories.
 TMP_DIR = {
     ML1M: f'{DATASET_DIR[ML1M]}/tmp',

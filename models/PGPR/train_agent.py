@@ -13,7 +13,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from torch.distributions import Categorical
-from pgpr_utils import ML1M, TMP_DIR, get_logger, set_random_seed, USER
+from pgpr_utils import ML1M, TMP_DIR, get_logger, set_random_seed, USER, LOG_DIR, HPARAMS_FILE
 from kg_env import BatchKGEnvironment
 
 logger = None
@@ -216,6 +216,18 @@ def main():
 
     os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
     args.device = torch.device('cuda:0') if torch.cuda.is_available() else 'cpu'
+
+    os.makedirs(LOG_DIR, exist_ok=True)
+    with open(f'{HPARAMS_FILE}', 'w') as f:
+        import json
+        import copy
+        args_dict = dict()
+        for x,y in copy.deepcopy(args._get_kwargs()):
+            args_dict[x] = y
+        if 'device' in args_dict:
+            del args_dict['device']
+        json.dump(args_dict,f)
+  
 
     args.log_dir = os.path.join(TMP_DIR[args.dataset], args.name)
     if not os.path.isdir(args.log_dir):
