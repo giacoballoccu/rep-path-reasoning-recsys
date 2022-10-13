@@ -13,11 +13,21 @@ import torch
 ML1M = 'ml1m'
 LFM1M = 'lfm1m'
 CELL = 'cellphones'
+MODEL = 'cafe'
 # Dataset directories.
 DATA_DIR = {
-    ML1M: f'../../data/{ML1M}/preprocessed/cafe',
-    LFM1M: f'../../data/{LFM1M}/preprocessed/cafe',
-    CELL: f'../../data/{CELL}/preprocessed/cafe'
+    ML1M: f'../../data/{ML1M}/preprocessed/{MODEL}',
+    LFM1M: f'../../data/{LFM1M}/preprocessed/{MODEL}',
+    CELL: f'../../data/{CELL}/preprocessed/{MODEL}'
+}
+LOG_DIR = f'../../results/{MODEL}'
+TRANSE_HPARAMS_FILE = f'{LOG_DIR}/transe_{MODEL}_hparams_file.json'
+HPARAMS_FILE = f'{LOG_DIR}/{MODEL}_hparams_file.json'
+
+LOG_DATASET_DIR = {
+    ML1M: f'{LOG_DIR}/{ML1M}/',
+    LFM1M: f'{LOG_DIR}/{LFM1M}',
+    CELL: f'{LOG_DIR}/{MODEL}/{CELL}',
 }
 
 # Model result directories.

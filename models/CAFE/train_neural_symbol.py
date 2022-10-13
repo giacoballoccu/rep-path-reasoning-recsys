@@ -102,6 +102,18 @@ def main():
         os.makedirs(args.log_dir)
     set_logger(args.log_dir + '/train_log.txt')
     logger.info(args)
+    os.makedirs(LOG_DIR, exist_ok=True)
+    with open(f'{HPARAMS_FILE}', 'w') as f:
+        import json
+        import copy
+        args_dict = dict()
+        for x,y in copy.deepcopy(args._get_kwargs()):
+            args_dict[x] = y
+        if 'device' in args_dict:
+            del args_dict['device']
+        json.dump(args_dict,f)
+       
+
     train(args)
 
 
