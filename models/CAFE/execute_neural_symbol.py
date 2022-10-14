@@ -437,10 +437,6 @@ def run_program(args):
 
         pred_labels[uid] = [t[0] for t in tmp]
         pbar.update(1)
-    with open("/home/gballoccu/Desktop/RecSys22-Tutorial/Hands-On/results/ml1m/cafe" + "/red_labels.pkl",
-              'wb') as pred_paths_file:
-        pickle.dump(pred_labels, pred_paths_file)
-    pred_paths_file.close()
     save_pred_paths(args.dataset, pred_paths_istances)
     msg = evaluate_with_insufficient_pred(pred_labels, test_labels, dataset_name)
     logger.info(msg)

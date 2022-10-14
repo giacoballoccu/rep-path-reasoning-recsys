@@ -92,7 +92,7 @@ def train(args):
                 smooth_reg_loss = []
                 smooth_rank_loss = []
             steps += 1
-        if epoch % 10:
+        if epoch % 10 == 0:
             torch.save(model.state_dict(), '{}/symbolic_model_epoch{}.ckpt'.format(args.log_dir, epoch))
 
 
