@@ -9,14 +9,15 @@ import random
 from UCPR.utils import *
 import pandas as pd
 import random
-
+from collections import defaultdict
 
 
 class Dataset(object):
     """This class is used to load data files and save in the instance."""
 
-    def __init__(self, args, set_name='train', word_sampling_rate=1e-4):
+    def __init__(self, args, set_name='train', word_sampling_rate=1e-4, use_ucpr_entities=False):
         self.dataset_name = args.dataset
+        self.use_ucpr_entities = use_ucpr_entities
         self.data_dir = DATASET_DIR[self.dataset_name]
         if not self.data_dir.endswith('/'):
             self.data_dir += '/'
@@ -33,6 +34,9 @@ class Dataset(object):
     #This will not work if your entities are composed by multiple words, e.g. if you name an entity related_product
     #this script will consider as a relation, please use a single word for relations
     def infer_kg_structure(self):
+
+        MAIN_ENT_PROD, MAIN_REL = MAIN_PRODUCT_INTERACTION[self.dataset_name]
+
         file_list = os.listdir(self.data_dir)
         entity_filenames = [filename for filename in file_list if len(filename.split("_")) == 1]
         entity_filename_edict = edict()
@@ -55,7 +59,7 @@ class Dataset(object):
         self.relation2entity = {}
         for rel_name in relation_names:
             entity_name = rel_name.split("_")[-1]
-            self.relation2entity[rel_name] = entity_name
+            self.relation2entity[rel_name] = entity_name if not self.use_ucpr_entities else UCPR_ENT2TYPE(entity_name)
 
         self.relation2entity[INTERACTION[self.dataset_name]] = MAIN_PRODUCT_INTERACTION[self.dataset_name][0] 
         
@@ -72,10 +76,21 @@ class Dataset(object):
         - `vocab`: a list of string indicating entity values.
         - `vocab_size`: vocabulary size.
         """
-        for name in entity_filename_edict:
-            vocab = [x.split("\t")[0] for x in self._load_file(entity_filename_edict[name])][1:] #Remove header
-            setattr(self, name, edict(vocab=vocab, vocab_size=len(vocab) + 1))
-            print('Load', name, 'of size', len(vocab))
+        if not self.use_ucpr_entities:
+            for name in entity_filename_edict:
+                vocab = [x.split("\t")[0] for x in self._load_file(entity_filename_edict[name])][1:] #Remove header
+                setattr(self, name, edict(vocab=vocab, vocab_size=len(vocab) + 1))
+                print('Load', name, 'of size', len(vocab))
+        else:
+            ent_counter = defaultdict(int)
+            for name in entity_filename_edict:
+                vocab = [x.split("\t")[0] for x in self._load_file(entity_filename_edict[name])][1:] #Remove header
+                name = UCPR_ENT2TYPE(name)
+                ent_counter[name] += len(vocab) + 1
+            for entity, vocab_size in ent_counter.items():
+                setattr(self, entity, edict(vocab_size=vocab_size))
+                print('Load', entity, 'of size', vocab_size)
+            
 
     def load_reviews(self):
         """Load user-product reviews from train/test data files.
@@ -146,11 +161,17 @@ class Dataset(object):
             # Note that `data` variable saves list of entity_tail indices.
             # The i-th record of `data` variable is the entity_tail idx (i.e. product_idx=i).
             # So for each product-relation, there are always |products| records.
-            relation = edict(
+            if not self.use_ucpr_entities:
+                relation = edict(
+                    data=[],
+                    et_vocab=product_relations[name][1].vocab,  # copy of brand, catgory ... 's vocab
+                    et_distrib=np.zeros(product_relations[name][1].vocab_size)  # [1] means self.brand ..
+                )
+            else:
+                relation = edict(
                 data=[],
-                et_vocab=product_relations[name][1].vocab,  # copy of brand, catgory ... 's vocab
                 et_distrib=np.zeros(product_relations[name][1].vocab_size)  # [1] means self.brand ..
-            )
+                )
             size = 0
             for line in self._load_file(product_relations[name][0]):  # [0] means brand_p_b.txt.gz ..
                 knowledge = []

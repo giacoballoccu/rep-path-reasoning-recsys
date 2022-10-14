@@ -20,10 +20,51 @@ DATA_DIR = {
     LFM1M: f'../../data/{LFM1M}/preprocessed/{MODEL}',
     CELL: f'../../data/{CELL}/preprocessed/{MODEL}'
 }
+OPTIM_HPARAMS_METRIC = 'ndcg'
+
 LOG_DIR = f'../../results/{MODEL}'
+
+CFG_DIR = {
+    ML1M: f'{LOG_DIR}/{ML1M}/hparams_cfg',
+    LFM1M: f'{LOG_DIR}/{LFM1M}/hparams_cfg',
+    CELL: f'{LOG_DIR}/{CELL}/hparams_cfg',
+}
+BEST_CFG_DIR = {
+    ML1M: f'{LOG_DIR}/{ML1M}/best_hparams_cfg',
+    LFM1M: f'{LOG_DIR}/{LFM1M}/best_hparams_cfg',
+    CELL: f'{LOG_DIR}/{CELL}/best_hparams_cfg',
+}
+TEST_METRICS_FILE_NAME = 'test_metrics.json'
+TEST_METRICS_FILE_PATH = {
+    ML1M: f'{CFG_DIR[ML1M]}/{TEST_METRICS_FILE_NAME}',
+    LFM1M: f'{CFG_DIR[LFM1M]}/{TEST_METRICS_FILE_NAME}',
+    CELL: f'{CFG_DIR[CELL]}/{TEST_METRICS_FILE_NAME}',
+}
+BEST_TEST_METRICS_FILE_PATH = {
+    ML1M: f'{BEST_CFG_DIR[ML1M]}/{TEST_METRICS_FILE_NAME}',
+    LFM1M: f'{BEST_CFG_DIR[LFM1M]}/{TEST_METRICS_FILE_NAME}',
+    CELL: f'{BEST_CFG_DIR[CELL]}/{TEST_METRICS_FILE_NAME}',
+}
+
+
+CONFIG_FILE_NAME = 'config.json'
+CFG_FILE_PATH = {
+    ML1M: f'{CFG_DIR[ML1M]}/{CONFIG_FILE_NAME}',
+    LFM1M: f'{CFG_DIR[LFM1M]}/{CONFIG_FILE_NAME}',
+    CELL: f'{CFG_DIR[CELL]}/{CONFIG_FILE_NAME}',
+}
+BEST_CFG_FILE_PATH = {
+    ML1M: f'{BEST_CFG_DIR[ML1M]}/{CONFIG_FILE_NAME}',
+    LFM1M: f'{BEST_CFG_DIR[LFM1M]}/{CONFIG_FILE_NAME}',
+    CELL: f'{BEST_CFG_DIR[CELL]}/{CONFIG_FILE_NAME}',
+}
+
 TRANSE_HPARAMS_FILE = f'{LOG_DIR}/transe_{MODEL}_hparams_file.json'
 HPARAMS_FILE = f'{LOG_DIR}/{MODEL}_hparams_file.json'
-TEST_METRICS_FILE = f'{LOG_DIR}/{MODEL}_test.json'
+
+
+
+
 
 LOG_DATASET_DIR = {
     ML1M: f'{LOG_DIR}/{ML1M}/',
@@ -175,3 +216,8 @@ def set_random_seed(seed):
     torch.manual_seed(seed)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(seed)
+
+
+def makedirs(dataset_name):
+    os.makedirs(BEST_CFG_DIR[dataset_name], exist_ok=True)
+    os.makedirs(CFG_DIR[dataset_name], exist_ok=True)

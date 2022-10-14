@@ -77,7 +77,8 @@ def evaluate(dataset_name, topk_matches, test_user_products):
         print("Overall for noOfUser={}, {}={:.4f}".format(n_users, metric,
                                                           avg_metric_value))
         print("\n")
-    with open(TEST_METRICS_FILE, 'w') as f:
+    makedirs(dataset_name)
+    with open(TEST_METRICS_FILE_PATH[dataset_name], 'w') as f:
         json.dump(metrics,f)
 
 def dcg_at_k(r, k, method=1):

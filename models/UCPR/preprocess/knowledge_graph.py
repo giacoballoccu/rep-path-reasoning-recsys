@@ -31,6 +31,7 @@ class KnowledgeGraph(object):
 
     def __init__(self, dataset):
         self.G = dict()
+        self.use_ucpr_entities = dataset.use_ucpr_entities
         self._load_entities(dataset)
         self.dataset_name = dataset.dataset_name
         self._load_reviews(dataset)
@@ -41,11 +42,14 @@ class KnowledgeGraph(object):
     def _load_entities(self, dataset):
         print('Load entities...')
         num_nodes = 0
-        for entity in get_entities(dataset.dataset_name):
+
+        entities =  list(set([ UCPR_ENT2TYPE(ent) if self.use_ucpr_entities else ent for ent in get_entities(dataset.dataset_name)]))
+
+        for entity in entities:
             self.G[entity] = {}
             vocab_size = getattr(dataset, entity).vocab_size
             for eid in range(vocab_size):
-                relations = get_dataset_relations(dataset.dataset_name, entity)
+                relations = get_dataset_relations(dataset.dataset_name, entity, is_ucpr=self.use_ucpr_entities)
                 self.G[entity][eid] = {r: [] for r in relations}
             num_nodes += vocab_size
         print('Total {:d} nodes.'.format(num_nodes))
@@ -67,7 +71,7 @@ class KnowledgeGraph(object):
     def _load_knowledge(self, dataset):
         relations = get_knowledge_derived_relations(dataset.dataset_name)
         main_entity, _ = MAIN_PRODUCT_INTERACTION[dataset.dataset_name]
-        #print('AAAAA ',relations)
+        
         for relation in relations:
             print('Load knowledge {}...'.format(relation))
             data = getattr(dataset, relation).data
@@ -76,7 +80,7 @@ class KnowledgeGraph(object):
                 if len(eids) <= 0:
                     continue
                 for eid in set(eids):
-                    et_type = get_entity_tail(dataset.dataset_name, relation)
+                    et_type = get_entity_tail(dataset.dataset_name, relation, is_ucpr=self.use_ucpr_entities)
                     self._add_edge(main_entity, pid, relation, et_type, eid)
                     num_edges += 2
             print('Total {:d} {:s} edges.'.format(num_edges, relation))

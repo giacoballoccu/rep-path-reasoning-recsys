@@ -43,16 +43,58 @@ TMP_DIR = {
     CELL: f'{DATASET_DIR[CELL]}/tmp',
 }
 
+
+
+OPTIM_HPARAMS_METRIC = 'ndcg'
+
 LOG_DIR = f'../../results/{MODEL}'
-TEST_METRICS_FILE = f'{LOG_DIR}/{MODEL}_test.json'
+
+CFG_DIR = {
+    ML1M: f'{LOG_DIR}/{ML1M}/hparams_cfg',
+    LFM1M: f'{LOG_DIR}/{LFM1M}/hparams_cfg',
+    CELL: f'{LOG_DIR}/{CELL}/hparams_cfg',
+}
+BEST_CFG_DIR = {
+    ML1M: f'{LOG_DIR}/{ML1M}/best_hparams_cfg',
+    LFM1M: f'{LOG_DIR}/{LFM1M}/best_hparams_cfg',
+    CELL: f'{LOG_DIR}/{CELL}/best_hparams_cfg',
+}
+TEST_METRICS_FILE_NAME = 'test_metrics.json'
+TEST_METRICS_FILE_PATH = {
+    ML1M: f'{CFG_DIR[ML1M]}/{TEST_METRICS_FILE_NAME}',
+    LFM1M: f'{CFG_DIR[LFM1M]}/{TEST_METRICS_FILE_NAME}',
+    CELL: f'{CFG_DIR[CELL]}/{TEST_METRICS_FILE_NAME}',
+}
+BEST_TEST_METRICS_FILE_PATH = {
+    ML1M: f'{BEST_CFG_DIR[ML1M]}/{TEST_METRICS_FILE_NAME}',
+    LFM1M: f'{BEST_CFG_DIR[LFM1M]}/{TEST_METRICS_FILE_NAME}',
+    CELL: f'{BEST_CFG_DIR[CELL]}/{TEST_METRICS_FILE_NAME}',
+}
+
+
+CONFIG_FILE_NAME = 'config.json'
+CFG_FILE_PATH = {
+    ML1M: f'{CFG_DIR[ML1M]}/{CONFIG_FILE_NAME}',
+    LFM1M: f'{CFG_DIR[LFM1M]}/{CONFIG_FILE_NAME}',
+    CELL: f'{CFG_DIR[CELL]}/{CONFIG_FILE_NAME}',
+}
+BEST_CFG_FILE_PATH = {
+    ML1M: f'{BEST_CFG_DIR[ML1M]}/{CONFIG_FILE_NAME}',
+    LFM1M: f'{BEST_CFG_DIR[LFM1M]}/{CONFIG_FILE_NAME}',
+    CELL: f'{BEST_CFG_DIR[CELL]}/{CONFIG_FILE_NAME}',
+}
+
 TRANSE_HPARAMS_FILE = f'{LOG_DIR}/transe_{MODEL}_hparams_file.json'
 HPARAMS_FILE = f'{LOG_DIR}/{MODEL}_hparams_file.json'
 
+
+
 LOG_DATASET_DIR = {
-    ML1M: f'{LOG_DIR}/{ML1M}/',
+    ML1M: f'{LOG_DIR}/{ML1M}',
     LFM1M: f'{LOG_DIR}/{LFM1M}',
-    CELL: f'{LOG_DIR}/{MODEL}/{CELL}',
+    CELL: f'{LOG_DIR}/{CELL}',
 }
+
 SAVE_MODEL_DIR = {
     ML1M: f'{LOG_DATASET_DIR[ML1M]}/save',
     LFM1M: f'{LOG_DATASET_DIR[LFM1M]}/save',
@@ -155,6 +197,14 @@ ALSO_BOUGHT_RP = 'also_bought_related_product'
 ALSO_VIEWED_RP = 'also_viewed_related_product'
 ALSO_BOUGHT_P = 'also_bought_product'
 ALSO_VIEWED_P = 'also_viewed_product'
+
+
+ATTRIBUTE = 'attribute'
+def UCPR_ENT2TYPE(entity):
+    if entity != USER or entity != PRODUCT:
+        return ATTRIBUTE
+    return entity
+
 
 
 
@@ -313,13 +363,25 @@ def get_knowledge_derived_relations(dataset_name):
     return ans
 
 
-def get_dataset_relations(dataset_name, entity_head):
-    return list(KG_RELATION[dataset_name][entity_head].keys())
+
+def get_dataset_relations(dataset_name, entity_head, is_ucpr=False):
+    if not is_ucpr or (entity_head == USER or entity_head == PRODUCT):
+        return list(KG_RELATION[dataset_name][entity_head].keys())
+    else:
+        l = []
+        for entity in KG_RELATION[dataset_name]:
+            l.extend(KG_RELATION[dataset_name][entity].keys())
+        return l 
 
 
-def get_entity_tail(dataset_name, relation):
+
+def get_entity_tail(dataset_name, relation, is_ucpr=False):
     entity_head, _ = MAIN_PRODUCT_INTERACTION[dataset_name]
-    return KG_RELATION[dataset_name][entity_head][relation]
+    if not is_ucpr:
+        return KG_RELATION[dataset_name][entity_head][relation]
+    else:
+        return UCPR_ENT2TYPE(KG_RELATION[dataset_name][entity_head][relation])
+
 
 
 def get_logger(logname):
@@ -463,3 +525,8 @@ def shuffle(arr):
         # Swap arr[i] with the element at random index
         arr[i], arr[j] = arr[j], arr[i]
     return arr
+
+
+def makedirs(dataset_name):
+    os.makedirs(BEST_CFG_DIR[dataset_name], exist_ok=True)
+    os.makedirs(CFG_DIR[dataset_name], exist_ok=True)

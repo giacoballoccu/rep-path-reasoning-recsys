@@ -75,7 +75,7 @@ def save_output(dataset_name, pred_paths):
         pickle.dump(pred_paths, pred_paths_file)
     pred_paths_file.close()
 
-def evaluate(topk_matches, test_user_products, no_skip_user):
+def evaluate(topk_matches, test_user_products, no_skip_user, dataset_name):
     """Compute metrics for predicted recommendations.
     Args:
         topk_matches: a list or dict of product ids in ascending order.
@@ -128,7 +128,6 @@ def evaluate(topk_matches, test_user_products, no_skip_user):
         metrics.hr.append(hit)
         metrics.recall.append(recall)
         metrics.precision.append(precision)
-    #print(x)
     avg_metrics = edict(
         ndcg=[],
         hr=[],
@@ -143,8 +142,8 @@ def evaluate(topk_matches, test_user_products, no_skip_user):
         print("Overall for noOfUser={}, {}={:.4f}".format(n_users, metric,
                                                           avg_metric_value))
         print("\n")
-
-    with open(TEST_METRICS_FILE, 'w') as f:
+    makedirs(dataset_name)
+    with open(TEST_METRICS_FILE_PATH[dataset_name], 'w') as f:
         json.dump(metrics,f)
 
     return avg_metrics.precision, avg_metrics.recall, avg_metrics.ndcg, avg_metrics.hr,\
@@ -476,7 +475,7 @@ def evaluate_paths(topk,dataset_name, pred_paths, scores, train_labels,
         no_skip_user[uid] = 1
 
     avg_precision, avg_recall, avg_ndcg, avg_hit, invalid_users = evaluate(pred_labels, 
-                test_labels, no_skip_user)
+                test_labels, no_skip_user, dataset_name)
     print('precision: ', avg_precision)
     print('recall: ',  avg_recall) 
     print('ndcg: ', avg_ndcg)
@@ -522,8 +521,8 @@ def test(args, train_labels, valid_labels, test_labels, best_recall, pretest = 1
     #for top_k in [10, 20, 25,50]:
     TOP_N_LOGGING = 100    
     
-    if args.run_path or os.path.exists(path_file) == False:
-        predict_paths(args, policy_file, path_file, train_labels, test_labels, pretest)#predict_paths(policy_file, path_file, args)
+    #if args.run_path or os.path.exists(path_file) == False:
+    #    predict_paths(args, policy_file, path_file, train_labels, test_labels, pretest)#predict_paths(policy_file, path_file, args)
     if args.save_paths or args.run_eval():
         pred_paths, scores = extract_paths(args.dataset, path_file, train_labels, valid_labels, test_labels)
     if args.run_eval:

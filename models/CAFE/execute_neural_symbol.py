@@ -89,7 +89,7 @@ def ndcg_at_k(r, k, method=1):
     return dcg_at_k(r, k, method) / dcg_max
 
 
-def evaluate_with_insufficient_pred(topk_matches, test_user_products):
+def evaluate_with_insufficient_pred(topk_matches, test_user_products, dataset_name):
     """Compute metrics for predicted recommendations.
     Args:
         topk_matches: a list or dict of product ids ordered by largest to smallest scores
@@ -149,7 +149,8 @@ def evaluate_with_insufficient_pred(topk_matches, test_user_products):
     our_ndcg = np.mean(our_ndcgs)
     our_recall = np.mean(recalls)
 
-    with open(TEST_METRICS_FILE, 'w') as f:
+    makedirs(dataset_name)
+    with open(TEST_METRICS_FILE_PATH[dataset_name], 'w') as f:
         json.dump(metrics,f)
     print(f"Our ndcg: {our_ndcg}, Our recall: {our_recall}")
     avg_precision = np.mean(precisions) * 100
@@ -403,6 +404,7 @@ def save_pred_paths(dataset, pred_paths):
 
 
 def run_program(args):
+    dataset_name = args.dataset
     kg = load_kg(args.dataset)
     kg_mask = KGMask(kg)
 
@@ -440,7 +442,7 @@ def run_program(args):
         pickle.dump(pred_labels, pred_paths_file)
     pred_paths_file.close()
     save_pred_paths(args.dataset, pred_paths_istances)
-    msg = evaluate_with_insufficient_pred(pred_labels, test_labels)
+    msg = evaluate_with_insufficient_pred(pred_labels, test_labels, dataset_name)
     logger.info(msg)
 
 

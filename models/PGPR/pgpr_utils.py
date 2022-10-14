@@ -30,16 +30,59 @@ DATASET_DIR = {
 }
 
 
+OPTIM_HPARAMS_METRIC = 'ndcg'
 LOG_DIR = f'../../results/{MODEL}'
-TEST_METRICS_FILE = f'{LOG_DIR}/{MODEL}_test.json'
+
+CFG_DIR = {
+    ML1M: f'{LOG_DIR}/{ML1M}/hparams_cfg',
+    LFM1M: f'{LOG_DIR}/{LFM1M}/hparams_cfg',
+    CELL: f'{LOG_DIR}/{CELL}/hparams_cfg',
+}
+BEST_CFG_DIR = {
+    ML1M: f'{LOG_DIR}/{ML1M}/best_hparams_cfg',
+    LFM1M: f'{LOG_DIR}/{LFM1M}/best_hparams_cfg',
+    CELL: f'{LOG_DIR}/{CELL}/best_hparams_cfg',
+}
+TEST_METRICS_FILE_NAME = 'test_metrics.json'
+TEST_METRICS_FILE_PATH = {
+    ML1M: f'{CFG_DIR[ML1M]}/{TEST_METRICS_FILE_NAME}',
+    LFM1M: f'{CFG_DIR[LFM1M]}/{TEST_METRICS_FILE_NAME}',
+    CELL: f'{CFG_DIR[CELL]}/{TEST_METRICS_FILE_NAME}',
+}
+BEST_TEST_METRICS_FILE_PATH = {
+    ML1M: f'{BEST_CFG_DIR[ML1M]}/{TEST_METRICS_FILE_NAME}',
+    LFM1M: f'{BEST_CFG_DIR[LFM1M]}/{TEST_METRICS_FILE_NAME}',
+    CELL: f'{BEST_CFG_DIR[CELL]}/{TEST_METRICS_FILE_NAME}',
+}
+
+
+CONFIG_FILE_NAME = 'config.json'
+CFG_FILE_PATH = {
+    ML1M: f'{CFG_DIR[ML1M]}/{CONFIG_FILE_NAME}',
+    LFM1M: f'{CFG_DIR[LFM1M]}/{CONFIG_FILE_NAME}',
+    CELL: f'{CFG_DIR[CELL]}/{CONFIG_FILE_NAME}',
+}
+BEST_CFG_FILE_PATH = {
+    ML1M: f'{BEST_CFG_DIR[ML1M]}/{CONFIG_FILE_NAME}',
+    LFM1M: f'{BEST_CFG_DIR[LFM1M]}/{CONFIG_FILE_NAME}',
+    CELL: f'{BEST_CFG_DIR[CELL]}/{CONFIG_FILE_NAME}',
+}
+
+TRANSE_HPARAMS_FILE = f'{LOG_DIR}/transe_{MODEL}_hparams_file.json'
+HPARAMS_FILE = f'{LOG_DIR}/{MODEL}_hparams_file.json'
+
+
+
+
+
+
 LOG_DATASET_DIR = {
     ML1M: f'{LOG_DIR}/{ML1M}/',
     LFM1M: f'{LOG_DIR}/{LFM1M}',
     CELL: f'{LOG_DIR}/{MODEL}/{CELL}',
 }
 
-TRANSE_HPARAMS_FILE = f'{LOG_DIR}/transe_{MODEL}_hparams_file.json'
-HPARAMS_FILE = f'{LOG_DIR}/{MODEL}_hparams_file.json'
+
 # Model result directories.
 TMP_DIR = {
     ML1M: f'{DATASET_DIR[ML1M]}/tmp',
@@ -418,3 +461,7 @@ def shuffle(arr):
         # Swap arr[i] with the element at random index
         arr[i], arr[j] = arr[j], arr[i]
     return arr
+
+def makedirs(dataset_name):
+    os.makedirs(BEST_CFG_DIR[dataset_name], exist_ok=True)
+    os.makedirs(CFG_DIR[dataset_name], exist_ok=True)
