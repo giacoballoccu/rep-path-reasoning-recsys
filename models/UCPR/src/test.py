@@ -522,7 +522,7 @@ def test(args, train_labels, valid_labels, test_labels, best_recall, pretest = 1
     TOP_N_LOGGING = 100    
     
     #if args.run_path or os.path.exists(path_file) == False:
-    #    predict_paths(args, policy_file, path_file, train_labels, test_labels, pretest)#predict_paths(policy_file, path_file, args)
+        #predict_paths(args, policy_file, path_file, train_labels, test_labels, pretest)#predict_paths(policy_file, path_file, args)
     if args.save_paths or args.run_eval():
         pred_paths, scores = extract_paths(args.dataset, path_file, train_labels, valid_labels, test_labels)
     if args.run_eval:

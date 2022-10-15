@@ -40,22 +40,20 @@ class AC_lstm_mf_dummy(nn.Module):
 
 
         self.kg = load_kg(args.dataset)
+        self.dataset_name = self.kg.dataset_name
 
         if self.args.envir == 'p1':
-            self._get_next_node_type = lambda curr_node_type, relation, next_node_id:  KG_RELATION[self.kg.dataset_name][curr_node_type][relation]#lambda curr_node_type, relation, next_node_id: self.kg(curr_node_type,  next_node_id, relation) 
-                            #self._get_next_node_type_meta
+            self._get_next_node_type = lambda curr_node_type, relation, next_node_id:  \
+                        KG_RELATION[self.dataset_name][curr_node_type][relation]
             if self.args.KGE_pretrained == True: 
                 self.kg_emb = RW_KGE_pretrained(args)
             else:  
                 self.kg_emb = RW_KGE(args)
 
         elif self.args.envir == 'p2':
-            self._get_next_node_type = lambda curr_node_type, relation, next_node_id:  KG_RELATION[self.kg.dataset_name][curr_node_type][relation]#lambda curr_node_type, relation, next_node_id: self.kg(curr_node_type,  next_node_id, relation) #self._get_next_node_type_graph
+            self._get_next_node_type = lambda curr_node_type, relation, next_node_id:  \
+                        KG_RELATION[self.dataset_name][curr_node_type][relation]
             if self.args.KGE_pretrained == True: 
-                # if  self.args.dataset == MOVIE_CORE:
-                #     self.kg_emb = KnowledgeEmbedding_memory_graph(args)
-                # else:
-                    # self.kg_emb = KG_KGE_pretrained(args)
                 self.kg_emb = KG_KGE_pretrained(args)
             else:  
                 self.kg_emb = KG_KGE(args)
@@ -66,14 +64,6 @@ class AC_lstm_mf_dummy(nn.Module):
 
         self.dummy_rela = torch.ones(max(self.user_triplet_set) * 2+ 1, 1, self.embed_size)
         self.dummy_rela = nn.Parameter(self.dummy_rela, requires_grad=True).to(self.device)
-
-    ''' 
-    def _get_next_node_type_meta(self, curr_node_type, next_relation, next_entity_id):
-        return KG_RELATION[self.args.dataset][curr_node_type][next_relation]
-
-    def _get_next_node_type_graph(self, curr_node_type, next_relation, next_entity_id):
-        return self.et_idx2ty[next_entity_id]
-    '''
 
 
     def bulid_model_rl(self):

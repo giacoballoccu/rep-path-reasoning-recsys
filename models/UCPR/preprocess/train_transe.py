@@ -4,33 +4,41 @@ import os
 import argparse
 import torch
 import torch.optim as optim
-from UCPR.preprocess.dataset import DataLoader
+from UCPR.preprocess.dataset import DataLoader, Dataset
 from UCPR.utils import *
-from transe_model import KnowledgeEmbedding
-
+from UCPR.preprocess.transe_model import KnowledgeEmbedding
+import json
+import sys
 logger = None
 
 
-def train(args, dataset):
-    dataloader = DataLoader(dataset, args.batch_size)
-    review_to_train = len(dataset.review.data) * args.epochs + 1
+def train(args):
+    dataset_name = args.dataset
+    train_set = Dataset(args,set_name='train')
+    val_set = Dataset(args,set_name='valid')
+    train_loader = DataLoader(train_set, args.batch_size)
+    valid_loader = DataLoader(val_set, args.batch_size)
+    review_to_train = len(train_set.review.data) * args.epochs + 1
 
-    model = KnowledgeEmbedding(args, dataloader).to(args.device)
+    model = KnowledgeEmbedding(args, train_loader).to(args.device)
     logger.info('Parameters:' + str([i[0] for i in model.named_parameters()]))
     optimizer = optim.SGD(model.parameters(), lr=args.lr)
     steps = 0
     smooth_loss = 0.0
 
+    best_val_loss = sys.maxsize
+    train_loss_history = []
+    val_loss_history = []
     for epoch in range(1, args.epochs + 1):
-        dataloader.reset()
-        while dataloader.has_next():
+        train_loader.reset()
+        while train_loader.has_next():
             # Set learning rate.
-            lr = args.lr * max(1e-4, 1.0 - dataloader.finished_review_num / float(review_to_train))
+            lr = args.lr * max(1e-4, 1.0 - train_loader.finished_review_num / float(review_to_train))
             for pg in optimizer.param_groups:
                 pg['lr'] = lr
 
             # Get training batch.
-            batch_idxs = dataloader.get_batch()
+            batch_idxs = train_loader.get_batch()
             batch_idxs = torch.from_numpy(batch_idxs).to(args.device)
 
             # Train models.
@@ -44,19 +52,51 @@ def train(args, dataset):
             steps += 1
             if steps % args.steps_per_checkpoint == 0:
                 logger.info('Epoch: {:02d} | '.format(epoch) +
-                            'Review: {:d}/{:d} | '.format(dataloader.finished_review_num, review_to_train) +
+                            'Review: {:d}/{:d} | '.format(train_loader.finished_review_num, review_to_train) +
                             'Lr: {:.5f} | '.format(lr) +
                             'Smooth loss: {:.5f}'.format(smooth_loss))
+                train_loss_history.append(smooth_loss)
                 smooth_loss = 0.0
-        if epoch % 10 == 0:
-            torch.save(model.state_dict(), '{}/transe_model_sd_epoch_{}.ckpt'.format(args.log_dir, epoch))
+        if epoch % 1 == 0:
+            if args.do_validation:
+                model.eval()
+                total_val_loss = 0
+                cnt = 0
+                valid_loader.reset()
+                while valid_loader.has_next():
+                    # Get valid batch.
+                    batch_idxs = valid_loader.get_batch()
+                    batch_idxs = torch.from_numpy(batch_idxs).to(args.device)
+                    valid_loss = model(batch_idxs)
+ 
+                    total_val_loss += valid_loss.item()
+                    cnt += 1
 
+                avg_valid_loss = total_val_loss/max(cnt, 1)
+                logger.info('Epoch: {:02d} | '.format(epoch) +
+                                    'Validation loss: {:.5f}'.format(avg_valid_loss))
+                val_loss_history.append(avg_valid_loss)
+                if avg_valid_loss < best_val_loss:
+                    best_val_loss = avg_valid_loss
+                    
+                    torch.save(model.state_dict(), '{}/transe_best_model.ckpt'.format(args.log_dir))
+                model.train()
+        torch.save(model.state_dict(), '{}/transe_model_sd_epoch_{}.ckpt'.format(args.log_dir, epoch))
+    
+    makedirs()
+    with open(TRANSE_TEST_METRICS_FILE_PATH, 'w') as f:
+        json.dump( {'val_loss': best_val_loss, 
+                'val_loss_history': val_loss_history,
+                'train_loss_history':train_loss_history } )
+    
 
 def extract_embeddings(args, dataset):
     """Note that last entity embedding is of size [vocab_size+1, d]."""
     dataset_name = args.dataset
     os.makedirs(args.log_dir, exist_ok=True)
-    model_file = '{}/transe_model_sd_epoch_{}.ckpt'.format(args.log_dir, args.epochs)
+    
+    model_file = '{}/transe_best_model.ckpt'.format(args.log_dir)
+    
     print('Load embeddings', model_file)
     state_dict = torch.load(model_file, map_location=lambda storage, loc: storage)
     embeds = {}
@@ -90,6 +130,8 @@ def main():
     parser.add_argument('--embed_size', type=int, default=100, help='knowledge embedding size.')
     parser.add_argument('--num_neg_samples', type=int, default=5, help='number of negative samples.')
     parser.add_argument('--steps_per_checkpoint', type=int, default=200, help='Number of steps for checkpoint.')
+    parser.add_argument('--do_validation', type=bool, default=True, help='Whether to perform validation')
+
 
 
     args = parser.parse_args()
@@ -119,7 +161,7 @@ def main():
 
     set_random_seed(args.seed)
     dataset = load_dataset(args.dataset)
-    train(args, dataset)
+    train(args)
     extract_embeddings(args, dataset)
 
 

@@ -72,6 +72,8 @@ BEST_TEST_METRICS_FILE_PATH = {
 }
 
 
+
+
 CONFIG_FILE_NAME = 'config.json'
 CFG_FILE_PATH = {
     ML1M: f'{CFG_DIR[ML1M]}/{CONFIG_FILE_NAME}',
@@ -83,6 +85,38 @@ BEST_CFG_FILE_PATH = {
     LFM1M: f'{BEST_CFG_DIR[LFM1M]}/{CONFIG_FILE_NAME}',
     CELL: f'{BEST_CFG_DIR[CELL]}/{CONFIG_FILE_NAME}',
 }
+
+
+TRANSE_CFG_FILE_NAME = 'config_transe.json'
+TRANSE_TEST_METRICS_FILE_PATH = {
+    ML1M: f'{CFG_DIR[ML1M]}/{TRANSE_TEST_METRICS_FILE_NAME}',
+    LFM1M: f'{CFG_DIR[LFM1M]}/{TRANSE_TEST_METRICS_FILE_NAME}',
+    CELL: f'{CFG_DIR[CELL]}/{TRANSE_TEST_METRICS_FILE_NAME}',
+}
+BEST_TRANSE_TEST_METRICS_FILE_PATH = {
+    ML1M: f'{BEST_CFG_DIR[ML1M]}/{TRANSE_TEST_METRICS_FILE_NAME}',
+    LFM1M: f'{BEST_CFG_DIR[LFM1M]}/{TRANSE_TEST_METRICS_FILE_NAME}',
+    CELL: f'{BEST_CFG_DIR[CELL]}/{TRANSE_TEST_METRICS_FILE_NAME}',
+}
+TRANSE_CFG_FILE_PATH = {
+    ML1M: f'{CFG_DIR[ML1M]}/{TRANSE_CFG_FILE_NAME}',
+    LFM1M: f'{CFG_DIR[LFM1M]}/{TRANSE_CFG_FILE_NAME}',
+    CELL: f'{CFG_DIR[CELL]}/{TRANSE_CFG_FILE_NAME}',
+}
+TRANSE_BEST_CFG_FILE_PATH = {
+    ML1M: f'{BEST_CFG_DIR[ML1M]}/{TRANSE_CFG_FILE_NAME}',
+    LFM1M: f'{BEST_CFG_DIR[LFM1M]}/{TRANSE_CFG_FILE_NAME}',
+    CELL: f'{BEST_CFG_DIR[CELL]}/{TRANSE_CFG_FILE_NAME}',
+}
+
+
+
+
+
+
+
+
+
 
 TRANSE_HPARAMS_FILE = f'{LOG_DIR}/transe_{MODEL}_hparams_file.json'
 HPARAMS_FILE = f'{LOG_DIR}/{MODEL}_hparams_file.json'
@@ -198,12 +232,6 @@ ALSO_VIEWED_RP = 'also_viewed_related_product'
 ALSO_BOUGHT_P = 'also_bought_product'
 ALSO_VIEWED_P = 'also_viewed_product'
 
-
-ATTRIBUTE = 'attribute'
-def UCPR_ENT2TYPE(entity):
-    if entity != USER or entity != PRODUCT:
-        return ATTRIBUTE
-    return entity
 
 
 
@@ -364,23 +392,15 @@ def get_knowledge_derived_relations(dataset_name):
 
 
 
-def get_dataset_relations(dataset_name, entity_head, is_ucpr=False):
-    if not is_ucpr or (entity_head == USER or entity_head == PRODUCT):
-        return list(KG_RELATION[dataset_name][entity_head].keys())
-    else:
-        l = []
-        for entity in KG_RELATION[dataset_name]:
-            l.extend(KG_RELATION[dataset_name][entity].keys())
-        return l 
+def get_dataset_relations(dataset_name, entity_head):    
+    return list(KG_RELATION[dataset_name][entity_head].keys())
 
 
 
-def get_entity_tail(dataset_name, relation, is_ucpr=False):
+
+def get_entity_tail(dataset_name, relation):
     entity_head, _ = MAIN_PRODUCT_INTERACTION[dataset_name]
-    if not is_ucpr:
-        return KG_RELATION[dataset_name][entity_head][relation]
-    else:
-        return UCPR_ENT2TYPE(KG_RELATION[dataset_name][entity_head][relation])
+    return KG_RELATION[dataset_name][entity_head][relation]
 
 
 

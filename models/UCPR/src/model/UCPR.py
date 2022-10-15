@@ -39,17 +39,22 @@ class UCPR(AC_lstm_mf_dummy):
 
 
         self.dataset_name = args.dataset
+        self.dataset = load_dataset(args.dataset)
+        
         if self.args.envir == 'p1':
-            self._get_next_node_type = lambda curr_node_type, relation, next_node_id:  KG_RELATION[self.dataset_name][curr_node_type][relation]#lambda curr_node_type, relation, next_node_id: self.kg(curr_node_type,  next_node_id, relation)#self._get_next_node_type_meta
+            self._get_next_node_type = lambda curr_node_type, relation, next_node_id:  \
+                        KG_RELATION[self.dataset_name][curr_node_type][relation]            
+
             if self.args.KGE_pretrained == True: self.kg_emb = RW_KGE_pretrained(args)
             else:  self.kg_emb = RW_KGE(args)
 
         elif self.args.envir == 'p2':
-            self._get_next_node_type = lambda curr_node_type, relation, next_node_id:  KG_RELATION[self.dataset_name][curr_node_type][relation]#lambda curr_node_type, relation, next_node_id: self.kg(curr_node_type,  next_node_id, relation)#self._get_next_node_type_graph
+            self._get_next_node_type = lambda curr_node_type, relation, next_node_id:  \
+                        KG_RELATION[self.dataset_name][curr_node_type][relation]
             if self.args.KGE_pretrained == True: self.kg_emb = KG_KGE_pretrained(args)
             else:  self.kg_emb = KG_KGE(args)
 
-            dataset = load_dataset(args.dataset)
+            
 
 
         self.bulid_mode_user()

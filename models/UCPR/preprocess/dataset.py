@@ -15,9 +15,9 @@ from collections import defaultdict
 class Dataset(object):
     """This class is used to load data files and save in the instance."""
 
-    def __init__(self, args, set_name='train', word_sampling_rate=1e-4, use_ucpr_entities=False):
+    def __init__(self, args, set_name='train', word_sampling_rate=1e-4, verbose=False):
         self.dataset_name = args.dataset
-        self.use_ucpr_entities = use_ucpr_entities
+        self.verbose = verbose
         self.data_dir = DATASET_DIR[self.dataset_name]
         if not self.data_dir.endswith('/'):
             self.data_dir += '/'
@@ -25,8 +25,7 @@ class Dataset(object):
         entity_filename_edict, relation_filename_edict = self.infer_kg_structure()
         #Other relation names doesn't contain the main interaction
         self.entity_names, self.other_relation_names = list(entity_filename_edict.keys()), list(relation_filename_edict.keys())
-        #self.relation_names =  self.other_relation_names + [INTERACTION[self.dataset_name] ]
-        
+
         self.load_entities(entity_filename_edict)
         self.load_product_relations(relation_filename_edict)
         self.load_reviews()
@@ -59,7 +58,7 @@ class Dataset(object):
         self.relation2entity = {}
         for rel_name in relation_names:
             entity_name = rel_name.split("_")[-1]
-            self.relation2entity[rel_name] = entity_name if not self.use_ucpr_entities else UCPR_ENT2TYPE(entity_name)
+            self.relation2entity[rel_name] = entity_name
 
         self.relation2entity[INTERACTION[self.dataset_name]] = MAIN_PRODUCT_INTERACTION[self.dataset_name][0] 
         
@@ -76,21 +75,12 @@ class Dataset(object):
         - `vocab`: a list of string indicating entity values.
         - `vocab_size`: vocabulary size.
         """
-        if not self.use_ucpr_entities:
-            for name in entity_filename_edict:
-                vocab = [x.split("\t")[0] for x in self._load_file(entity_filename_edict[name])][1:] #Remove header
-                setattr(self, name, edict(vocab=vocab, vocab_size=len(vocab) + 1))
+
+        for name in entity_filename_edict:
+            vocab = [x.split("\t")[0] for x in self._load_file(entity_filename_edict[name])][1:] #Remove header
+            setattr(self, name, edict(vocab=vocab, vocab_size=len(vocab) + 1))
+            if self.verbose:
                 print('Load', name, 'of size', len(vocab))
-        else:
-            ent_counter = defaultdict(int)
-            for name in entity_filename_edict:
-                vocab = [x.split("\t")[0] for x in self._load_file(entity_filename_edict[name])][1:] #Remove header
-                name = UCPR_ENT2TYPE(name)
-                ent_counter[name] += len(vocab) + 1
-            for entity, vocab_size in ent_counter.items():
-                setattr(self, entity, edict(vocab_size=vocab_size))
-                print('Load', entity, 'of size', vocab_size)
-            
 
     def load_reviews(self):
         """Load user-product reviews from train/test data files.
@@ -115,7 +105,8 @@ class Dataset(object):
             timestamp = int(arr[3])
             review_data.append((user_idx, product_idx, rating, timestamp))
             product_distrib[product_idx] += 1
-        print(f"Invalid users: {invalid_users}, invalid items: {invalid_pid}")
+        if self.verbose:
+            print(f"Invalid users: {invalid_users}, invalid items: {invalid_pid}")
         self.review = edict(
             data=review_data,
             size=len(review_data),
@@ -124,8 +115,8 @@ class Dataset(object):
             review_count=len(review_data),
             review_distrib=np.ones(len(review_data))  # set to 1 now
         )
-
-        print('Load review of size', self.review.size)
+        if self.verbose:
+            print('Load review of size', self.review.size)
 
     def load_product_relations(self, relation_filename_edict):
         """Load 8 product -> ? relations:
@@ -161,17 +152,13 @@ class Dataset(object):
             # Note that `data` variable saves list of entity_tail indices.
             # The i-th record of `data` variable is the entity_tail idx (i.e. product_idx=i).
             # So for each product-relation, there are always |products| records.
-            if not self.use_ucpr_entities:
-                relation = edict(
+            
+            relation = edict(
                     data=[],
                     et_vocab=product_relations[name][1].vocab,  # copy of brand, catgory ... 's vocab
                     et_distrib=np.zeros(product_relations[name][1].vocab_size)  # [1] means self.brand ..
-                )
-            else:
-                relation = edict(
-                data=[],
-                et_distrib=np.zeros(product_relations[name][1].vocab_size)  # [1] means self.brand ..
-                )
+            )
+
             size = 0
             for line in self._load_file(product_relations[name][0]):  # [0] means brand_p_b.txt.gz ..
                 knowledge = []
@@ -184,7 +171,8 @@ class Dataset(object):
                         size += 1
                 relation.data.append(knowledge)
             setattr(self, name, relation)
-            print('Load', name, 'of size', size)
+            if self.verbose:
+                print('Load', name, 'of size', size)
 
 
 class DataLoader(object):

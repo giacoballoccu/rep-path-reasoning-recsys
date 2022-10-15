@@ -68,18 +68,17 @@ class KnowledgeEmbedding(nn.Module):
 
 
         self.relations = edict()
-        main_rel = INTERACTION[dataset.dataset_name]
-        self.relations[main_rel] = edict(
-            et="product",
-            et_distrib=self._make_distrib(getattr(dataset, "review").product_uniform_distrib)
-        )
         for relation_name in dataset.other_relation_names:
             value = edict(
                 et=dataset.relation2entity[relation_name],
                 et_distrib=self._make_distrib(getattr(dataset, relation_name).et_distrib)
             )
             self.relations[relation_name] = value
-
+        main_rel = INTERACTION[dataset.dataset_name]
+        self.relations[main_rel] = edict(
+            et="product",
+            et_distrib=self._make_distrib(getattr(dataset, "review").product_uniform_distrib)
+        )
 
     def _entity_embedding(self, vocab_size):
         """Create entity embedding of size [vocab_size+1, embed_size].

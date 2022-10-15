@@ -16,7 +16,7 @@ def load_metrics(filepath):
     return metrics
 def save_metrics(metrics, filepath):
     with open(filepath, 'w') as f:
-        json.dump(metrics, f)CFG_FILE_PATH
+        json.dump(metrics, f)
 def save_cfg(configuration, filepath):
     with open(filepath, 'w') as f:
         json.dump(metrics, f)     
@@ -38,9 +38,6 @@ def save_best(best_metrics, test_metrics, grid):
         shutil.copytree(TMP_DIR[dataset_name], BEST_CFG_DIR[dataset_name] )
 
 
-def makedirs(dataset_name):
-    os.makedirs(BEST_CFG_DIR[dataset_name], exist_ok=True)
-    os.makedirs(CFG_DIR[dataset_name], exist_ok=True)
 
 
 
