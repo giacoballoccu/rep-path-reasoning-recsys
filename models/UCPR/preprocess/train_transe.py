@@ -83,8 +83,8 @@ def train(args):
                 model.train()
         torch.save(model.state_dict(), '{}/transe_model_sd_epoch_{}.ckpt'.format(args.log_dir, epoch))
     
-    makedirs()
-    with open(TRANSE_TEST_METRICS_FILE_PATH, 'w') as f:
+    makedirs(CFG_DIR[dataset_name])
+    with open(TRANSE_TEST_METRICS_FILE_PATH[dataset_name], 'w') as f:
         json.dump( {'val_loss': best_val_loss, 
                 'val_loss_history': val_loss_history,
                 'train_loss_history':train_loss_history } )
