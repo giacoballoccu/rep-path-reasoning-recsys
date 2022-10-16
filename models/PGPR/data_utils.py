@@ -28,7 +28,7 @@ class Dataset(object):
     #This will not work if your entities are composed by multiple words, e.g. if you name an entity related_product
     #this script will consider as a relation, please use a single word for relations
     def infer_kg_structure(self):
-        file_list = os.listdir(self.data_dir)
+        file_list = [f for f in os.listdir(self.data_dir) if f.endswith('.txt.gz')]
         entity_filenames = [filename for filename in file_list if len(filename.split("_")) == 1]
         entity_filename_edict = edict()
         entity_names = []
@@ -182,11 +182,13 @@ class DataLoader(object):
         (u_id, p_id, w_id, b_id, c_id, rp_id, rp_id, rp_id).
         """
         batch = []
+        #print(self.product_relations)
         review_idx = self.review_seq[self.cur_review_i]
         user_idx, product_idx, rating, _ = self.dataset.review.data[review_idx]
         product_knowledge = {pr: getattr(self.dataset, pr).data[product_idx] for pr in
                              self.product_relations}  # DEFINES THE ORDER OF BATCH_IDX
-
+        #3079 2208
+        #print(self.product_relations)
         while len(batch) < self.batch_size:
             data = [user_idx, product_idx]
             for pr in self.product_relations:

@@ -128,20 +128,21 @@ class TopkReasoningPaths:
      """
 
 
-def pathfy(dataset_name, uid_paths):
-    LIR_matrix = load_LIR_matrix(dataset_name)
-    SEP_matrix = load_SEP_matrix(dataset_name)
+def pathfy(dataset_name, model_name, uid_paths):
+    LIR_matrix = load_LIR_matrix(dataset_name, model_name)
+    #SEP_matrix = load_SEP_matrix(dataset_name, model_name)
     topk_reasoning_paths = {}
     for uid, path_triplets in uid_paths.items():
         curr_reasoning_paths = []
-        for path_triplet in path_triplets:
-            score, prob, path = path_triplet
-            linked_interaction_id, linked_interaction_rel = get_linked_interaction_triple(path)
-            shared_entity_id, shared_entity_type = get_shared_entity_tuple(path)
-            lir = LIR_matrix[linked_interaction_rel][linked_interaction_id]
-            sep = SEP_matrix[shared_entity_type][shared_entity_id]
-            path_type = get_path_type(path)
-            pattern = get_path_pattern(path)
-            curr_reasoning_paths.append(ReasoningPath(path, score, prob, lir, sep, path_type, pattern))
+        for path_tuple in path_triplets:
+            pid, score, prob, path = path_tuple
+            if path != None:
+                linked_interaction_id, _, linked_interaction_entity = get_linked_interaction_triple(path)
+                shared_entity_id, shared_entity_type = get_shared_entity_tuple(path)
+                lir = LIR_matrix[uid][linked_interaction_entity][linked_interaction_id]
+                sep = 0 #SEP_matrix[shared_entity_type][shared_entity_id]
+                path_type = get_path_type(path)
+                pattern = get_path_pattern(path)
+                curr_reasoning_paths.append(ReasoningPath(path, score, prob, lir, sep, path_type, pattern))
         topk_reasoning_paths[uid] = TopkReasoningPaths(dataset_name, curr_reasoning_paths)
     return topk_reasoning_paths

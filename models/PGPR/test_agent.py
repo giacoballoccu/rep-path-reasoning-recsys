@@ -219,7 +219,7 @@ def save_output(dataset_name, pred_paths):
         pickle.dump(pred_paths, pred_paths_file)
     pred_paths_file.close()
 
-def extract_paths(dataset_name, path_file, train_labels, valid_labels, test_labels):
+def extract_paths(dataset_name, save_paths, path_file, train_labels, valid_labels, test_labels):
     embeds = load_embed(args.dataset)
     user_embeds = embeds[USER]
     main_entity, main_relation = MAIN_PRODUCT_INTERACTION[dataset_name]
@@ -250,8 +250,8 @@ def extract_paths(dataset_name, path_file, train_labels, valid_labels, test_labe
         path_prob = reduce(lambda x, y: x * y, probs)
         pred_paths[uid][pid].append((path_score, path_prob, path))
 
-
-    save_output(dataset_name, pred_paths)
+    if args.save_paths:
+        save_output(dataset_name, pred_paths)
     return pred_paths, scores
 
 def evaluate_paths(dataset_name, pred_paths, emb_scores, train_labels, test_labels):
@@ -324,8 +324,8 @@ def test(args):
     # kg = load_kg(args.dataset)
     if args.run_path:
         predict_paths(policy_file, path_file, args)
-    if args.save_paths or args.run_eval():
-        pred_paths, scores = extract_paths(args.dataset, path_file, train_labels, valid_labels, test_labels)
+    if args.save_paths or args.run_eval:
+        pred_paths, scores = extract_paths(args.dataset, args.save_paths, path_file, train_labels, valid_labels, test_labels)
     if args.run_eval:
         evaluate_paths(args.dataset, pred_paths, scores, train_labels, test_labels)
 
@@ -346,7 +346,7 @@ if __name__ == '__main__':
     parser.add_argument('--add_products', type=boolean, default=True, help='Add predicted products up to 10')
     parser.add_argument('--topk', type=list, nargs='*', default=[25, 5, 1], help='number of samples')
     parser.add_argument('--run_path', type=boolean, default=True, help='Generate predicted path? (takes long time)')
-    parser.add_argument('--run_eval', type=boolean, default=False, help='Run evaluation?')
+    parser.add_argument('--run_eval', type=boolean, default=True, help='Run evaluation?')
     parser.add_argument('--save_paths', type=boolean, default=True, help='Save paths')
     args = parser.parse_args()
 

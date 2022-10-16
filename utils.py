@@ -23,6 +23,7 @@ DATASETS_WITH_WORDS = [CELL, BEAUTY, CLOTH]
 AMAZON_DATASETS = [CELL, BEAUTY, CLOTH]
 
 TRAIN = 'train'
+VALID = 'valid'
 TEST = 'test'
 USER = 'user'
 
@@ -38,6 +39,12 @@ MAIN_INTERACTION = {
 GENDER = "gender"
 AGE = "age"
 OVERALL = "overall"
+
+
+"""
+Non-Personalized methods
+"""
+MOSTPOP = "most_pop"
 """
 Knowledge-Aware methods (don't produce explanations paths)
 """
@@ -122,39 +129,48 @@ DATASET_SENSIBLE_ATTRIBUTE_MATRIX = {
     LFM1M: {GENDER: 1, AGE: 1},
 }
 
+def get_dataset_id2model_kg_id(dataset_name, model_name, what="user"):
+    model_data_dir = get_model_data_dir(model_name, dataset_name)
+    file = open(os.path.join(model_data_dir, f"mappings/{what}_mapping.txt"), "r")
+    csv_reader = csv.reader(file, delimiter='\t')
+    dataset_pid2model_kg_pid = {}
+    next(csv_reader, None)
+    for row in csv_reader:
+        dataset_pid2model_kg_pid[row[0]] = int(row[1])
+    file.close()
+    return dataset_pid2model_kg_pid
 
-def get_uid_to_sensible_attribute(dataset_name, attribute):
+def get_uid_to_sensible_attribute(dataset_name, model_name, attribute):
     if attribute not in DATASET_SENSIBLE_ATTRIBUTE_MATRIX[dataset_name] or \
             DATASET_SENSIBLE_ATTRIBUTE_MATRIX[dataset_name][attribute] == 0:
         print("Wrong / not available sensible attribute specified")
         exit(-1)
 
-    # Convertion to standardize human readable format
-    if attribute == GENDER:
-        attribute2name = {"M": "Male", "F": "Female"}
-    elif attribute == AGE:
-        attribute2name = {1: "Under 18", 18: "18-24", 25: "25-34", 35: "35-44", 45: "45-49", 50: "50-55", 56: "56+"}
-
     # Create mapping
     uid2attribute = {}
     ensure_dataset_name(dataset_name)
     data_dir = get_data_dir(dataset_name)
+
+    dataset_pid2model_kg_pid = get_dataset_id2model_kg_id(dataset_name, model_name, what="user")
     with open(data_dir + "users.txt", 'r') as users_file:
         reader = csv.reader(users_file, delimiter="\t")
         next(reader, None)
         for row in reader:
-            uid = row[0]
-            gender = row[1]
-            age = int(row[2])
-            uid2attribute[uid] = attribute2name[(gender if attribute == GENDER else age)]
+            uid = dataset_pid2model_kg_pid[row[0]]
+            age = row[1]
+            gender = row[2]
+            uid2attribute[uid] = gender if attribute == GENDER else age
     users_file.close()
 
     return uid2attribute
 
 
-def get_item_genre(dataset_name):
+def get_item_genre(dataset_name, model_name):
     data_dir = get_data_dir(dataset_name)
-    item_genre_df = pd.read_csv(os.path.join(data_dir, "products.txt"), sep="\t", header=True)
+    dataset_id2model_kg_id = get_dataset_id2model_kg_id(dataset_name, model_name, "product")
+    dataset_id2model_kg_id = dict(zip([int(x) for x in dataset_id2model_kg_id.keys()], dataset_id2model_kg_id.values())) #TODO FIX SPAGHETTI
+    item_genre_df = pd.read_csv(os.path.join(data_dir, "products.txt"), sep="\t")
+    item_genre_df.pid = item_genre_df.pid.map(dataset_id2model_kg_id)
     return dict(zip(item_genre_df.pid, item_genre_df.genre))
 
 def get_item_count(dataset_name):
@@ -162,20 +178,26 @@ def get_item_count(dataset_name):
     df_items = pd.read_csv(data_dir + "products.txt", sep="\t")
     return df_items.pid.unique().shape[0]
 
-def get_item_pop(dataset_name):
+def get_item_pop(dataset_name, model_name):
     data_dir = get_data_dir(dataset_name)
+    dataset_id2model_kg_id = get_dataset_id2model_kg_id(dataset_name, model_name,"product")
+    dataset_id2model_kg_id = dict(zip([int(x) for x in dataset_id2model_kg_id.keys()], dataset_id2model_kg_id.values())) #TODO FIX SPAGHETTI
     df_items = pd.read_csv(data_dir + "products.txt", sep="\t")
+    df_items.pid = df_items.pid.map(dataset_id2model_kg_id)
     return dict(zip(df_items.pid, df_items.pop_item))
 
-def get_item_provider_pop(dataset_name):
+def get_item_provider_pop(dataset_name, model_name):
     data_dir = get_data_dir(dataset_name)
+    dataset_id2model_kg_id = get_dataset_id2model_kg_id(dataset_name, model_name,"product")
+    dataset_id2model_kg_id = dict(zip([int(x) for x in dataset_id2model_kg_id.keys()], dataset_id2model_kg_id.values())) #TODO FIX SPAGHETTI
     df_items = pd.read_csv(data_dir + "products.txt", sep="\t")
+    df_items.pid = df_items.pid.map(dataset_id2model_kg_id)
     return dict(zip(df_items.pid, df_items.pop_provider))
 
 
-def load_labels(dataset_name, model_name, split=TRAIN):
-    if split != TRAIN and split != TEST:
-        raise Exception('mode should be one of {train, test}.')
+def load_labels(dataset_name, model_name, split=TRAIN): #TODO MAKE IT AGNOSITC WITH MODEL.CALLS
+    if split != TRAIN and split != VALID and split != TEST:
+        raise Exception('mode should be one of {train, valid, test}.')
     tmp_dir = get_tmp_dir(dataset_name, model_name)
     label_path = os.path.join(tmp_dir, f"{split}_label.pkl")
     user_products = pickle.load(open(label_path, 'rb'))
@@ -183,12 +205,12 @@ def load_labels(dataset_name, model_name, split=TRAIN):
 
 
 def load_kg(dataset_name, model_name):
-    kg_path = os.path.join(get_data_dir(dataset_name), model_name, "tmp", "kg.pkl")
+    kg_path = os.path.join(get_data_dir(dataset_name), model_name, "tmp", "kg.pkl")  #TODO MAKE IT AGNOSITC WITH MODEL.CALLS
     kg = pickle.load(open(kg_path, 'rb'))
     return kg
 
 
-def load_embed(dataset_name, model_name):
+def load_embed(dataset_name, model_name): #TODO MAKE IT AGNOSITC WITH MODEL.CALLS
     tmp_dir = get_tmp_dir(dataset_name, model_name)
     embed_file = os.path.join(tmp_dir, f"transe_embed.pkl")
     embeds = pickle.load(open(embed_file, 'rb'))

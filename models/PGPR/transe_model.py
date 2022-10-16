@@ -50,7 +50,7 @@ class KnowledgeEmbedding(nn.Module):
         self.relations = edict()
         main_rel = INTERACTION[dataset.dataset_name]
         self.relations[main_rel] = edict(
-            et="product",
+            et=PRODUCT,
             et_distrib=self._make_distrib(getattr(dataset, "review").product_uniform_distrib)
         )
         for relation_name in dataset.other_relation_names:
@@ -92,6 +92,8 @@ class KnowledgeEmbedding(nn.Module):
 
     def forward(self, batch_idxs):
         loss = self.compute_loss(batch_idxs)
+        #loss = self.compute_loss_lfm(batch_idxs)
+        #assert loss == loss2
         return loss
 
     def compute_loss(self, batch_idxs):
@@ -101,26 +103,23 @@ class KnowledgeEmbedding(nn.Module):
 
         user_idxs = batch_idxs[:, 0]
         product_idxs = batch_idxs[:, 1]
-        rel2entity_idxs_tuple = {}
-        i = 2
-        for rel_name in get_knowledge_derived_relations(self.dataset_name):
-            rel2entity_idxs_tuple[rel_name] = (self.relation2entity[rel_name], batch_idxs[:, i])
-            i+=1
+        knowledge_relations = get_knowledge_derived_relations(self.dataset_name)
+        #print(knowledge_relations)
 
         # user + interaction -> product
         up_loss, up_embeds = self.neg_loss(USER, INTERACTION[self.dataset_name], PRODUCT, user_idxs, product_idxs)
         regularizations.extend(up_embeds)
         loss = up_loss
 
-        for curr_rel in get_knowledge_derived_relations(self.dataset_name):
-            entity_idxs_tuple = rel2entity_idxs_tuple[curr_rel]
-            entity_name, curr_idxs = entity_idxs_tuple
+        i = 2
+        for curr_rel in knowledge_relations:
+            entity_name, curr_idxs = self.relation2entity[curr_rel], batch_idxs[:, i]
             # product + curr_rel -> curr_entity
             curr_loss, curr_embeds = self.neg_loss(PRODUCT, curr_rel, entity_name, product_idxs, curr_idxs)
             if curr_loss is not None:
                 regularizations.extend(curr_embeds)
                 loss += curr_loss
-
+            i+=1
         # l2 regularization
         if self.l2_lambda > 0:
             l2_loss = 0.0

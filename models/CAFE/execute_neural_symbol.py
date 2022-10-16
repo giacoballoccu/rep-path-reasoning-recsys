@@ -101,6 +101,7 @@ def evaluate_with_insufficient_pred(topk_matches, test_user_products, dataset_na
         hr=[],
         precision=[],
         recall=[],
+        hit=[],
     )
     precisions, recalls, ndcgs, hits, our_ndcgs = [], [], [], [], []
     test_user_idxs = list(test_user_products.keys())
@@ -437,7 +438,7 @@ def run_program(args):
 
         pred_labels[uid] = [t[0] for t in tmp]
         pbar.update(1)
-    save_pred_paths(args.dataset, pred_paths_istances)
+    #save_pred_paths(args.dataset, pred_paths_istances)
     msg = evaluate_with_insufficient_pred(pred_labels, test_labels, dataset_name)
     logger.info(msg)
 

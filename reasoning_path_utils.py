@@ -3,6 +3,7 @@ from collections import defaultdict
 import numpy as np
 from utils import *
 from easydict import EasyDict as edict
+import models.PGPR as pgpr
 
 LIR = "lir"
 SEP = "sep"
@@ -23,7 +24,7 @@ def entity2plain_text(dataset_name, model_name):
 # (self_loop user 0) (mention word 2408) (described_as product 1953) (self_loop product 1953) #hop2
 def get_linked_interaction_triple(path):
     linked_interaction_id, linked_interaction_rel, linked_interaction_type = path[1][-1], path[1][0], path[1][1]
-    return linked_interaction_id, linked_interaction_rel
+    return linked_interaction_id, linked_interaction_rel, linked_interaction_type
 
 
 def get_shared_entity_tuple(path):
@@ -47,16 +48,16 @@ def get_path_pattern(path):
 
 
 def get_path_types_in_kg(dataset_name):
-    df_kg = pd.DataFrame(os.join(get_data_dir(dataset_name), "kg_final.txt"), sep="\t", header=True)
-    return list(df_kg.kg.relations.unique())
+    df_kg = pd.read_csv(os.path.join(get_data_dir(dataset_name), "kg_final.txt"), sep="\t")
+    return list(df_kg.relation.unique())
 
 
 def get_no_path_types_in_kg(dataset_name):
-    df_kg = pd.DataFrame(os.join(get_data_dir(dataset_name), "kg_final.txt"), sep="\t", header=True)
-    return len(df_kg.kg.relations.unique())
+    df_kg = pd.read_csv(os.path.join(get_data_dir(dataset_name), "kg_final.txt"), sep="\t")
+    return len(df_kg.relation.unique())
 
 
-def load_LIR_matrix(dataset_name):
+def load_LIR_matrix(dataset_name, model_name):
     data_dir = get_data_dir(dataset_name)
     lir_matrix_filepath = os.path.join(data_dir, "LIR_matrix.pkl")
     lir_words_matrix_filepath = os.path.join(data_dir, "LIR_matrix_words.pkl")
@@ -74,7 +75,7 @@ def load_LIR_matrix(dataset_name):
             #f.close()
     else:
         print("Generating LIR-matrix")
-        LIR_matrix = generate_LIR_matrix(dataset_name)
+        LIR_matrix = generate_LIR_matrix(dataset_name, model_name)
         with open(lir_matrix_filepath, 'wb') as f:
             pickle.dump(LIR_matrix, f)
         f.close()
@@ -85,7 +86,7 @@ def load_LIR_matrix(dataset_name):
             #f.close()
     return LIR_matrix
 
-def load_SEP_matrix(dataset_name):
+def load_SEP_matrix(dataset_name, model_name):
     data_dir = get_data_dir(dataset_name)
     sep_matrix_filepath = os.path.join(data_dir, "SEP_matrix.pkl")
     if os.path.isfile(sep_matrix_filepath):
@@ -95,22 +96,11 @@ def load_SEP_matrix(dataset_name):
         f.close()
     else:
         print("Generating SEP-matrix")
-        SEP_matrix = generate_SEP_matrix()
+        SEP_matrix = generate_SEP_matrix(dataset_name, model_name)
         with open(sep_matrix_filepath, 'wb') as f:
             pickle.dump(SEP_matrix, f)
         f.close()
     return SEP_matrix
-
-def get_dataset_id2model_kg_id(dataset_name, model_name, what="user"):
-    model_data_dir = get_model_data_dir(model_name, dataset_name)
-    file = open(os.path.join(model_data_dir, f"mappings/{what}_mappings.txt", "r"))
-    csv_reader = csv.reader(file, delimiter='\t')
-    dataset_pid2model_kg_pid = {}
-    next(csv_reader, None)
-    for row in csv_reader:
-        dataset_pid2model_kg_pid[row[1]] = int(row[0])
-    file.close()
-    return dataset_pid2model_kg_pid
 
 
 def get_interaction2timestamp_map(dataset_name, model_name):
@@ -127,7 +117,7 @@ def get_interaction2timestamp_map(dataset_name, model_name):
         user2pid_time_tuple = defaultdict(list)
         dataset2kg_pid = get_dataset_id2model_kg_id(dataset_name, model_name, "product")
         file = open(os.path.join(data_dir, "train.txt"), 'r')
-        csv_reader = csv.reader(file, delimiter=' ')
+        csv_reader = csv.reader(file, delimiter='\t')
         uid_mapping = get_dataset_id2model_kg_id(dataset_name, model_name, "user")
         for row in csv_reader:
             uid = uid_mapping[row[0]]
@@ -169,7 +159,7 @@ def generate_LIR_matrix(dataset_name, model_name):
             interactions.sort(key=lambda x: x[2])
             if len(uid_timestamp[uid]) <= 1:  # Skips users with only one review in train (can happen with lastfm)
                 continue
-            ema_timestamps = normalized_ema(interactions)
+            ema_timestamps = normalized_ema([x[2] for x in interactions])
             pid_lir = {}
             for i in range(len(interactions)):
                 pid = interactions[i][1]

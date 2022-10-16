@@ -194,14 +194,3 @@ class KnowledgeGraph(object):
 '''
 
 
-def check_test_path(dataset_str, kg):
-    # Check if there exists at least one path for any user-product in test set.
-    test_user_products = load_labels(dataset_str, 'test')
-    for uid in test_user_products:
-        for pid in test_user_products[uid]:
-            count = 0
-            for pattern_id in [1, 11, 12, 13, 14, 15, 16, 17, 18]:
-                tmp_path = kg.heuristic_search(uid, pid, pattern_id)
-                count += len(tmp_path)
-            if count == 0:
-                print(uid, pid)

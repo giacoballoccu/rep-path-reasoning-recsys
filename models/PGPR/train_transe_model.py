@@ -61,6 +61,7 @@ def extract_embeddings(args, dataset):
     embeds = {}
     for entity_name in dataset.entity_names:
         embeds[entity_name] = state_dict[f'{entity_name}.weight'].cpu().data.numpy()[:-1]
+
     embeds[INTERACTION[dataset_name]] = (
         state_dict[INTERACTION[dataset_name]].cpu().data.numpy()[0],
         state_dict[f'{INTERACTION[dataset_name]}_bias.weight'].cpu().data.numpy()
@@ -109,8 +110,6 @@ def main():
     if not os.path.isdir(args.log_dir):
         os.makedirs(args.log_dir)
 
-
-     
     global logger
     logger = get_logger(args.log_dir + '/train_log.txt')
     logger.info(args)
