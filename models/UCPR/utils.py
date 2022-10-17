@@ -44,6 +44,8 @@ TMP_DIR = {
     CELL: f'{DATASET_DIR[CELL]}/tmp',
 }
 
+VALID_METRICS_FILE_NAME = 'valid_metrics.json'
+
 
 TRANSE_OPT_METRIC = 'valid_loss'
 OPTIM_HPARAMS_METRIC = 'ndcg'
@@ -60,6 +62,8 @@ BEST_CFG_DIR = {
     LFM1M: f'{LOG_DIR}/{LFM1M}/best_hparams_cfg',
     CELL: f'{LOG_DIR}/{CELL}/best_hparams_cfg',
 }
+
+
 TEST_METRICS_FILE_NAME = 'test_metrics.json'
 TEST_METRICS_FILE_PATH = {
     ML1M: f'{CFG_DIR[ML1M]}/{TEST_METRICS_FILE_NAME}',

@@ -27,6 +27,9 @@ DATA_DIR = {
 }
 OPTIM_HPARAMS_METRIC = 'ndcg'
 
+VALID_METRICS_FILE_NAME = 'valid_metrics.json'
+
+
 LOG_DIR = f'{ROOT_DIR}/results/{MODEL}'
 
 CFG_DIR = {

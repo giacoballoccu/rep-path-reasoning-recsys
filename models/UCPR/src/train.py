@@ -320,7 +320,7 @@ def train(args):
 
         cur_tim = time.strftime("%Y%m%d-%H%M%S")
         logger.info("current time = " + str(cur_tim))
-        metrics.write(TMP_DIR[args.dataset])
+        metrics.write(os.path.join(TMP_DIR[args.dataset], VALID_METRICS_FILE_NAME) )
 
 
 if __name__ == '__main__':

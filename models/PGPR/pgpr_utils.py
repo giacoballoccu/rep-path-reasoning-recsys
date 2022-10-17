@@ -30,6 +30,7 @@ DATASET_DIR = {
     CELL: f'{ROOT_DIR}/data/{CELL}/preprocessed/{MODEL}'
 }
 
+VALID_METRICS_FILE_NAME = 'valid_metrics.json'
 
 OPTIM_HPARAMS_METRIC = 'ndcg'
 LOG_DIR = f'{ROOT_DIR}/results/{MODEL}'

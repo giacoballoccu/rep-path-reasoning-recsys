@@ -322,7 +322,7 @@ def train(args):
             policy_file = '{}/policy_model_epoch_{}.ckpt'.format(args.log_dir, epoch)
             logger.info("Save models to " + policy_file)
             torch.save(model.state_dict(), policy_file)
-    metrics.write(TMP_DIR[args.dataset])
+    metrics.write(os.path.join(TMP_DIR[args.dataset], VALID_METRICS_FILE_NAME))
 
 def main():
     parser = argparse.ArgumentParser()

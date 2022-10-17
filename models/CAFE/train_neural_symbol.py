@@ -193,7 +193,7 @@ def train(args):
             if epoch % 10 == 0:
                 torch.save(model.state_dict(), '{}/symbolic_model_epoch{}.ckpt'.format(args.log_dir, epoch))
 
-    metrics.write(TMP_DIR[args.dataset])
+    metrics.write(os.path.join(TMP_DIR[args.dataset], VALID_METRICS_FILE_NAME))
 
 def main():
     args = parse_args()
