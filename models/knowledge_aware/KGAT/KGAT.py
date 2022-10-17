@@ -62,7 +62,7 @@ class KGAT(object):
         self.n_users = data_config['n_users']
         self.n_items = data_config['n_items']
         self.n_entities = data_config['n_entities']
-        self.n_relations = data_config['n_relations']+2
+        self.n_relations = data_config['n_relations']
 
         self.n_fold = 100
 

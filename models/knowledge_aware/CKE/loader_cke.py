@@ -4,19 +4,19 @@ Tensorflow Implementation of the Baseline Model, CKE, in:
 Wang Xiang et al. KGAT: Knowledge Graph Attention Network for Recommendation. In KDD 2019.
 @author: Xiang Wang (xiangwang@u.nus.edu)
 '''
-from models.knowledge_aware.load_data import *
+import numpy as np
+import random as rd
+from models.traditional.load_data import Data
+
 
 class CKE_loader(Data):
-    def __init__(self, args, path):
-        super().__init__(args, path)
+    def __init__(self, args, path, batch_style='list'):
+        super().__init__(args, path, batch_style)
 
-    def _generate_train_kg_batch(self):
-        exist_heads = self.kg_dict.keys()
-        if self.batch_size_kg <= len(exist_heads):
-            heads = rd.sample(exist_heads, self.batch_size_kg)
-        else:
-            heads = [rd.choice(exist_heads) for _ in range(self.batch_size_kg)]
-
+        self.exist_heads = list(self.kg_dict.keys())
+        self.N_exist_heads = len(self.exist_heads)
+    def __getitem__(self, idx): 
+        
         def sample_pos_triples_for_h(h, num):
             # pos triples associated with head entity h.
             # format of kg_dict is {h: [t,r]}.
@@ -47,35 +47,39 @@ class CKE_loader(Data):
                 if (t, r) not in self.kg_dict[h] and t not in neg_ts:
                     neg_ts.append(t)
             return neg_ts
+        h = self.exist_heads[idx]
+        pos_rs, pos_ts = sample_pos_triples_for_h(h, 1)
+        neg_ts = sample_neg_triples_for_h(h, pos_rs[0], 1)
 
-        pos_r_batch, pos_t_batch, neg_t_batch = [], [], []
+        if len(pos_rs) == 1:
+            pos_rs = pos_rs[0]  
+        if len(pos_ts) == 1:
+            pos_ts = pos_ts[0]  
+        if len(neg_ts) == 1:
+            neg_ts = neg_ts[0]              
+        
+        if self.batch_style_id == 0:
+            return h, pos_rs, pos_ts, neg_ts
+        else:
+            return {'heads': h, 'relations': pos_rs, 'pos_tails':pos_ts, 'neg_tails':neg_ts}   
 
-        for h in heads:
-            pos_rs, pos_ts = sample_pos_triples_for_h(h, 1)
-            pos_r_batch += pos_rs
-            pos_t_batch += pos_ts
 
-            neg_ts = sample_neg_triples_for_h(h, pos_rs[0], 1)
-            neg_t_batch += neg_ts
 
-        return heads, pos_r_batch, pos_t_batch, neg_t_batch
 
-    def generate_train_batch(self):
-        users, pos_items, neg_items = self._generate_train_cf_batch()
-        heads, relations, pos_tails, neg_tails = self._generate_train_kg_batch()
 
-        batch_data = {}
-        batch_data['users'] = users
-        batch_data['pos_items'] = pos_items
-        batch_data['neg_items'] = neg_items
+    def as_train_feed_dict(self, model, batch_data):#users, pos_items, neg_items, heads, relations, pos_tails, neg_tails ):
+        if self.batch_style_id == 0:
+            users, pos_items, neg_items, heads, relations, pos_tails, neg_tails = batch_data
+            batch_data = {}
+            batch_data['users'] = users
+            batch_data['pos_items'] = pos_items
+            batch_data['neg_items'] = neg_items
+            batch_data['heads'] = heads
+            batch_data['relations'] = relations
+            batch_data['pos_tails'] = pos_tails
+            batch_data['neg_tails'] = neg_tails            
 
-        batch_data['heads'] = heads
-        batch_data['relations'] = relations
-        batch_data['pos_tails'] = pos_tails
-        batch_data['neg_tails'] = neg_tails
-        return batch_data
 
-    def generate_train_feed_dict(self, model, batch_data):
         feed_dict ={
             model.u: batch_data['users'],
             model.pos_i: batch_data['pos_items'],
@@ -86,12 +90,29 @@ class CKE_loader(Data):
             model.pos_t: batch_data['pos_tails'],
             model.neg_t: batch_data['neg_tails']
         }
+        
 
         return feed_dict
 
-    def generate_test_feed_dict(self, model, user_batch, item_batch, drop_flag=False):
+        
+    def as_test_feed_dict(self, model, user_batch, item_batch, drop_flag=False):
         feed_dict = {
             model.u: user_batch,
             model.pos_i: item_batch
         }
-        return feed_dict
+
+        return feed_dict  
+
+
+
+
+    def __len__(self):
+        # number of existing heads after the preprocessing described in the paper, 
+        # determines the length of the training dataset, for which a positive an negative are extracted
+        return self.N_exist_heads
+    
+
+
+
+
+

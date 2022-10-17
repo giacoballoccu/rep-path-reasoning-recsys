@@ -6,6 +6,10 @@ __author__ = "xiangwang"
 import os
 import re
 
+
+def save_topk():
+    pass
+
 def txt2list(file_src):
     orig_file = open(file_src, "r")
     lines = orig_file.readlines()
