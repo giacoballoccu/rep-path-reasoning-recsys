@@ -4,15 +4,21 @@ Tensorflow Implementation of Knowledge Graph Attention Network (KGAT) model in:
 Wang Xiang et al. KGAT: Knowledge Graph Attention Network for Recommendation. In KDD 2019.
 @author: Xiang Wang (xiangwang@u.nus.edu)
 '''
-from models.knowledge_aware.load_data import *
+import numpy as np
+from models.knowledge_aware.load_data import Data
 from time import time
 import scipy.sparse as sp
 import random as rd
 import collections
+import os
+import math
+
+
+
 
 class KGAT_loader(Data):
-    def __init__(self, args, path):
-        super().__init__(args, path)
+    def __init__(self, args, path, batch_style='list'):
+        super().__init__(args, path, batch_style)
 
         # generate the sparse adjacency matrices for user-item interaction & relational kg data.
         self.adj_list, self.adj_r_list = self._get_relational_adj_list()
@@ -22,6 +28,8 @@ class KGAT_loader(Data):
 
         # generate the triples dictionary, key is 'head', value is '(tail, relation)'.
         self.all_kg_dict = self._get_all_kg_dict()
+        self.exist_heads = list(self.all_kg_dict.keys())
+        self.N_exist_heads = len(self.exist_heads)
 
         self.all_h_list, self.all_r_list, self.all_t_list, self.all_v_list = self._get_all_kg_data()
 
@@ -180,13 +188,24 @@ class KGAT_loader(Data):
 
         return new_h_list, new_r_list, new_t_list, new_v_list
 
-    def _generate_train_A_batch(self):
+
+
+    def __len__(self):
+        # number of existing users after the preprocessing described in the paper,
+        # determines the length of the training dataset, for which a positive an negative are extracted
+        return self.N_exist_heads
+
+    ##_generate_train_A_batch
+    def __getitem__(self, idx):
+
+        '''
         exist_heads = self.all_kg_dict.keys()
 
         if self.batch_size_kg <= len(exist_heads):
             heads = rd.sample(exist_heads, self.batch_size_kg)
         else:
             heads = [rd.choice(exist_heads) for _ in range(self.batch_size_kg)]
+        '''
 
         def sample_pos_triples_for_h(h, num):
             pos_triples = self.all_kg_dict[h]
@@ -214,9 +233,8 @@ class KGAT_loader(Data):
                 if (t, r) not in self.all_kg_dict[h] and t not in neg_ts:
                     neg_ts.append(t)
             return neg_ts
-
+        '''
         pos_r_batch, pos_t_batch, neg_t_batch = [], [], []
-
         for h in heads:
             pos_rs, pos_ts = sample_pos_triples_for_h(h, 1)
             pos_r_batch += pos_rs
@@ -224,20 +242,44 @@ class KGAT_loader(Data):
 
             neg_ts = sample_neg_triples_for_h(h, pos_rs[0], 1)
             neg_t_batch += neg_ts
+        
+        '''
+        h = self.exist_heads[idx]
+        pos_rs, pos_ts = sample_pos_triples_for_h(h, 1)
+        neg_ts = sample_neg_triples_for_h(h, pos_rs[0], 1)
 
-        return heads, pos_r_batch, pos_t_batch, neg_t_batch
+        if len(pos_rs) == 1:
+            pos_rs = pos_rs[0]
+        if len(pos_ts) == 1:
+            pos_ts = pos_ts[0]
+        if len(neg_ts) == 1:
+            neg_ts = neg_ts[0]
 
-    def generate_train_batch(self):
-        users, pos_items, neg_items = self._generate_train_cf_batch()
+        if self.batch_style_id == 0:
+            return h, pos_rs, pos_ts, neg_ts
+        else:
+            return {'heads': h, 'relations': pos_rs, 'pos_tails':pos_ts, 'neg_tails':neg_ts}
 
-        batch_data = {}
-        batch_data['users'] = users
-        batch_data['pos_items'] = pos_items
-        batch_data['neg_items'] = neg_items
 
-        return batch_data
+    def as_test_feed_dict(self, model, user_batch, item_batch, drop_flag=True):
 
-    def generate_train_feed_dict(self, model, batch_data):
+        feed_dict ={
+            model.users: user_batch,
+            model.pos_items: item_batch,
+            model.mess_dropout: [0.] * len(eval(self.args.layer_size)),
+            model.node_dropout: [0.] * len(eval(self.args.layer_size)),
+
+        }
+
+        return feed_dict
+    def as_train_feed_dict(self, model, batch_data):
+        if self.batch_style_id == 0:
+            users, pos_items, neg_items = batch_data
+            batch_data = {}
+            batch_data['users'] = users
+            batch_data['pos_items'] = pos_items
+            batch_data['neg_items'] = neg_items
+
         feed_dict = {
             model.users: batch_data['users'],
             model.pos_items: batch_data['pos_items'],
@@ -249,18 +291,21 @@ class KGAT_loader(Data):
 
         return feed_dict
 
-    def generate_train_A_batch(self):
-        heads, relations, pos_tails, neg_tails = self._generate_train_A_batch()
+    def as_train_A_feed_dict(self, model, batch_data):
+        if self.batch_style_id == 0:
+            heads, relations, pos_tails, neg_tails = batch_data
+            batch_data = {}
+            batch_data['heads'] = heads
+            batch_data['relations'] = relations
+            batch_data['pos_tails'] = pos_tails
+            batch_data['neg_tails'] = neg_tails
+        #batch_data = {}
 
-        batch_data = {}
+        #batch_data['heads'] = heads
+        #batch_data['relations'] = relations
+        #batch_data['pos_tails'] = pos_tails
+        #batch_data['neg_tails'] = neg_tails
 
-        batch_data['heads'] = heads
-        batch_data['relations'] = relations
-        batch_data['pos_tails'] = pos_tails
-        batch_data['neg_tails'] = neg_tails
-        return batch_data
-
-    def generate_train_A_feed_dict(self, model, batch_data):
         feed_dict = {
             model.h: batch_data['heads'],
             model.r: batch_data['relations'],
@@ -270,17 +315,3 @@ class KGAT_loader(Data):
         }
 
         return feed_dict
-
-
-    def generate_test_feed_dict(self, model, user_batch, item_batch, drop_flag=True):
-
-        feed_dict ={
-            model.users: user_batch,
-            model.pos_items: item_batch,
-            model.mess_dropout: [0.] * len(eval(self.args.layer_size)),
-            model.node_dropout: [0.] * len(eval(self.args.layer_size)),
-
-        }
-
-        return feed_dict
-

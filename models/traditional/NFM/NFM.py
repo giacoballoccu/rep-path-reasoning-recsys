@@ -5,6 +5,7 @@ Wang Xiang et al. KGAT: Knowledge Graph Attention Network for Recommendation. In
 @author: Xiang Wang (xiangwang@u.nus.edu)
 '''
 import tensorflow.compat.v1 as tf
+tf.disable_v2_behavior()
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL']='2'
 
@@ -18,7 +19,10 @@ class NFM(object):
         self._statistics_params()
 
     def _parse_args(self, data_config, pretrain_data, args):
-        self.model_type = 'nfm'
+        if args.model_type == 'nfm':
+            self.model_type = 'nfm'
+        else:
+            self.model_type = 'fm'
 
         self.pretrain_data = pretrain_data
 
@@ -34,10 +38,14 @@ class NFM(object):
         self.batch_size = args.batch_size
 
         # settings for neural CF part.
-        self.weight_size = eval(args.layer_size)
-        self.n_layers = len(self.weight_size)
+        if args.model_type == 'nfm':
+            self.weight_size = eval(args.layer_size)
+            self.n_layers = len(self.weight_size)
 
-        self.model_type += '_l%d' % self.n_layers
+            self.model_type += '_l%d' % self.n_layers
+        else:
+            self.weight_size = []
+            self.n_layers = 0
 
         self.regs = eval(args.regs)
 
@@ -65,20 +73,24 @@ class NFM(object):
 
         all_weights['var_linear'] = tf.Variable(initializer([self.n_features, 1]), name='var_linear')
 
+        # model parameters for FM.
+        if self.pretrain_data is None:
+            all_weights['var_factor'] = tf.Variable(initializer([self.n_features, self.emb_dim]), name='var_factor')
+            print('using xavier initialization')
+        else:
+            user_embed = self.pretrain_data['user_embed']
+            item_embed = self.pretrain_data['item_embed']
+            other_embed = initializer([self.n_entities - self.n_items, self.emb_dim])
 
-        user_embed = self.pretrain_data['user_embed']
-        item_embed = self.pretrain_data['item_embed']
-        other_embed = initializer([self.n_entities - self.n_items, self.emb_dim])
+            all_weights['var_factor'] = tf.Variable(initial_value=tf.concat([user_embed, item_embed, other_embed], 0),
+                                                    trainable=True, name='var_factor', dtype=tf.float32)
 
-        all_weights['var_factor'] = tf.Variable(initial_value=tf.concat([user_embed, item_embed, other_embed], 0),
-                                                trainable=True, name='var_factor', dtype=tf.float32)
-
-        # user_embed = tf.Variable(initial_value=self.pretrain_data['user_embed'], trainable=True, dtype=tf.float32)
-        # item_embed = tf.Variable(initial_value=self.pretrain_data['item_embed'], trainable=True, dtype=tf.float32)
-        # other_embed = tf.Variable(initializer([self.n_entities - self.n_items, self.emb_dim]))
-        #
-        # all_weights['var_factor'] = tf.concat([user_embed, item_embed, other_embed], 0, name='var_factor')
-        print('using pretrained initialization')
+            # user_embed = tf.Variable(initial_value=self.pretrain_data['user_embed'], trainable=True, dtype=tf.float32)
+            # item_embed = tf.Variable(initial_value=self.pretrain_data['item_embed'], trainable=True, dtype=tf.float32)
+            # other_embed = tf.Variable(initializer([self.n_entities - self.n_items, self.emb_dim]))
+            #
+            # all_weights['var_factor'] = tf.concat([user_embed, item_embed, other_embed], 0, name='var_factor')
+            print('using pretrained initialization')
 
         # model parameters for NFM.
         self.weight_size_list = [self.emb_dim] + self.weight_size
@@ -88,7 +100,10 @@ class NFM(object):
             all_weights['b_%d' %i] = tf.Variable(
                 initializer([1, self.weight_size_list[i+1]]), name='b_%d' %i)
 
-        all_weights['h'] = tf.Variable(initializer([self.weight_size_list[-1], 1]), name='h')
+        if self.model_type == 'fm':
+            all_weights['h'] = tf.constant(1., tf.float32, [self.emb_dim, 1])
+        else:
+            all_weights['h'] = tf.Variable(initializer([self.weight_size_list[-1], 1]), name='h')
 
         return all_weights
 

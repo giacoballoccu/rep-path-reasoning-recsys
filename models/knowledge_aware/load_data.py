@@ -5,28 +5,46 @@ Wang Xiang et al. KGAT: Knowledge Graph Attention Network for Recommendation. In
 @author: Xiang Wang (xiangwang@u.nus.edu)
 '''
 import collections
+import os
+
 import numpy as np
 import random as rd
+import torch
+import torch.utils.data
+from torch.utils.data import Dataset
+import math
 
-class Data(object):
-    def __init__(self, args, path):
+
+class Data(Dataset):
+
+    def __init__(self, args, path, batch_style='list'):
+        super(Data).__init__()
+
+        self.batch_styles = {'list':0,'map':1}
+        assert batch_style in list(self.batch_styles.keys()), f'Error: got {batch_style} but valid batch styles are {list(self.batch_styles.keys())}'
         self.path = path
         self.args = args
+        self.batch_style = batch_style
+        self.batch_style_id = self.batch_styles[self.batch_style]
 
         self.batch_size = args.batch_size
 
-        train_file = path + '/train.txt'
-        test_file = path + '/test.txt'
+        train_file = os.path.join(path, 'preprocessed/kgat/train.txt')
+        valid_file = os.path.join(path, 'preprocessed/kgat/valid.txt')
+        test_file = os.path.join(path, 'preprocessed/kgat/test.txt')
 
-        kg_file = path + '/kg_final.txt'
+        kg_file = os.path.join(path, 'preprocessed/kgat/kg_final.txt')
 
         # ----------get number of users and items & then load rating data from train_file & test_file------------.
-        self.n_train, self.n_test = 0, 0
+        self.n_train, self.n_valid, self.n_test = 0, 0, 0
+
         self.n_users, self.n_items = 0, 0
 
         self.train_data, self.train_user_dict = self._load_ratings(train_file)
+        self.valid_data, self.valid_user_dict = self._load_ratings(valid_file)
         self.test_data, self.test_user_dict = self._load_ratings(test_file)
-        self.exist_users = self.train_user_dict.keys()
+        self.exist_users = list(self.train_user_dict.keys())
+        self.N_exist_users = len(self.exist_users)
 
         self._statistic_ratings()
 
@@ -60,8 +78,10 @@ class Data(object):
 
     def _statistic_ratings(self):
         self.n_users = max(max(self.train_data[:, 0]), max(self.test_data[:, 0])) + 1
-        self.n_items = max(max(self.train_data[:, 1]), max(self.test_data[:, 1])) + 1
+        self.n_items = max(max(max(self.train_data[:, 1]), max(self.valid_data[:, 1])  ),
+                                max(self.test_data[:, 1])) + 1
         self.n_train = len(self.train_data)
+        self.n_valid = len(self.valid_data)
         self.n_test = len(self.test_data)
 
     # reading train & test interaction data.
@@ -94,41 +114,7 @@ class Data(object):
         print('[n_entities, n_relations, n_triples]=[%d, %d, %d]' % (self.n_entities, self.n_relations, self.n_triples))
         print('[batch_size, batch_size_kg]=[%d, %d]' % (self.batch_size, self.batch_size_kg))
 
-    def _generate_train_cf_batch(self):
-        if self.batch_size <= self.n_users:
-            users = rd.sample(self.exist_users, self.batch_size)
-        else:
-            users = [rd.choice(self.exist_users) for _ in range(self.batch_size)]
 
-        def sample_pos_items_for_u(u, num):
-            pos_items = self.train_user_dict[u]
-            n_pos_items = len(pos_items)
-            pos_batch = []
-            while True:
-                if len(pos_batch) == num: break
-                pos_id = np.random.randint(low=0, high=n_pos_items, size=1)[0]
-                pos_i_id = pos_items[pos_id]
-
-                if pos_i_id not in pos_batch:
-                    pos_batch.append(pos_i_id)
-            return pos_batch
-
-        def sample_neg_items_for_u(u, num):
-            neg_items = []
-            while True:
-                if len(neg_items) == num: break
-                neg_i_id = np.random.randint(low=0, high=self.n_items,size=1)[0]
-
-                if neg_i_id not in self.train_user_dict[u] and neg_i_id not in neg_items:
-                    neg_items.append(neg_i_id)
-            return neg_items
-
-        pos_items, neg_items = [], []
-        for u in users:
-            pos_items += sample_pos_items_for_u(u, 1)
-            neg_items += sample_neg_items_for_u(u, 1)
-
-        return users, pos_items, neg_items
 
     def get_sparsity_split(self):
         try:
@@ -205,3 +191,89 @@ class Data(object):
 
 
         return split_uids, split_state
+    def __len__(self):
+        # number of existing users after the preprocessing described in the paper,
+        # determines the length of the training dataset, for which a positive an negative are extracted
+        return len(self.exist_users)
+
+    ##_generate_train_cf_batch
+    def __getitem__(self, idx):
+        """
+        if self.batch_size <= self.n_users:
+            user = rd.sample(self.exist_users, self.batch_size)
+        else:
+            users = [rd.choice(self.exist_users) for _ in range(self.batch_size)]
+        """
+        def sample_pos_items_for_u(u, num):
+            pos_items = self.train_user_dict[u]
+            n_pos_items = len(pos_items)
+            pos_batch = []
+            while True:
+                if len(pos_batch) == num: break
+                pos_id = np.random.randint(low=0, high=n_pos_items, size=1)[0]
+                pos_i_id = pos_items[pos_id]
+
+                if pos_i_id not in pos_batch:
+                    pos_batch.append(pos_i_id)
+            return pos_batch
+
+        def sample_neg_items_for_u(u, num):
+            neg_items = []
+            while True:
+                if len(neg_items) == num: break
+                neg_i_id = np.random.randint(low=0, high=self.n_items,size=1)[0]
+
+                if neg_i_id not in self.train_user_dict[u] and neg_i_id not in neg_items:
+                    neg_items.append(neg_i_id)
+            return neg_items
+        """
+        pos_items, neg_items = [], []
+        for u in users:
+            pos_items += sample_pos_items_for_u(u, 1)
+            neg_items += sample_neg_items_for_u(u, 1)
+        """
+        u = self.exist_users[idx]
+        pos_item = sample_pos_items_for_u(u, 1)
+        neg_item = sample_neg_items_for_u(u, 1)
+        if len(pos_item) == 1:
+            pos_item = pos_item[0]
+        if len(neg_item) == 1:
+            neg_item = neg_item[0]
+
+
+        if self.batch_style_id == 0:
+            return u, pos_item, neg_item
+        else:
+            return {'users': u, 'pos_items': pos_item, 'neg_items':neg_item}#u, pos_item, neg_item #users, pos_items, neg_items
+
+
+    def as_test_feed_dict(self, model, user_batch, item_batch, drop_flag=True):
+
+        feed_dict ={
+            model.users: user_batch,
+            model.pos_items: item_batch,
+            model.mess_dropout: [0.] * len(eval(self.args.layer_size)),
+            model.node_dropout: [0.] * len(eval(self.args.layer_size)),
+
+        }
+
+        return feed_dict
+    def as_train_feed_dict(self, model, batch_data):
+        if self.batch_style_id == 0:
+            users, pos_items, neg_items = batch_data
+            batch_data = {}
+            batch_data['users'] = users
+            batch_data['pos_items'] = pos_items
+            batch_data['neg_items'] = neg_items
+
+
+        feed_dict = {
+            model.users: batch_data['users'],
+            model.pos_items: batch_data['pos_items'],
+            model.neg_items: batch_data['neg_items'],
+
+            model.mess_dropout: eval(self.args.mess_dropout),
+            model.node_dropout: eval(self.args.node_dropout),
+        }
+
+        return feed_dict

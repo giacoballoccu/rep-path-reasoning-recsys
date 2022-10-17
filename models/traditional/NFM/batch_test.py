@@ -4,43 +4,75 @@ Tensorflow Implementation of Knowledge Graph Attention Network (KGAT) model in:
 Wang Xiang et al. KGAT: Knowledge Graph Attention Network for Recommendation. In KDD 2019.
 @author: Xiang Wang (xiangwang@u.nus.edu)
 '''
-import models.knowledge_aware.metrics as metrics
-from models.knowledge_aware.parser import *
+import models.traditional.metrics as metrics
+from models.traditional.parser import parse_args
 import multiprocessing
 import heapq
 import numpy as np
-
+import random
+from torch.utils.data import DataLoader, RandomSampler
+import torch
+torch.multiprocessing.set_sharing_strategy('file_system')
 from loader_nfm import NFM_loader
 
-cores = multiprocessing.cpu_count() // 2
+
+
+train_cores = multiprocessing.cpu_count()
+test_cores = multiprocessing.cpu_count()//2
 
 args = parse_args()
 Ks = eval(args.Ks)
 
-if args.model_type == 'bprmf':
-    data_generator = BPRMF_loader(args=args, path=args.data_path + args.dataset)
-    batch_test_flag = False
 
-elif args.model_type == 'cke':
-    data_generator = CKE_loader(args=args, path=args.data_path + args.dataset)
-    batch_test_flag = False
-
-elif args.model_type in ['cfkg']:
-    data_generator = CFKG_loader(args=args, path=args.data_path + args.dataset)
-    batch_test_flag = True
-
-elif args.model_type in ['fm','nfm']:
-    data_generator = NFM_loader(args=args, path=args.data_path + args.dataset)
-    batch_test_flag = True
-
-elif args.model_type in ['kgat']:
-    data_generator = KGAT_loader(args=args, path=args.data_path + args.dataset)
-    batch_test_flag = False
+data_generator = {}
 
 
-USR_NUM, ITEM_NUM = data_generator.n_users, data_generator.n_items
-N_TRAIN, N_TEST = data_generator.n_train, data_generator.n_test
+MANUAL_SEED = 2019
+
+torch.manual_seed(MANUAL_SEED)
+
+def seed_worker(worker_id):
+    torch.manual_seed(MANUAL_SEED)
+    np.random.seed(MANUAL_SEED)
+    random.seed(MANUAL_SEED)
+
+g = torch.Generator(device='cpu')
+g.manual_seed(MANUAL_SEED)
+
+ds = NFM_loader(args=args, path=args.data_path + args.dataset)
+data_generator['dataset'] = ds
+data_generator['loader'] = DataLoader(ds,
+                batch_size=ds.batch_size,
+                sampler=RandomSampler(ds,
+                    replacement=True,
+                    generator=g) if args.with_replacement else None,
+                shuffle=False if args.with_replacement else True,
+                num_workers=train_cores,
+                drop_last=True,
+                persistent_workers=True
+                    )
+batch_test_flag = True
+
+USR_NUM, ITEM_NUM = data_generator['dataset'].n_users, data_generator['dataset'].n_items
+N_TRAIN, N_TEST = data_generator['dataset'].n_train, data_generator['dataset'].n_test
 BATCH_SIZE = args.batch_size
+
+
+
+def get_auc(item_score, user_pos_test):
+    item_score = sorted(item_score.items(), key=lambda kv: kv[1])
+    item_score.reverse()
+    item_sort = [x[0] for x in item_score]
+    posterior = [x[1] for x in item_score]
+
+    r = []
+    for i in item_sort:
+        if i in user_pos_test:
+            r.append(1)
+        else:
+            r.append(0)
+    auc = metrics.auc(ground_truth=r, prediction=posterior)
+    return auc
 
 def ranklist_by_heapq(user_pos_test, test_items, rating, Ks):
     item_score = {}
@@ -58,21 +90,6 @@ def ranklist_by_heapq(user_pos_test, test_items, rating, Ks):
             r.append(0)
     auc = 0.
     return r, auc
-
-def get_auc(item_score, user_pos_test):
-    item_score = sorted(item_score.items(), key=lambda kv: kv[1])
-    item_score.reverse()
-    item_sort = [x[0] for x in item_score]
-    posterior = [x[1] for x in item_score]
-
-    r = []
-    for i in item_sort:
-        if i in user_pos_test:
-            r.append(1)
-        else:
-            r.append(0)
-    auc = metrics.auc(ground_truth=r, prediction=posterior)
-    return auc
 
 def ranklist_by_sorted(user_pos_test, test_items, rating, Ks):
     item_score = {}
@@ -112,15 +129,17 @@ def test_one_user(x):
     u = x[1]
     #user u's items in the training set
     try:
-        training_items = data_generator.train_user_dict[u]
+        training_items = data_generator['dataset'].train_user_dict[u]
+        valid_items = data_generator['dataset'].valid_user_dict[u]
     except Exception:
         training_items = []
+        valid_items = []
     #user u's items in the test set
-    user_pos_test = data_generator.test_user_dict[u]
+    user_pos_test = data_generator['dataset'].test_user_dict[u]
 
     all_items = set(range(ITEM_NUM))
 
-    test_items = list(all_items - set(training_items))
+    test_items = list((all_items - set(training_items)) - set(valid_items) )
 
     if args.test_flag == 'part':
         r, auc = ranklist_by_heapq(user_pos_test, test_items, rating, Ks)
@@ -144,7 +163,7 @@ def test(sess, model, users_to_test, drop_flag=False, batch_test_flag=False):
     result = {'precision': np.zeros(len(Ks)), 'recall': np.zeros(len(Ks)), 'ndcg': np.zeros(len(Ks)),
               'hit_ratio': np.zeros(len(Ks)), 'auc': 0.}
 
-    pool = multiprocessing.Pool(cores)
+    pool = multiprocessing.Pool(test_cores)
 
     if args.model_type in ['ripple']:
 
@@ -163,6 +182,7 @@ def test(sess, model, users_to_test, drop_flag=False, batch_test_flag=False):
 
     count = 0
 
+    DATASET_KEY = 'A_dataset' if args.model_type == 'cke' else 'dataset'
     for u_batch_id in range(n_user_batchs):
         start = u_batch_id * u_batch_size
         end = (u_batch_id + 1) * u_batch_size
@@ -181,7 +201,7 @@ def test(sess, model, users_to_test, drop_flag=False, batch_test_flag=False):
 
                 item_batch = range(i_start, i_end)
 
-                feed_dict = data_generator.generate_test_feed_dict(model=model,
+                feed_dict = data_generator[DATASET_KEY].as_test_feed_dict(model=model,
                                                                    user_batch=user_batch,
                                                                    item_batch=item_batch,
                                                                    drop_flag=drop_flag)
@@ -195,7 +215,7 @@ def test(sess, model, users_to_test, drop_flag=False, batch_test_flag=False):
 
         else:
             item_batch = range(ITEM_NUM)
-            feed_dict = data_generator.generate_test_feed_dict(model=model,
+            feed_dict = data_generator[DATASET_KEY].as_test_feed_dict(model=model,
                                                                user_batch=user_batch,
                                                                item_batch=item_batch,
                                                                drop_flag=drop_flag)

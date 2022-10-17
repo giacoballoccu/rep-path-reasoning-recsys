@@ -56,7 +56,7 @@ class MapperKGAT(MapperBase):
         #kg_final.txt
         kg_final_df = pd.read_csv(os.path.join(input_folder, "kg_final.txt"), sep="\t")
         kg_final_df = kg_final_df[["entity_head", "relation", "entity_tail"]]
-        kg_final_df.to_csv(os.path.join(output_folder, "kg_final.txt"), sep=self.sep, index=False)
+        kg_final_df.to_csv(os.path.join(output_folder, "kg_final.txt"), sep=self.sep, header=False, index=False)
 
     def write_split_KGAT(self):
         dataset_name = self.dataset_name

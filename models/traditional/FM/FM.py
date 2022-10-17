@@ -1,10 +1,11 @@
 '''
 Created on Dec 18, 2018
-Tensorflow Implementation of the Baseline model, FM, in:
+Tensorflow Implementation of the Baseline model, NFM, in:
 Wang Xiang et al. KGAT: Knowledge Graph Attention Network for Recommendation. In KDD 2019.
 @author: Xiang Wang (xiangwang@u.nus.edu)
 '''
 import tensorflow.compat.v1 as tf
+tf.disable_v2_behavior()
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL']='2'
 
@@ -82,7 +83,7 @@ class FM(object):
             # all_weights['var_factor'] = tf.concat([user_embed, item_embed, other_embed], 0, name='var_factor')
             print('using pretrained initialization')
 
-        # model parameters for FM.
+        # model parameters for NFM.
         self.weight_size_list = [self.emb_dim] + self.weight_size
         for i in range(self.n_layers):
             all_weights['W_%d' %i] = tf.Variable(
@@ -90,7 +91,10 @@ class FM(object):
             all_weights['b_%d' %i] = tf.Variable(
                 initializer([1, self.weight_size_list[i+1]]), name='b_%d' %i)
 
-        all_weights['h'] = tf.constant(1., tf.float32, [self.emb_dim, 1])
+        if self.model_type == 'fm':
+            all_weights['h'] = tf.constant(1., tf.float32, [self.emb_dim, 1])
+        else:
+            all_weights['h'] = tf.Variable(initializer([self.weight_size_list[-1], 1]), name='h')
 
         return all_weights
 
