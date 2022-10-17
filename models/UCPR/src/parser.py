@@ -1,5 +1,5 @@
 import os
-from UCPR.utils import *
+from models.UCPR.utils import *
 import argparse
 import random
 
@@ -91,8 +91,14 @@ def parse_args():
     parser.add_argument('--load_pt_emb_size', type=int, default=0, help='core number')
     parser.add_argument('--user_o', type=int, default=0, help='user_o')
     parser.add_argument('--add_products', type=boolean, default=True, help='Add predicted products up to 10')
-
-
+    parser.add_argument('--do_validation', type=bool, default=True, help='Whether to perform validation')
+    parser.add_argument("--wandb", action="store_true", help="If passed, will log to Weights and Biases.")
+    parser.add_argument(
+        "--wandb_entity",
+        required="--wandb" in sys.argv,
+        type=str,
+        help="Entity name to push to the wandb logged data, in case args.wandb is specified.",
+    )  
 
 
     args = parser.parse_args()

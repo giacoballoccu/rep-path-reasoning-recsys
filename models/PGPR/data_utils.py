@@ -6,7 +6,7 @@ import numpy as np
 import gzip
 from easydict import EasyDict as edict
 import random
-from pgpr_utils import get_knowledge_derived_relations, DATASET_DIR
+from models.PGPR.pgpr_utils import get_knowledge_derived_relations, DATASET_DIR
 
 
 class Dataset(object):

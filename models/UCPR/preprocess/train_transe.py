@@ -4,9 +4,9 @@ import os
 import argparse
 import torch
 import torch.optim as optim
-from UCPR.preprocess.dataset import DataLoader, Dataset
-from UCPR.utils import *
-from UCPR.preprocess.transe_model import KnowledgeEmbedding
+from models.UCPR.preprocess.dataset import DataLoader, Dataset
+from models.UCPR.utils import *
+from models.UCPR.preprocess.transe_model import KnowledgeEmbedding
 import json
 import sys
 logger = None
@@ -83,11 +83,11 @@ def train(args):
                 model.train()
         torch.save(model.state_dict(), '{}/transe_model_sd_epoch_{}.ckpt'.format(args.log_dir, epoch))
     
-    makedirs(CFG_DIR[dataset_name])
+    makedirs(dataset_name)
     with open(TRANSE_TEST_METRICS_FILE_PATH[dataset_name], 'w') as f:
-        json.dump( {'val_loss': best_val_loss, 
-                'val_loss_history': val_loss_history,
-                'train_loss_history':train_loss_history } )
+        json.dump( {'valid_loss': best_val_loss, 
+                'valid_loss_history': val_loss_history,
+                'train_loss_history':train_loss_history } ,f)
     
 
 def extract_embeddings(args, dataset):

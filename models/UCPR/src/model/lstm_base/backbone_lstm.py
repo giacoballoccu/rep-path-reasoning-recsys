@@ -14,7 +14,7 @@ from torch.distributions import Categorical
 
 from easydict import EasyDict as edict
 
-from UCPR.utils import *
+from models.UCPR.utils import *
  
 SavedAction = namedtuple('SavedAction', ['log_prob', 'value'])
 

@@ -14,10 +14,10 @@ import torch
 from torch.nn import functional as F
 import json
 from easydict import EasyDict as edict
-from my_knowledge_graph import *
-from data_utils import KGMask
-from symbolic_model import SymbolicNetwork, create_symbolic_model
-from cafe_utils import *
+from models.CAFE.knowledge_graph import *
+from models.CAFE.data_utils import KGMask
+from models.CAFE.symbolic_model import SymbolicNetwork, create_symbolic_model
+from models.CAFE.cafe_utils import *
 
 logger = None
 

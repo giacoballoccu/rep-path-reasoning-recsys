@@ -13,10 +13,10 @@ from torch.autograd import Variable
 from torch.distributions import Categorical
 
 from easydict import EasyDict as edict
-from UCPR.src.model.lstm_base.model_kg import KG_KGE#, RW_KGE
-from UCPR.src.model.lstm_base.model_kg_pre import KG_KGE_pretrained#, RW_KGE_pretrained
-from UCPR.src.model.lstm_base.backbone_lstm import EncoderRNN_batch, KGState_LSTM
-from UCPR.utils import *
+from models.UCPR.src.model.lstm_base.model_kg import KG_KGE#, RW_KGE
+from models.UCPR.src.model.lstm_base.model_kg_pre import KG_KGE_pretrained#, RW_KGE_pretrained
+from models.UCPR.src.model.lstm_base.backbone_lstm import EncoderRNN_batch, KGState_LSTM
+from models.UCPR.utils import *
 
 SavedAction = namedtuple('SavedAction', ['log_prob', 'value'])
 

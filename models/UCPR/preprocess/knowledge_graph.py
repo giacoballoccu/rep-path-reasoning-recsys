@@ -20,7 +20,7 @@ import numpy as np
 import gzip
 from easydict import EasyDict as edict
 import random
-from UCPR.utils import *
+from models.UCPR.utils import *
 #get_knowledge_derived_relations, DATASET_DIR, \
 #    get_pid_to_kgid_mapping, get_uid_to_kgid_mapping, get_entity_edict,\
 #    MAIN_PRODUCT_INTERACTION, USER,\
@@ -29,8 +29,9 @@ from UCPR.utils import *
 
 class KnowledgeGraph(object):
 
-    def __init__(self, dataset):
+    def __init__(self, dataset, verbose=False):
         self.G = dict()
+        self.verbose = verbose
         self._load_entities(dataset)
         self.dataset = dataset
         self.dataset_name = dataset.dataset_name
@@ -40,7 +41,8 @@ class KnowledgeGraph(object):
         self.top_matches = None
 
     def _load_entities(self, dataset):
-        print('Load entities...')
+        if self.verbose:
+            print('Load entities...')
         num_nodes = 0
         entities = get_entities(dataset.dataset_name)
         for entity in entities:
@@ -49,13 +51,13 @@ class KnowledgeGraph(object):
             relations = get_dataset_relations(dataset.dataset_name, entity)
             for eid in range(vocab_size):
                 self.G[entity][eid] = {r: [] for r in relations}
-                contig_id += 1
-
             num_nodes += vocab_size
-        print('Total {:d} nodes.'.format(num_nodes))
+        if self.verbose:
+            print('Total {:d} nodes.'.format(num_nodes))
 
     def _load_reviews(self, dataset):
-        print('Load reviews...')
+        if self.verbose:
+            print('Load reviews...')
         num_edges = 0
         for rid, data in enumerate(dataset.review.data):
             uid, pid, _, _ = data
@@ -64,15 +66,16 @@ class KnowledgeGraph(object):
             main_product, main_interaction = MAIN_PRODUCT_INTERACTION[dataset.dataset_name]
             self._add_edge(USER, uid, main_interaction, main_product, pid)
             num_edges += 2
-
-        print('Total {:d} review edges.'.format(num_edges))
+        if self.verbose:
+            print('Total {:d} review edges.'.format(num_edges))
 
     def _load_knowledge(self, dataset):
         relations = get_knowledge_derived_relations(dataset.dataset_name)
         main_entity, _ = MAIN_PRODUCT_INTERACTION[dataset.dataset_name]
         
         for relation in relations:
-            print('Load knowledge {}...'.format(relation))
+            if self.verbose:
+                print('Load knowledge {}...'.format(relation))
             data = getattr(dataset, relation).data
             num_edges = 0
             for pid, eids in enumerate(data):
@@ -82,14 +85,16 @@ class KnowledgeGraph(object):
                     et_type = get_entity_tail(dataset.dataset_name, relation)
                     self._add_edge(main_entity, pid, relation, et_type, eid)
                     num_edges += 2
-            print('Total {:d} {:s} edges.'.format(num_edges, relation))
+            if self.verbose:
+                print('Total {:d} {:s} edges.'.format(num_edges, relation))
 
     def _add_edge(self, etype1, eid1, relation, etype2, eid2):
         self.G[etype1][eid1][relation].append(eid2)
         self.G[etype2][eid2][relation].append(eid1)
 
     def _clean(self):
-        print('Remove duplicates...')
+        if self.verbose:
+            print('Remove duplicates...')
         for etype in self.G:
             for eid in self.G[etype]:
                 for r in self.G[etype][eid]:
@@ -98,7 +103,8 @@ class KnowledgeGraph(object):
                     self.G[etype][eid][r] = data
 
     def compute_degrees(self):
-        print('Compute node degrees...')
+        if self.verbose:
+            print('Compute node degrees...')
         self.degrees = {}
         self.max_degree = {}
         for etype in self.G:

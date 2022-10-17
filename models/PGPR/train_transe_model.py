@@ -5,8 +5,8 @@ import argparse
 import torch
 import torch.optim as optim
 from data_utils import DataLoader
-from pgpr_utils import *
-from transe_model import KnowledgeEmbedding
+from models.PGPR.pgpr_utils import *
+from models.PGPR.transe_model import KnowledgeEmbedding
 
 logger = None
 

@@ -7,9 +7,9 @@ import argparse
 import pandas as pd
 
 # from pgpr_utils.py import *
-from data_utils import Dataset
-from knowledge_graph import KnowledgeGraph
-from pgpr_utils import DATASET_DIR, save_labels, ML1M, TMP_DIR, save_dataset, load_dataset, save_kg
+from models.PGPR.data_utils import Dataset
+from models.PGPR.knowledge_graph import KnowledgeGraph
+from models.PGPR.pgpr_utils import DATASET_DIR, save_labels, ML1M, TMP_DIR, save_dataset, load_dataset, save_kg
 
 
 def generate_labels(dataset, mode='train'):

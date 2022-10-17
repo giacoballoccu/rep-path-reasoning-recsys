@@ -1,6 +1,6 @@
 import os
 import numpy as np
-from UCPR.utils import EVALUATION, EVALUATION_2, SAVE_MODEL_DIR, get_logger
+from models.UCPR.utils import EVALUATION, EVALUATION_2, SAVE_MODEL_DIR, get_logger
 
 def parameter_path(args):
     if args.gp_setting == '6000_800_15_500_50':

@@ -5,10 +5,10 @@ import pickle
 import gzip
 import argparse
 
-from UCPR.utils import *
+from models.UCPR.utils import *
 #from UCPR.preprocess.dataset import RW_based_dataset, KG_based_dataset
-from UCPR.preprocess.dataset import Dataset
-from UCPR.preprocess.knowledge_graph import KnowledgeGraph #RW_based_KG, KG_based_KG
+from models.UCPR.preprocess.dataset import Dataset
+from models.UCPR.preprocess.knowledge_graph import KnowledgeGraph #RW_based_KG, KG_based_KG
 import pandas as pd
 
 

@@ -1,15 +1,18 @@
 import argparse
 import json
-from UCPR.utils import *
+from models.UCPR.utils import *
 import wandb
 import sys
 import numpy as np
 import shutil
 import os
-
+from sklearn.model_selection import ParameterGrid
+import subprocess
 TRAIN_FILE_NAME = 'preprocess/train_transe.py'
 
 def load_metrics(filepath):
+    if not os.path.exists(filepath):
+        return None
     with open(filepath) as f:
         metrics = json.load(f)
     return metrics
@@ -18,7 +21,7 @@ def save_metrics(metrics, filepath):
         json.dump(metrics, f)
 def save_cfg(configuration, filepath):
     with open(filepath, 'w') as f:
-        json.dump(metrics, f)     
+        json.dump(configuration, f)     
 def metrics_average(metrics):
     avg_metrics = dict()
     for k, v in metrics.items():
@@ -28,14 +31,19 @@ def metrics_average(metrics):
 
 def save_best(best_metrics, test_metrics, grid):
     dataset_name = grid["dataset"]
-    best_avg = metrics_average(best_metrics)
-    avg = metrics_average(test_metrics)
-
-    if avg['val_loss'] > best_avg['val_loss']:
+    if best_metrics is None:
         save_metrics(test_metrics, f'{BEST_TRANSE_TEST_METRICS_FILE_PATH[dataset_name]}')
         save_cfg(grid, f'{BEST_TRANSE_CFG_FILE_PATH[dataset_name] }')
         shutil.rmtree(BEST_CFG_DIR[dataset_name])
-        shutil.copytree(TMP_DIR[dataset_name], BEST_TRANSE_CFG_FILE_PATH[dataset_name] )
+        shutil.copytree(TMP_DIR[dataset_name], BEST_CFG_DIR[dataset_name] )
+        return 
+
+
+    if best_metrics[TRANSE_OPT_METRIC] > test_metrics[TRANSE_OPT_METRIC]:
+        save_metrics(test_metrics, f'{BEST_TRANSE_TEST_METRICS_FILE_PATH[dataset_name]}')
+        save_cfg(grid, f'{BEST_TRANSE_CFG_FILE_PATH[dataset_name] }')
+        shutil.rmtree(BEST_CFG_DIR[dataset_name])
+        shutil.copytree(TMP_DIR[dataset_name], BEST_CFG_DIR[dataset_name] )
 
 
 def makedirs(dataset_name):
@@ -47,44 +55,44 @@ def makedirs(dataset_name):
 def main(args):
 
 
-    chosen_hyperparam_grid = {'batch_size': 64,
-         'dataset': 'lfm1m',
-         'embed_size': 100,
-         'epochs': 30,
-         'gpu': '0',
-         'l2_lambda': 0,
-         'lr': 0.5,
-         'max_grad_norm': 5.0,
-         'name': 'train_transe_model',
-         'num_neg_samples': 5,
-         'seed': 123,
-         'steps_per_checkpoint': 200,
-         'weight_decay': 0}
+    chosen_hyperparam_grid = {'batch_size': [64],
+         'dataset': ['lfm1m','ml1m'],
+         'embed_size': [100],
+         'epochs': [1],
+         'gpu': ['0'],
+         'l2_lambda': [0],
+         'lr': [0.5],
+         'max_grad_norm': [5.0],
+         'name': ['train_transe_model'],
+         'num_neg_samples': [5],
+         'seed': [123],
+         'steps_per_checkpoint': [200],
+         'weight_decay': [0]}
     hparam_grids = ParameterGrid(chosen_hyperparam_grid)
     print('num_experiments: ', len(hparam_grids))
 
-    for grid in hparam_grids:
-        dataset_name = grid["dataset"]
+    for configuration in hparam_grids:
+        dataset_name = configuration["dataset"]
         makedirs(dataset_name)
         if args.wandb:
             wandb.init(project=f'{MODEL_NAME}_TRANSE_{dataset_name}',
-                           entity=args.wandb_entity, config=grid)    
-
+                           entity=args.wandb_entity, config=configuration)    
+        #'''
         CMD = ["python3", TRAIN_FILE_NAME]
 
-        for k,v in grid.items():
+        for k,v in configuration.items():
             CMD.extend( [f'--{k}', f'{v}'] )
-        print('Executing job: ',grid)
-        call(CMD)
+        print('Executing job: ',configuration)
+        subprocess.call(CMD)
         
-
+        print(TRANSE_CFG_FILE_PATH[dataset_name])
         save_cfg(configuration, TRANSE_CFG_FILE_PATH[dataset_name])        
         test_metrics = load_metrics(TRANSE_TEST_METRICS_FILE_PATH[dataset_name])
         best_metrics = load_metrics(BEST_TRANSE_TEST_METRICS_FILE_PATH[dataset_name])
-        save_best(best_metrics, test_metrics, grid)
+        save_best(best_metrics, test_metrics, configuration)
     
         if args.wandb:
-            wandb.log(metrics_average(test_metrics))
+            wandb.log(test_metrics[TRANSE_OPT_METRIC])
 
 
 
@@ -99,7 +107,7 @@ if __name__ == '__main__':
         type=str,
         help="Entity name to push to the wandb logged data, in case args.wandb is specified.",
     )    
-
+    args = parser.parse_args()
     main(args)
                  
     

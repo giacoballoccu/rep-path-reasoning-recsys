@@ -6,7 +6,7 @@ import gzip
 import pickle
 from easydict import EasyDict as edict
 import random
-from UCPR.utils import *
+from models.UCPR.utils import *
 import pandas as pd
 import random
 

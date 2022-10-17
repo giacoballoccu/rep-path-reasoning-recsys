@@ -13,11 +13,11 @@ from torch.autograd import Variable
 from torch.distributions import Categorical
 
 from easydict import EasyDict as edict
-from UCPR.src.model.lstm_base.model_lstm_mf_emb import AC_lstm_mf_dummy
-from UCPR.src.model.lstm_base.model_kg import KG_KGE#, RW_KGE
-from UCPR.src.model.lstm_base.model_kg_pre import KG_KGE_pretrained#, RW_KGE_pretrained
-from UCPR.src.model.lstm_base.backbone_lstm import EncoderRNN, EncoderRNN_batch, KGState_LSTM, KGState_LSTM_no_rela
-from UCPR.utils import *
+from models.UCPR.src.model.lstm_base.model_lstm_mf_emb import AC_lstm_mf_dummy
+from models.UCPR.src.model.lstm_base.model_kg import KG_KGE#, RW_KGE
+from models.UCPR.src.model.lstm_base.model_kg_pre import KG_KGE_pretrained#, RW_KGE_pretrained
+from models.UCPR.src.model.lstm_base.backbone_lstm import EncoderRNN, EncoderRNN_batch, KGState_LSTM, KGState_LSTM_no_rela
+from models.UCPR.utils import *
 
 
 SavedAction = namedtuple('SavedAction', ['log_prob', 'value'])
@@ -394,14 +394,14 @@ class UCPR(AC_lstm_mf_dummy):
         critic_loss = critic_loss.mean()
         entropy_loss = entropy_loss.mean()
         loss = actor_loss + critic_loss + ent_weight * entropy_loss + l2_loss
-        optimizer.zero_grad()
-        loss.backward()
+        if self.training:
+            optimizer.zero_grad()
+            loss.backward()
+            # if  step % 50 == 0:
+            #     plot_grad_flow_v2(self.named_parameters(), self.args.log_dir, step)
+            #     print('grad_cherck')
 
-        # if  step % 50 == 0:
-        #     plot_grad_flow_v2(self.named_parameters(), self.args.log_dir, step)
-        #     print('grad_cherck')
-
-        optimizer.step()
+            optimizer.step()
         del self.rewards[:]
         del self.saved_actions[:]
         del self.entropy[:]
