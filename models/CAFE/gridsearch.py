@@ -1,6 +1,6 @@
 import argparse
 import json
-from models.CAFE.utils import *
+from models.CAFE.cafe_utils import *
 import wandb
 import sys
 import numpy as np
@@ -14,6 +14,8 @@ TRAIN_FILE_NAME = 'train_neural_symbol.py'
 TEST_FILE_NAME = 'execute_neural_symbol.py'
 
 def load_metrics(filepath):
+    if not os.path.exists(filepath):
+        return None
     with open(filepath) as f:
         metrics = json.load(f)
     return metrics
@@ -22,7 +24,7 @@ def save_metrics(metrics, filepath):
         json.dump(metrics, f)
 def save_cfg(configuration, filepath):
     with open(filepath, 'w') as f:
-        json.dump(metrics, f)     
+        json.dump(configuration, f)     
 def metrics_average(metrics):
     avg_metrics = dict()
     for k, v in metrics.items():
@@ -31,7 +33,12 @@ def metrics_average(metrics):
 
 def save_best(best_metrics, test_metrics, grid):
     dataset_name = grid["dataset"]
-
+    if best_metrics is None:
+        save_metrics(test_metrics, f'{BEST_TEST_METRICS_FILE_PATH[dataset_name]}')
+        save_cfg(grid, f'{BEST_CFG_FILE_PATH[dataset_name] }')
+        shutil.rmtree(BEST_CFG_DIR[dataset_name])
+        shutil.copytree(TMP_DIR[dataset_name], BEST_CFG_DIR[dataset_name] )
+        return 
     if test_metrics[OPTIM_HPARAMS_METRIC] > best_metrics[OPTIM_HPARAMS_METRIC]:
         save_metrics(test_metrics, f'{BEST_TEST_METRICS_FILE_PATH[dataset_name]}')
         save_cfg(grid, f'{BEST_CFG_FILE_PATH[dataset_name] }')
@@ -61,8 +68,8 @@ def main(args):
               "steps_per_checkpoint": [100], 
               "topk_candidates": [10], 
               "use_dropout": [True],
-              "wandb":[True],
-              "wandb_entity": ['t-rex-recom']}
+                "wandb": [True if args.wandb else False], 
+     "wandb_entity": [args.wandb_entity]}
 
 
 
@@ -75,7 +82,7 @@ def main(args):
         dataset_name = configuration["dataset"]
         makedirs(dataset_name)
         if args.wandb:
-            wandb.init(project=f'{MODEL_NAME}_{dataset_name}',
+            wandb.init(project=f'cafe_{dataset_name}',
                            entity=args.wandb_entity, config=configuration)    
             
          
@@ -83,7 +90,13 @@ def main(args):
         CMD = ["python3", TRAIN_FILE_NAME]
 
         for k,v in configuration.items():
-            CMD.extend( [f'--{k}', f'{v}'] )
+                if k == 'wandb':
+                    CMD.extend([f'--{k}'])
+                elif isinstance(v,list):
+                    cmd_args = [f'--{k}'] + [f" {val} " for val in v]
+                    CMD.extend( cmd_args )
+                else:
+                    CMD.extend( [f'--{k}', f'{v}'] )     
         print('Executing job: ',configuration)
         subprocess.call(CMD)
         
@@ -92,8 +105,13 @@ def main(args):
         print('Done training, testing phase')
         CMD = ["python3", TEST_FILE_NAME]
         for k,v in configuration.items():
-            if k in test_args:
-                CMD.extend( [f'--{k}', f'{v}'] )
+                if k == 'wandb':
+                    CMD.extend([f'--{k}'])
+                elif isinstance(v,list):
+                    cmd_args = [f'--{k}'] + [f" {val} " for val in v]
+                    CMD.extend( cmd_args )
+                else:
+                    CMD.extend( [f'--{k}', f'{v}'] )     
         subprocess.call(CMD)
 
         save_cfg(configuration, CFG_FILE_PATH[dataset_name])        

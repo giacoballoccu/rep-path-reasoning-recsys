@@ -20,6 +20,7 @@ ML1M = 'ml1m'
 LFM1M = 'lfm1m'
 CELL = 'cellphones'
 
+ROOT_DIR = os.environ('TREX_DATA_ROOT') if 'TREX_DATA_ROOT' in os.environ else '../..'
 
 # STILL NOT SUPPORTED = beauty, cell, cloth
 BEAUTY_CORE ='beauty'
@@ -31,9 +32,9 @@ AZ_BOOK_CORE = 'book'
 MODEL = 'ucpr'
 # Dataset directories.
 DATASET_DIR = {
-    ML1M: f'../../data/{ML1M}/preprocessed/{MODEL}',
-    LFM1M: f'../../data/{LFM1M}/preprocessed/{MODEL}',
-    CELL: f'../../data/{CELL}/preprocessed/{MODEL}'
+    ML1M: f'{ROOT_DIR}/data/{ML1M}/preprocessed/{MODEL}',
+    LFM1M: f'{ROOT_DIR}/data/{LFM1M}/preprocessed/{MODEL}',
+    CELL: f'{ROOT_DIR}/data/{CELL}/preprocessed/{MODEL}'
 }
 
 # Model result directories.
@@ -47,7 +48,7 @@ TMP_DIR = {
 TRANSE_OPT_METRIC = 'valid_loss'
 OPTIM_HPARAMS_METRIC = 'ndcg'
 
-LOG_DIR = f'../../results/{MODEL}'
+LOG_DIR = f'{ROOT_DIR}/results/{MODEL}'
 
 CFG_DIR = {
     ML1M: f'{LOG_DIR}/{ML1M}/hparams_cfg',

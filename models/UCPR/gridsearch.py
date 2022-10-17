@@ -12,6 +12,8 @@ TRAIN_FILE_NAME = 'src/train.py'
 TEST_FILE_NAME = 'src/test.py'
 
 def load_metrics(filepath):
+    if not os.path.exists(filepath):
+        return None    
     with open(filepath) as f:
         metrics = json.load(f)
     return metrics
@@ -20,7 +22,7 @@ def save_metrics(metrics, filepath):
         json.dump(metrics, f)
 def save_cfg(configuration, filepath):
     with open(filepath, 'w') as f:
-        json.dump(metrics, f)     
+        json.dump(configuration, f)     
 def metrics_average(metrics):
     avg_metrics = dict()
     for k, v in metrics.items():
@@ -29,8 +31,13 @@ def metrics_average(metrics):
 
 def save_best(best_metrics, test_metrics, grid):
     dataset_name = grid["dataset"]
-    best_avg = metrics_average(best_metrics)
-    avg = metrics_average(test_metrics)
+    if best_metrics is None:
+        save_metrics(test_metrics, f'{BEST_TEST_METRICS_FILE_PATH[dataset_name]}')
+        save_cfg(grid, f'{BEST_CFG_FILE_PATH[dataset_name] }')
+        shutil.rmtree(BEST_CFG_DIR[dataset_name])
+        shutil.copytree(TMP_DIR[dataset_name], BEST_CFG_DIR[dataset_name] )
+        return 
+    dataset_name = grid["dataset"]
 
     if avg[OPTIM_HPARAMS_METRIC] > best_avg[OPTIM_HPARAMS_METRIC]:
         save_metrics(test_metrics, f'{BEST_TEST_METRICS_FILE_PATH[dataset_name]}')
@@ -45,50 +52,103 @@ def save_best(best_metrics, test_metrics, grid):
 def main(args):
 
 
-    chosen_hyperparam_grid = {'batch_size': [64],
-         'dataset': ['lfm1m','ml1m'],
-         'embed_size': [100],
-         'epochs': [40],
-         'gpu': ['0'],
-         'l2_lambda': [0],
-         'lr': [0.5],
-         'max_grad_norm': [5.0],
-         'name': ['train_transe_model'],
-         'num_neg_samples': [5],
-         'seed': [123],
-         'steps_per_checkpoint': [200],
-         'weight_decay': [0]}
+    chosen_hyperparam_grid = { 
+    "act_dropout": [0.5], 
+    "batch_size": [128],   
+    "dataset": ["lfm1m", 'ml1m'], 
+    "embed_size": [50], 
+    "ent_weight": [0.001],   
+    "epochs": [50],  
+    "gamma": [0.99], 
+ "hidden": [[64, 32]], 
+     "l2_lambda": [0], 
+     "l2_weight": [1e-06], 
+     "lambda_num": [0.5], 
+     "lr": [7e-05], 
+     "max_acts": [50], 
+     "max_path_len": [3], 
+     "model": ["UCPR"],  
+     "n_memory": [32], 
+"p_hop": [1],  
+ "sub_batch_size": [1], 
+
+
+    "add_products": [True], 
+    "att_core": [0], 
+    #"gp_setting": "6000_800_15_500_250", 
+    "gpu": ["0"], 
+    #"grad_check": [False],
+     "gradient_plot": ["gradient_plot/"], 
+     "h0_embbed": [0], 
+    
+     "item_core": [10], 
+     #"kg_emb_grad": [False], 
+     "kg_fre_lower": [15],
+    "kg_fre_upper": [500],  
+
+     "name": ["train_agent_enti_emb"],  
+       
+     "run_eval": [True], 
+     "run_path": [True], 
+     "sam_type": ["alet"],   
+     "seed": [52], 
+     "sort_by": ["prob"], 
+     "state_history": [1], 
+     #"state_rg": [False], 
+    
+     #"test_lstm_up": [True], 
+     "topk": [[25, 5, 1]], 
+     "topk_list": [[1, 10, 100, 100]],  
+     #"tri_pro_rm": [False], 
+     #"tri_wd_rm": [False], 
+     "user_core": [300], 
+     "user_core_th": [6], 
+     #"user_o": [False], 
+     "wandb": [True if args.wandb else False], 
+     "wandb_entity": [args.wandb_entity]}
     hparam_grids = ParameterGrid(chosen_hyperparam_grid)
     print('num_experiments: ', len(hparam_grids))
 
-    for grid in hparam_grids:
-        dataset_name = grid["dataset"]
+    for configuration in hparam_grids:
+        dataset_name = configuration["dataset"]
         makedirs(dataset_name)
         if args.wandb:
-            wandb.init(project=f'{MODEL_NAME}_{dataset_name}',
-                           entity=args.wandb_entity, config=grid)    
+            wandb.init(project=f'ucpr_{dataset_name}',
+                           entity=args.wandb_entity, config=configuration)    
             
          
 
         CMD = ["python3", TRAIN_FILE_NAME]
 
-        for k,v in grid.items():
-            CMD.extend( [f'--{k}', f'{v}'] )
-        print('Executing job: ',grid)
+        for k,v in configuration.items():
+                if k == 'wandb':
+                    CMD.extend([f'--{k}'])
+                elif isinstance(v,list):
+                    cmd_args = [f'--{k}'] + [f" {val} " for val in v]
+                    CMD.extend( cmd_args )
+                else:
+                    CMD.extend( [f'--{k}', f'{v}'] )   
+        print('Executing job: ',configuration)
         subprocess.call(CMD)
         
         # cafe and ucpr have the same command line args, pgpr does not, so the call below will have to be 
         # modified accordingly
         print('Done training, testing phase')
         CMD = ["python3", TEST_FILE_NAME]
-        for k,v in grid.items():
-            CMD.extend( [f'--{k}', f'{v}'] )
+        for k,v in configuration.items():
+                if k == 'wandb':
+                    CMD.extend([f'--{k}'])
+                elif isinstance(v,list):
+                    cmd_args = [f'--{k}'] + [f" {val} " for val in v]
+                    CMD.extend( cmd_args )
+                else:
+                    CMD.extend( [f'--{k}', f'{v}'] )   
         subprocess.call(CMD)
 
         save_cfg(configuration, CFG_FILE_PATH[dataset_name])        
         test_metrics = load_metrics(TEST_METRICS_FILE_PATH[dataset_name])
         best_metrics = load_metrics(BEST_TEST_METRICS_FILE_PATH[dataset_name])
-        save_best(best_metrics, test_metrics, grid)
+        save_best(best_metrics, test_metrics, configuration)
     
         if args.wandb:
             wandb.log(test_metrics)

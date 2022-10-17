@@ -231,6 +231,7 @@ def train(args):
     }
     first_iterate = True
     for epoch in range(0, args.epochs + 1):
+        splits_to_compute = list(loaders.items())
         if first_iterate:
             first_iterate = False
             splits_to_compute.insert(0, ('valid', valid_dataloader))   

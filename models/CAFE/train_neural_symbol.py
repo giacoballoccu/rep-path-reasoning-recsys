@@ -112,15 +112,11 @@ def train(args):
 
     loaders = {'train': train_dataloader,
                 'valid': valid_dataloader}
-    envs = {'train': train_env,
-            'valid':valid_env}
+
     step_counter = {
                 'train': 0,
             'valid':0
     }
-    uids_split = {'train' :train_uids,
-                'valid':valid_uids}
-
     first_iterate = True
 
     torch.save(model.state_dict(), '{}/symbolic_model_epoch{}.ckpt'.format(args.log_dir, 0))
@@ -138,9 +134,6 @@ def train(args):
                 model.eval()
             else:
                 model.train()
-            env = envs[split_name]
-            uids = uids_split[split_name]
-
             iter_counter = 0
             ### Start epoch ###
             dataloader.reset()
