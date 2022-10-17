@@ -57,17 +57,17 @@ def main(args):
 
     chosen_hyperparam_grid = {'batch_size': [64],
          'dataset': ['lfm1m','ml1m'],
-         'embed_size': [100],
-         'epochs': [1],
+         'embed_size': [100, 200],
+         'epochs': [50],
          'gpu': ['0'],
-         'l2_lambda': [0],
-         'lr': [0.5],
+         'l2_lambda': [0, 0.001],
+         'lr': [0.5, 0.005],
          'max_grad_norm': [5.0],
          'name': ['train_transe_model'],
          'num_neg_samples': [5],
          'seed': [123],
          'steps_per_checkpoint': [200],
-         'weight_decay': [0]}
+         'weight_decay': [0, 5e-4]}
     hparam_grids = ParameterGrid(chosen_hyperparam_grid)
     print('num_experiments: ', len(hparam_grids))
 

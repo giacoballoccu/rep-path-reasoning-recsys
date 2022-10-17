@@ -55,7 +55,7 @@ def main(args):
     "dataset": ["lfm1m", "ml1m"], 
     "do_validation": [True], 
     "ent_weight":[ 0.001], 
-    "epochs": [50], 
+    "epochs": [1], 
     "gamma": [0.99], 
     "gpu": ["0"], 
     "hidden": [[512, 256]], 

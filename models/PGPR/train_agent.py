@@ -14,6 +14,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 from torch.distributions import Categorical
 from models.PGPR.pgpr_utils import ML1M, TMP_DIR, get_logger, set_random_seed, USER, LOG_DIR, HPARAMS_FILE
+from models.PGPR.pgpr_utils import *
 from models.PGPR.kg_env import BatchKGEnvironment
 from easydict import EasyDict as edict
 from collections import defaultdict
@@ -318,7 +319,7 @@ def train(args):
             logger.info(info)
 
         ### END of epoch ###
-        if epoch % 10 == 0:
+        if epoch % 1 == 0:
             policy_file = '{}/policy_model_epoch_{}.ckpt'.format(args.log_dir, epoch)
             logger.info("Save models to " + policy_file)
             torch.save(model.state_dict(), policy_file)
