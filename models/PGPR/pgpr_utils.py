@@ -69,7 +69,7 @@ BEST_CFG_FILE_PATH = {
 }
 
 TRANSE_HPARAMS_FILE = f'{LOG_DIR}/transe_{MODEL}_hparams_file.json'
-HPARAMS_FILE = f'{LOG_DIR}/{MODEL}_hparams_file.json'
+HPARAMS_FILE = f'{MODEL}_hparams_file.json'
 
 
 

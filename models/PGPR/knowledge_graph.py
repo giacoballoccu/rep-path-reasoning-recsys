@@ -1,6 +1,6 @@
 from __future__ import absolute_import, division, print_function
 
-from pgpr_utils import *
+from models.PGPR.pgpr_utils import *
 
 
 class KnowledgeGraph(object):

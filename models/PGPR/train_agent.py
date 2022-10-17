@@ -13,12 +13,16 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from torch.distributions import Categorical
-from pgpr_utils import ML1M, TMP_DIR, get_logger, set_random_seed, USER, LOG_DIR, HPARAMS_FILE
-from kg_env import BatchKGEnvironment
-
+from models.PGPR.pgpr_utils import ML1M, TMP_DIR, get_logger, set_random_seed, USER, LOG_DIR, HPARAMS_FILE
+from models.PGPR.kg_env import BatchKGEnvironment
+from easydict import EasyDict as edict
+from collections import defaultdict
+import wandb
+import sys
 logger = None
 
 SavedAction = namedtuple('SavedAction', ['log_prob', 'value'])
+
 
 
 class ActorCritic(nn.Module):
@@ -45,7 +49,8 @@ class ActorCritic(nn.Module):
         x = F.dropout(F.elu(out), p=0.5)
 
         actor_logits = self.actor(x)
-        actor_logits[1 - act_mask] = -999999.0
+        #actor_logits[1 - act_mask] = -999999.0
+        actor_logits[~act_mask] = -999999.0
         act_probs = F.softmax(actor_logits, dim=-1)  # Tensor of [bs, act_dim]
 
         state_values = self.critic(x)  # Tensor of [bs, 1]
@@ -53,7 +58,7 @@ class ActorCritic(nn.Module):
 
     def select_action(self, batch_state, batch_act_mask, device):
         state = torch.FloatTensor(batch_state).to(device)  # Tensor [bs, state_dim]
-        act_mask = torch.ByteTensor(batch_act_mask).to(device)  # Tensor of [bs, act_dim]
+        act_mask = torch.BoolTensor(batch_act_mask).to(device)  # Tensor of [bs, act_dim]
 
         probs, value = self((state, act_mask))  # act_probs: [bs, act_dim], state_value: [bs, 1]
         m = Categorical(probs)
@@ -129,71 +134,195 @@ class ACDataLoader(object):
         return batch_uids.tolist()
 
 
+
+class MetricsLogger:
+    # attribute names
+    WANDB_ENTITY='wandb_entity'
+    PROJECT_NAME='project_name'
+    WANDB_CONFIG = 'config'
+    def __init__(self, wandb_entity=None, project_name=None, config=None):
+        self.wandb_entity = wandb_entity 
+        # extra care should be taken to call the wandb method only from
+        # main process if distributed training is on
+        if self.wandb_entity is not None:
+            assert wandb_entity is not None, f'Error {MetricsLogger.WANDB_ENTITY} is None, but is required for wandb logging.\n Please provide your account name as value of this member variable'
+            assert project_name is not None, f'Error "{MetricsLogger.PROJECT_NAME}" is None, but is required for wandb logging'
+            wandb.init(project=project_name,
+                       entity=wandb_entity, config=config)   
+        self.metrics = dict()
+    
+    def register(self, metric_name):
+        self.metrics[metric_name] = []
+        setattr(self, metric_name, self.metrics[metric_name])
+
+    def log(self, metric_name, value):
+        if metric_name not in self.metrics:
+            self.register(metric_name)
+        self.metrics[metric_name].append(value)
+
+
+    def history(self, metric_name, n_samples ):
+        # return latest n_samples of metric_name
+        return self.metrics[metric_name][-n_samples:]
+    def push(self, metric_names):
+        if self.wandb_entity is not None:
+            to_push = dict()
+            for name in metric_names:
+                to_push[name] = self.metrics[name][-1]
+            wandb.log(to_push)
+    def write(self, filepath):
+        if not os.path.exists(os.path.dirname(filepath)):
+            os.makedirs(os.path.dirname(filepath), exist_ok=True)
+        with open(filepath, 'w') as f:
+            import json
+            import copy
+            json.dump(self.metrics, f)   
+
 def train(args):
-    env = BatchKGEnvironment(args.dataset, args.max_acts, max_path_len=args.max_path_len,
+    # check how datasets are loaded by BatchKGEnvironment
+    train_env = BatchKGEnvironment(args.dataset, args.max_acts, max_path_len=args.max_path_len,
                              state_history=args.state_history)
-    uids = list(env.kg(USER).keys())
-    dataloader = ACDataLoader(uids, args.batch_size)
-    model = ActorCritic(env.state_dim, env.act_dim, gamma=args.gamma, hidden_sizes=args.hidden).to(args.device)
+    valid_env = BatchKGEnvironment(args.dataset, args.max_acts, max_path_len=args.max_path_len,
+                             state_history=args.state_history)
+    train_uids = list(train_env.kg(USER).keys())
+    valid_uids = list(valid_env.kg(USER).keys())
+    train_dataloader = ACDataLoader(train_uids, args.batch_size)
+    valid_dataloader = ACDataLoader(valid_uids, args.batch_size)
+
+
+    model = ActorCritic(train_env.state_dim, train_env.act_dim, gamma=args.gamma, hidden_sizes=args.hidden).to(args.device)
     model_sd = model.state_dict()
     model.load_state_dict(model_sd)
     logger.info('Parameters:' + str([i[0] for i in model.named_parameters()]))
     optimizer = optim.Adam(model.parameters(), lr=args.lr)
 
-    total_losses, total_plosses, total_vlosses, total_entropy, total_rewards = [], [], [], [], []
-    step = 0
+    metrics = MetricsLogger(args.wandb_entity, 
+                            f'pgpr_{args.dataset}',
+                            config=args)
+    metrics.register('train_loss')
+    metrics.register('train_ploss')
+    metrics.register('train_vloss')
+    metrics.register('train_entropy')
+    metrics.register('train_reward')
+
+    metrics.register('avg_train_loss')
+    metrics.register('avg_train_ploss')
+    metrics.register('avg_train_vloss')
+    metrics.register('avg_train_entropy')
+    metrics.register('avg_train_reward')
+    metrics.register('std_train_reward')
+
+    metrics.register('valid_loss')
+    metrics.register('valid_ploss')
+    metrics.register('valid_vloss')     
+    metrics.register('valid_entropy')
+    metrics.register('valid_reward')
+
+    metrics.register('avg_valid_loss')
+    metrics.register('avg_valid_ploss')
+    metrics.register('avg_valid_vloss')     
+    metrics.register('avg_valid_entropy')
+    metrics.register('avg_valid_entropy')
+    metrics.register('avg_valid_reward')
+    loaders = {'train': train_dataloader,
+                'valid': valid_dataloader}
+    envs = {'train': train_env,
+            'valid':valid_env}
+    step_counter = {
+                'train': 0,
+            'valid':0
+    }
+    uids_split = {'train' :train_uids,
+                'valid':valid_uids}
+
+    first_iterate = True
     model.train()
     start = 0
     for epoch in range(1, args.epochs + 1):
-        ### Start epoch ###
-        dataloader.reset()
-        while dataloader.has_next():
-            batch_uids = dataloader.get_batch()
-            ### Start batch episodes ###
-            batch_state = env.reset(batch_uids)  # numpy array of [bs, state_dim]
-            done = False
-            while not done:
-                batch_act_mask = env.batch_action_mask(dropout=args.act_dropout)  # numpy array of size [bs, act_dim]
-                batch_act_idx = model.select_action(batch_state, batch_act_mask, args.device)  # int
-                batch_state, batch_reward, done = env.batch_step(batch_act_idx)
-                model.rewards.append(batch_reward)
-            ### End of episodes ###
+        splits_to_compute = list(loaders.items())
+        if first_iterate:
+            first_iterate = False
+            splits_to_compute.insert(0, ('valid', valid_dataloader))        
+        for split_name, dataloader in splits_to_compute:
+            if split_name == 'valid':
+                model.eval()
+            else:
+                model.train()
+            dataloader.reset()
+            env = envs[split_name]
+            uids = uids_split[split_name]
 
-            lr = args.lr * max(1e-4, 1.0 - float(step) / (args.epochs * len(uids) / args.batch_size))
-            for pg in optimizer.param_groups:
-                pg['lr'] = lr
+            iter_counter = 0
+            ### Start epoch ###
+            dataloader.reset()
+            while dataloader.has_next():
+                batch_uids = dataloader.get_batch()
+                ### Start batch episodes ###
+                batch_state = env.reset(batch_uids)  # numpy array of [bs, state_dim]
+                done = False
+                while not done:
+                    batch_act_mask = env.batch_action_mask(dropout=args.act_dropout) # numpy array of size [bs, act_dim]
+                    batch_act_idx = model.select_action(batch_state, batch_act_mask, args.device)  # int
+                    batch_state, batch_reward, done = env.batch_step(batch_act_idx)
+                    model.rewards.append(batch_reward)
 
-            # Update policy
-            total_rewards.append(np.sum(model.rewards))
-            loss, ploss, vloss, eloss = model.update(optimizer, args.device, args.ent_weight)
-            total_losses.append(loss)
-            total_plosses.append(ploss)
-            total_vlosses.append(vloss)
-            total_entropy.append(eloss)
-            step += 1
+                ### End of episodes ###
+                if split_name == 'train':
+                    lr = args.lr * max(1e-4, 1.0 - float(step_counter[split_name]) / (args.epochs * len(uids) / args.batch_size))
+                    for pg in optimizer.param_groups:
+                        pg['lr'] = lr
 
-            # Report performance
-            if step > 0 and step % 100 == 0:
-                avg_reward = np.mean(total_rewards) / args.batch_size
-                avg_loss = np.mean(total_losses)
-                avg_ploss = np.mean(total_plosses)
-                avg_vloss = np.mean(total_vlosses)
-                avg_entropy = np.mean(total_entropy)
-                total_losses, total_plosses, total_vlosses, total_entropy, total_rewards = [], [], [], [], []
+                # Update policy
+                total_reward = np.sum(model.rewards)
+                loss, ploss, vloss, eloss = model.update(optimizer, args.device, args.ent_weight)
+                cur_metrics = {f'{split_name}_loss':loss,
+                                 f'{split_name}_ploss':ploss, 
+                                 f'{split_name}_vloss':vloss, 
+                                f'{split_name}_entropy':eloss,
+                                f'{split_name}_reward':total_reward,
+                                f'{split_name}_iter': step_counter[split_name]}
 
-                logger.info(
-                    'epoch/step={:d}/{:d}'.format(epoch, step) +
-                    ' | loss={:.5f}'.format(avg_loss) +
-                    ' | ploss={:.5f}'.format(avg_ploss) +
-                    ' | vloss={:.5f}'.format(avg_vloss) +
-                    ' | entropy={:.5f}'.format(avg_entropy) +
-                    ' | reward={:.5f}'.format(avg_reward))
+                for k,v in cur_metrics.items():
+                    metrics.log(k, v)
+                metrics.push(cur_metrics.keys())
+                
+                step_counter[split_name] += 1
+                iter_counter += 1
+
+
+            cur_metrics = [f'{split_name}_epoch']
+            cur_metrics.extend([f'{split_name}_loss',
+                 f'{split_name}_ploss', 
+                 f'{split_name}_vloss', 
+                f'{split_name}_entropy',
+                f'{split_name}_reward',
+                ])
+            for k in cur_metrics[1:]:
+                metrics.log(f'avg_{k}', sum(metrics.history(k, iter_counter))/max(iter_counter,1) )
+            getattr(metrics, f'avg_{split_name}_reward')[-1] /= args.batch_size 
+
+
+                
+            metrics.log(f'{split_name}_epoch', epoch)
+            cur_metrics.append(f'std_{split_name}_reward')
+            metrics.log(f'std_{split_name}_reward',np.std(metrics.history( f'{split_name}_reward', iter_counter)) )
+            info = ""
+            for k in cur_metrics:
+                if isinstance(getattr(metrics,k)[-1],float):
+                    x = '{:.5f}'.format(getattr(metrics, k)[-1])
+                else:
+                    x = '{:d}'.format(getattr(metrics, k)[-1])
+                info = info + f'| {k}={x} ' 
+
+            metrics.push(cur_metrics)
+            logger.info(info)
+
         ### END of epoch ###
         if epoch % 10 == 0:
             policy_file = '{}/policy_model_epoch_{}.ckpt'.format(args.log_dir, epoch)
             logger.info("Save models to " + policy_file)
             torch.save(model.state_dict(), policy_file)
-
+    metrics.write(TMP_DIR[args.dataset])
 
 def main():
     parser = argparse.ArgumentParser()
@@ -211,14 +340,22 @@ def main():
     parser.add_argument('--act_dropout', type=float, default=0, help='action dropout rate.')
     parser.add_argument('--state_history', type=int, default=1, help='state history length')
     parser.add_argument('--hidden', type=int, nargs='*', default=[512, 256], help='number of samples')
+    parser.add_argument('--do_validation', type=bool, default=True, help='Whether to perform validation')
+    parser.add_argument("--wandb", action="store_true", help="If passed, will log to Weights and Biases.")
+    parser.add_argument(
+        "--wandb_entity",
+        required="--wandb" in sys.argv,
+        type=str,
+        help="Entity name to push to the wandb logged data, in case args.wandb is specified.",
+    )  
 
     args = parser.parse_args()
 
     os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
     args.device = torch.device('cuda:0') if torch.cuda.is_available() else 'cpu'
 
-    os.makedirs(LOG_DIR, exist_ok=True)
-    with open(f'{HPARAMS_FILE}', 'w') as f:
+    os.makedirs(TMP_DIR[args.dataset], exist_ok=True)
+    with open(os.path.join(TMP_DIR[args.dataset],HPARAMS_FILE), 'w') as f:
         import json
         import copy
         args_dict = dict()

@@ -7,8 +7,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from pgpr_utils import *
-from data_utils import Dataset
+from models.PGPR.pgpr_utils import *
+from models.PGPR.data_utils import Dataset
 
 
 class KnowledgeEmbedding(nn.Module):

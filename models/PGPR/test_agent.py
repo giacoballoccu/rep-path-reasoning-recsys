@@ -9,9 +9,9 @@ import json
 from easydict import EasyDict as edict
 from tqdm import tqdm
 from functools import reduce
-from kg_env import BatchKGEnvironment
-from train_agent import ActorCritic
-from pgpr_utils import *
+from models.PGPR.kg_env import BatchKGEnvironment
+from models.PGPR.train_agent import ActorCritic
+from models.PGPR.pgpr_utils import *
 
 
 def evaluate(dataset_name, topk_matches, test_user_products):
