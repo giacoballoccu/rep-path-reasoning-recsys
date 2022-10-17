@@ -25,8 +25,7 @@ DATA_DIR = {
     LFM1M: f'{ROOT_DIR}/data/{LFM1M}/preprocessed/{MODEL}',
     CELL: f'{ROOT_DIR}/data/{CELL}/preprocessed/{MODEL}'
 }
-OPTIM_HPARAMS_METRIC = 'ndcg'
-
+OPTIM_HPARAMS_METRIC = 'avg_valid_loss'
 VALID_METRICS_FILE_NAME = 'valid_metrics.json'
 
 

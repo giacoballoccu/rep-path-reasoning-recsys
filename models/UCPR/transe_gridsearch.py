@@ -75,7 +75,7 @@ def main(args):
         dataset_name = configuration["dataset"]
         makedirs(dataset_name)
         if args.wandb:
-            wandb.init(project=f'{MODEL_NAME}_TRANSE_{dataset_name}',
+            wandb.init(project=f'grid_{MODEL_NAME}_TRANSE_{dataset_name}',
                            entity=args.wandb_entity, config=configuration)    
         #'''
         CMD = ["python3", TRAIN_FILE_NAME]

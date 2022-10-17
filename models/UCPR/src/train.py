@@ -22,6 +22,7 @@ import time
 import json
 from easydict import EasyDict as edict
 import wandb
+
 SavedAction = namedtuple('SavedAction', ['log_prob', 'value'])
 
 def pretrain_set(args, env):
@@ -139,7 +140,7 @@ class MetricsLogger:
         if self.wandb_entity is not None:
             assert wandb_entity is not None, f'Error {MetricsLogger.WANDB_ENTITY} is None, but is required for wandb logging.\n Please provide your account name as value of this member variable'
             assert project_name is not None, f'Error "{MetricsLogger.PROJECT_NAME}" is None, but is required for wandb logging'
-            wandb.init(project=project_name,
+            self.wandb_run = wandb.init(project=project_name,
                        entity=wandb_entity, config=config)   
         self.metrics = dict()
     
@@ -162,6 +163,12 @@ class MetricsLogger:
             for name in metric_names:
                 to_push[name] = self.metrics[name][-1]
             wandb.log(to_push)
+    def push_model(self, model_filepath, model_name):
+        artifact = wandb.Artifact(model_name, type='model')
+        artifact.add_file(model_filepath)
+        self.wandb_run.log_artifact(artifact)
+        self.wandb_run.join()
+
     def write(self, filepath):
         if not os.path.exists(os.path.dirname(filepath)):
             os.makedirs(os.path.dirname(filepath), exist_ok=True)
@@ -217,8 +224,8 @@ def train(args):
     metrics.register('avg_valid_ploss')
     metrics.register('avg_valid_vloss')     
     metrics.register('avg_valid_entropy')
-    metrics.register('avg_valid_entropy')
     metrics.register('avg_valid_reward')
+    metrics.register('std_valid_reward')
                  
 
     loaders = {'train': train_dataloader,
@@ -314,13 +321,15 @@ def train(args):
 
         ### END of epoch ###
         if epoch % 5 == 0:
-            policy_file = '{}/policy_model_epoch_{}.ckpt'.format(args.save_model_dir, epoch)
+            policy_file = '{}/policy_model_epoch_{}.ckpt'.format(TMP_DIR[args.dataset], epoch)
             logger.info("Save model to " + policy_file)
             torch.save(model.state_dict(), policy_file)
+            metrics.push_model(policy_file, f'{MODEL}_{args.dataset}_{epoch}')
 
         cur_tim = time.strftime("%Y%m%d-%H%M%S")
         logger.info("current time = " + str(cur_tim))
-        metrics.write(os.path.join(TMP_DIR[args.dataset], VALID_METRICS_FILE_NAME) )
+        makedirs(args.dataset)
+        metrics.write(TEST_METRICS_FILE_PATH[args.dataset])#metrics.write(os.path.join(TMP_DIR[args.dataset], VALID_METRICS_FILE_NAME) )
 
 
 if __name__ == '__main__':

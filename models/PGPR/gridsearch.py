@@ -8,6 +8,7 @@ import shutil
 import os
 from sklearn.model_selection import ParameterGrid
 import subprocess
+from tqdm import tqdm
 TRAIN_FILE_NAME = 'train_agent.py'
 TEST_FILE_NAME = 'test_agent.py'
 
@@ -36,8 +37,12 @@ def save_best(best_metrics, test_metrics, grid):
         save_cfg(grid, f'{BEST_CFG_FILE_PATH[dataset_name] }')
         shutil.rmtree(BEST_CFG_DIR[dataset_name])
         shutil.copytree(TMP_DIR[dataset_name], BEST_CFG_DIR[dataset_name] )
-        return 
-    if test_metrics[OPTIM_HPARAMS_METRIC] > best_metrics[OPTIM_HPARAMS_METRIC]:
+        return
+    
+    x = test_metrics[OPTIM_HPARAMS_METRIC][-OPTIM_HPARAMS_LAST_K:]/OPTIM_HPARAMS_LAST_K
+    best_x = best_metrics[OPTIM_HPARAMS_METRIC][-OPTIM_HPARAMS_LAST_K:]/OPTIM_HPARAMS_LAST_K
+    # if avg total reward is higher than current best
+    if x > best_x :
         save_metrics(test_metrics, f'{BEST_TEST_METRICS_FILE_PATH[dataset_name]}')
         save_cfg(grid, f'{BEST_CFG_FILE_PATH[dataset_name] }')
         shutil.rmtree(BEST_CFG_DIR[dataset_name])
@@ -55,7 +60,7 @@ def main(args):
     "dataset": ["lfm1m", "ml1m"], 
     "do_validation": [True], 
     "ent_weight":[ 0.001], 
-    "epochs": [1], 
+    "epochs": [40], 
     "gamma": [0.99], 
     "gpu": ["0"], 
     "hidden": [[512, 256]], 
@@ -68,8 +73,8 @@ def main(args):
   "wandb": [True if args.wandb else False], 
      "wandb_entity": [args.wandb_entity]}
 
-    test_args ={'dataset','seed','gpu','epochs','max_acts','max_acts', 'max_path_len','gamma','state_history',
-                'hidden','add_products','top_k','run_path', 'run_eval', 'save_paths'}
+    #test_args ={'dataset','seed','gpu','epochs','max_acts','max_acts', 'max_path_len','gamma','state_history',
+    #            'hidden','add_products','top_k','run_path', 'run_eval', 'save_paths'}
 
 
 
@@ -77,11 +82,11 @@ def main(args):
     hparam_grids = ParameterGrid(chosen_hyperparam_grid)
     print('num_experiments: ', len(hparam_grids))
 
-    for configuration in hparam_grids:
+    for i, configuration in enumerate(tqdm(hparam_grids)):
         dataset_name = configuration["dataset"]
         makedirs(dataset_name)
         if args.wandb:
-            wandb.init(project=f'pgpr_{dataset_name}',
+            wandb.init(project=f'grid_pgpr_{dataset_name}',
                            entity=args.wandb_entity, config=configuration)    
             
          
@@ -97,9 +102,11 @@ def main(args):
                 else:
                     CMD.extend( [f'--{k}', f'{v}'] )            
            
-        print('Executing job: ',configuration)
-        subprocess.call(CMD)
-        
+        print(f'Executing job {i+1}/{len(hparam_grids)}: ',configuration)
+        subprocess.call(CMD,
+                        stdout=subprocess.DEVNULL,
+                stderr=subprocess.STDOUT)
+        '''        
         # cafe and ucpr have the same command line args, pgpr does not, so the call below will have to be 
         # modified accordingly
         print('Done training, testing phase')
@@ -114,12 +121,12 @@ def main(args):
                 else:
                     CMD.extend( [f'--{k}', f'{v}'] )
         subprocess.call(CMD)
-
+        '''
         save_cfg(configuration, CFG_FILE_PATH[dataset_name])        
         test_metrics = load_metrics(TEST_METRICS_FILE_PATH[dataset_name])
         best_metrics = load_metrics(BEST_TEST_METRICS_FILE_PATH[dataset_name])
         save_best(best_metrics, test_metrics, configuration)
-    
+        
         if args.wandb:
             wandb.log(test_metrics)
 

@@ -8,6 +8,7 @@ import shutil
 import os
 from sklearn.model_selection import ParameterGrid
 import subprocess
+from tqdm import tqdm
 TRAIN_FILE_NAME = 'src/train.py'
 TEST_FILE_NAME = 'src/test.py'
 
@@ -37,9 +38,11 @@ def save_best(best_metrics, test_metrics, grid):
         shutil.rmtree(BEST_CFG_DIR[dataset_name])
         shutil.copytree(TMP_DIR[dataset_name], BEST_CFG_DIR[dataset_name] )
         return 
-    dataset_name = grid["dataset"]
 
-    if avg[OPTIM_HPARAMS_METRIC] > best_avg[OPTIM_HPARAMS_METRIC]:
+    x = test_metrics[OPTIM_HPARAMS_METRIC][-OPTIM_HPARAMS_LAST_K:]/OPTIM_HPARAMS_LAST_K
+    best_x = best_metrics[OPTIM_HPARAMS_METRIC][-OPTIM_HPARAMS_LAST_K:]/OPTIM_HPARAMS_LAST_K
+    # if avg total reward is higher than current best
+    if x > best_x :
         save_metrics(test_metrics, f'{BEST_TEST_METRICS_FILE_PATH[dataset_name]}')
         save_cfg(grid, f'{BEST_CFG_FILE_PATH[dataset_name] }')
         shutil.rmtree(BEST_CFG_DIR[dataset_name])
@@ -58,7 +61,7 @@ def main(args):
     "dataset": ["lfm1m", 'ml1m'], 
     "embed_size": [50], 
     "ent_weight": [0.001],   
-    "epochs": [50],  
+    "epochs": [40],  
     "gamma": [0.99], 
  "hidden": [[64, 32]], 
      "l2_lambda": [0], 
@@ -109,11 +112,11 @@ def main(args):
     hparam_grids = ParameterGrid(chosen_hyperparam_grid)
     print('num_experiments: ', len(hparam_grids))
 
-    for configuration in hparam_grids:
+    for i, configuration in enumerate(tqdm(hparam_grids)):
         dataset_name = configuration["dataset"]
         makedirs(dataset_name)
         if args.wandb:
-            wandb.init(project=f'ucpr_{dataset_name}',
+            wandb.init(project=f'grid_ucpr_{dataset_name}',
                            entity=args.wandb_entity, config=configuration)    
             
          
@@ -128,9 +131,12 @@ def main(args):
                     CMD.extend( cmd_args )
                 else:
                     CMD.extend( [f'--{k}', f'{v}'] )   
-        print('Executing job: ',configuration)
-        subprocess.call(CMD)
+        print(f'Executing job {i+1}/{len(hparam_grids)}: ',configuration)
+        subprocess.call(CMD,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.STDOUT)
         
+        '''     
         # cafe and ucpr have the same command line args, pgpr does not, so the call below will have to be 
         # modified accordingly
         print('Done training, testing phase')
@@ -144,6 +150,7 @@ def main(args):
                 else:
                     CMD.extend( [f'--{k}', f'{v}'] )   
         subprocess.call(CMD)
+        '''
 
         save_cfg(configuration, CFG_FILE_PATH[dataset_name])        
         test_metrics = load_metrics(TEST_METRICS_FILE_PATH[dataset_name])

@@ -48,7 +48,10 @@ VALID_METRICS_FILE_NAME = 'valid_metrics.json'
 
 
 TRANSE_OPT_METRIC = 'valid_loss'
-OPTIM_HPARAMS_METRIC = 'ndcg'
+#OPTIM_HPARAMS_METRIC = 'avg_valid_reward'
+OPTIM_HPARAMS_METRIC = 'valid_reward'
+OPTIM_HPARAMS_LAST_K = 100 # last 100 episodes
+#OPTIM_HPARAMS_METRIC = 'ndcg'
 
 LOG_DIR = f'{ROOT_DIR}/results/{MODEL}'
 

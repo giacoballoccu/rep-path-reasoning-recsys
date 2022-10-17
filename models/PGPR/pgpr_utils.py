@@ -23,6 +23,8 @@ CELL = 'cellphones'
 MODEL = 'pgpr'
 ROOT_DIR = os.environ('TREX_DATA_ROOT') if 'TREX_DATA_ROOT' in os.environ else '../..'
 
+
+
 # Dataset directories.
 DATASET_DIR = {
     ML1M: f'{ROOT_DIR}/data/{ML1M}/preprocessed/{MODEL}',
@@ -32,7 +34,8 @@ DATASET_DIR = {
 
 VALID_METRICS_FILE_NAME = 'valid_metrics.json'
 
-OPTIM_HPARAMS_METRIC = 'ndcg'
+OPTIM_HPARAMS_METRIC = 'valid_reward'
+OPTIM_HPARAMS_LAST_K = 100 # last 100 episodes
 LOG_DIR = f'{ROOT_DIR}/results/{MODEL}'
 
 CFG_DIR = {
