@@ -21,10 +21,10 @@ import gc
 import json
 from easydict import EasyDict as edict
 import itertools
-from UCPR.utils import *
-from UCPR.src.model.get_model.get_model import *
-from UCPR.src.parser import parse_args
-from UCPR.src.para_setting import parameter_path, parameter_path_th
+from models.UCPR.utils import *
+from models.UCPR.src.model.get_model.get_model import *
+from models.UCPR.src.parser import parse_args
+from models.UCPR.src.para_setting import parameter_path, parameter_path_th
 import collections
 def dcg_at_k(r, k, method=1):
     r = np.asfarray(r)[:k]

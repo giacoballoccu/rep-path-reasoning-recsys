@@ -44,7 +44,7 @@ TMP_DIR = {
 }
 
 
-
+TRANSE_OPT_METRIC = 'valid_loss'
 OPTIM_HPARAMS_METRIC = 'ndcg'
 
 LOG_DIR = f'../../results/{MODEL}'
@@ -119,7 +119,7 @@ BEST_TRANSE_CFG_FILE_PATH = {
 
 
 TRANSE_HPARAMS_FILE = f'{LOG_DIR}/transe_{MODEL}_hparams_file.json'
-HPARAMS_FILE = f'{LOG_DIR}/{MODEL}_hparams_file.json'
+HPARAMS_FILE = f'{MODEL}_hparams_file.json'
 
 
 

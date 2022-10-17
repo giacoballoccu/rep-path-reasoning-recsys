@@ -1,12 +1,13 @@
 import argparse
 import json
-from UCPR.utils import *
+from models.UCPR.utils import *
 import wandb
 import sys
 import numpy as np
 import shutil
 import os
-
+from sklearn.model_selection import ParameterGrid
+import subprocess
 TRAIN_FILE_NAME = 'src/train.py'
 TEST_FILE_NAME = 'src/test.py'
 
@@ -44,19 +45,19 @@ def save_best(best_metrics, test_metrics, grid):
 def main(args):
 
 
-    chosen_hyperparam_grid = {'batch_size': 64,
-         'dataset': 'lfm1m',
-         'embed_size': 100,
-         'epochs': 30,
-         'gpu': '0',
-         'l2_lambda': 0,
-         'lr': 0.5,
-         'max_grad_norm': 5.0,
-         'name': 'train_transe_model',
-         'num_neg_samples': 5,
-         'seed': 123,
-         'steps_per_checkpoint': 200,
-         'weight_decay': 0}
+    chosen_hyperparam_grid = {'batch_size': [64],
+         'dataset': ['lfm1m','ml1m'],
+         'embed_size': [100],
+         'epochs': [40],
+         'gpu': ['0'],
+         'l2_lambda': [0],
+         'lr': [0.5],
+         'max_grad_norm': [5.0],
+         'name': ['train_transe_model'],
+         'num_neg_samples': [5],
+         'seed': [123],
+         'steps_per_checkpoint': [200],
+         'weight_decay': [0]}
     hparam_grids = ParameterGrid(chosen_hyperparam_grid)
     print('num_experiments: ', len(hparam_grids))
 
@@ -74,7 +75,7 @@ def main(args):
         for k,v in grid.items():
             CMD.extend( [f'--{k}', f'{v}'] )
         print('Executing job: ',grid)
-        call(CMD)
+        subprocess.call(CMD)
         
         # cafe and ucpr have the same command line args, pgpr does not, so the call below will have to be 
         # modified accordingly
@@ -82,7 +83,7 @@ def main(args):
         CMD = ["python3", TEST_FILE_NAME]
         for k,v in grid.items():
             CMD.extend( [f'--{k}', f'{v}'] )
-        call(CMD)
+        subprocess.call(CMD)
 
         save_cfg(configuration, CFG_FILE_PATH[dataset_name])        
         test_metrics = load_metrics(TEST_METRICS_FILE_PATH[dataset_name])
@@ -90,7 +91,7 @@ def main(args):
         save_best(best_metrics, test_metrics, grid)
     
         if args.wandb:
-            wandb.log(metrics_average(test_metrics))
+            wandb.log(test_metrics)
 
 
 
@@ -105,7 +106,7 @@ if __name__ == '__main__':
         type=str,
         help="Entity name to push to the wandb logged data, in case args.wandb is specified.",
     )    
-
+    args = parser.parse_args()
     main(args)
                  
     

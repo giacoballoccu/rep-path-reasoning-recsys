@@ -8,8 +8,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-from UCPR.preprocess.dataset import Dataset
-from UCPR.utils import *
+from models.UCPR.preprocess.dataset import Dataset
+from models.UCPR.utils import *
 
 
 
