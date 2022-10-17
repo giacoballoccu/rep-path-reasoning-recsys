@@ -4,7 +4,7 @@ import random
 import numpy as np
 import gzip
 
-from cafe_utils import DATA_DIR
+from models.CAFE.cafe_utils import DATA_DIR
 
 ML1M = "ml1m"
 LFM1M = "lfm1m"
@@ -102,7 +102,7 @@ REV_MIXED_BY_ENGINEER = REV_PREFIX + MIXED_BY_ENGINEER
 REV_FEATURED_BY_ARTIST = REV_PREFIX + FEATURED_BY_ARTIST
 REV_BELONG_TO_GENRE = REV_PREFIX + BELONG_TO_GENRE
 
-class MyKnowledgeGraph:
+class KnowledgeGraph:
     def __init__(self, dataset):
         self.G = dict()
         # Assume each relation correspnonds to a unique pair of (head_entity_type, tail_entity_type)!

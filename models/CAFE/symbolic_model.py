@@ -4,8 +4,8 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
-from my_knowledge_graph import *
-from cafe_utils import *
+from models.CAFE.knowledge_graph import *
+from models.CAFE.cafe_utils import *
 
 
 class EntityEmbeddingModel(nn.Module):
@@ -273,7 +273,7 @@ def create_symbolic_model(args, kg, train=True, pretrain_embeds=None):
 
     Args:
         args: arguments.
-        kg (MyKnowledgeGraph): KG object.
+        kg (KnowledgeGraph): KG object.
         train (bool, optional): is training model. Defaults to True.
 
     Returns:

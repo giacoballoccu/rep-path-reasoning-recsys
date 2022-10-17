@@ -3,8 +3,8 @@ from __future__ import absolute_import, division, print_function
 import numpy as np
 from tqdm import tqdm
 
-from my_knowledge_graph import *
-from cafe_utils import *
+from models.CAFE.knowledge_graph import *
+from models.CAFE.cafe_utils import *
 
 
 def load_kg_embedding(dataset: str):
@@ -61,9 +61,9 @@ def main(args):
     embeds = load_kg_embedding(args.dataset)
     save_embed(args.dataset, embeds)
     # =========== END =========== #
-    # Run following codes to generate MyKnowledgeGraph object.
+    # Run following codes to generate KnowledgeGraph object.
     # ========== BEGIN ========== #
-    kg = MyKnowledgeGraph(args.dataset)
+    kg = KnowledgeGraph(args.dataset)
     save_kg(args.dataset, kg)
     # =========== END =========== #
 

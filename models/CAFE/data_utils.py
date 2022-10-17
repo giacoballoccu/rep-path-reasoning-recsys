@@ -6,9 +6,9 @@ import time
 import numpy as np
 
 # from datasets import AmazonDataset
-from my_knowledge_graph import *
+from models.CAFE.knowledge_graph import *
 # from const import *
-from cafe_utils import *
+from models.CAFE.cafe_utils import *
 
 
 class ReplayMemory(object):

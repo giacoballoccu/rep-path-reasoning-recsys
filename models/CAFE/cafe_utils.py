@@ -9,7 +9,7 @@ import gzip
 import scipy.sparse as sp
 from sklearn.feature_extraction.text import TfidfTransformer
 import torch
-
+import sys
 ML1M = 'ml1m'
 LFM1M = 'lfm1m'
 CELL = 'cellphones'
@@ -60,7 +60,7 @@ BEST_CFG_FILE_PATH = {
 }
 
 TRANSE_HPARAMS_FILE = f'{LOG_DIR}/transe_{MODEL}_hparams_file.json'
-HPARAMS_FILE = f'{LOG_DIR}/{MODEL}_hparams_file.json'
+HPARAMS_FILE = f'{MODEL}_hparams_file.json'
 
 
 
@@ -116,6 +116,14 @@ def parse_args():
     parser.add_argument('--sample_size', type=int, default=15, help='sample size for model.')
     parser.add_argument('--do_infer', type=boolean, default=False, help='whether to infer paths after training.')
     parser.add_argument('--do_execute', type=boolean, default=False, help='whether to execute neural programs.')
+    parser.add_argument('--do_validation', type=bool, default=True, help='Whether to perform validation')
+    parser.add_argument("--wandb", action="store_true", help="If passed, will log to Weights and Biases.")
+    parser.add_argument(
+        "--wandb_entity",
+        required="--wandb" in sys.argv,
+        type=str,
+        help="Entity name to push to the wandb logged data, in case args.wandb is specified.",
+    )  
 
     args = parser.parse_args()
 
