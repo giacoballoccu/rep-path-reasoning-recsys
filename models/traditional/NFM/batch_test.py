@@ -5,7 +5,7 @@ Wang Xiang et al. KGAT: Knowledge Graph Attention Network for Recommendation. In
 @author: Xiang Wang (xiangwang@u.nus.edu)
 '''
 import models.traditional.metrics as metrics
-from models.traditional.parser import parse_args
+from parser import parse_args
 import multiprocessing
 import heapq
 import numpy as np

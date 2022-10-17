@@ -7,6 +7,7 @@ Wang Xiang et al. KGAT: Knowledge Graph Attention Network for Recommendation. In
 from tensorflow.compat.v1 import ConfigProto, InteractiveSession
 import tensorflow.compat.v1 as tf
 tf.disable_v2_behavior()
+
 from models.knowledge_aware.helper import *
 from batch_test import *
 from time import time
@@ -63,6 +64,7 @@ if __name__ == '__main__':
     config['n_entities'] = data_generator['dataset'].n_entities
 
     if args.model_type in ['kgat', 'cfkg']:
+
         key = 'A_dataset' if args.model_type == 'kgat' else 'dataset'
         "Load the laplacian matrix."
         config['A_in'] = sum(data_generator[key].lap_list)
@@ -243,12 +245,11 @@ if __name__ == '__main__':
         ... phase 1: to train the recommender.
         """
         loader_iter = iter(data_generator['loader'])
-        loader_A_iter =  iter(data_generator['A_loader']) if 'A_loader' in data_generator else None
+        loader_A_iter = iter(data_generator['A_loader']) if 'A_loader' in data_generator else None
 
         train_start = time()
         for idx in range(n_batch):
             btime= time()
-
             try:
                 batch_data = next(loader_iter)
             except:

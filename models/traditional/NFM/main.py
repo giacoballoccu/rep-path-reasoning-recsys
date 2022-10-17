@@ -4,18 +4,14 @@ Tensorflow Implementation of Knowledge Graph Attention Network (KGAT) model in:
 Wang Xiang et al. KGAT: Knowledge Graph Attention Network for Recommendation. In KDD 2019.
 @author: Xiang Wang (xiangwang@u.nus.edu)
 '''
-import numpy as np
 from tensorflow.compat.v1 import ConfigProto, InteractiveSession
 import tensorflow.compat.v1 as tf
-
-
 tf.disable_v2_behavior()
-from models.traditional.helper import *
+
+from models.knowledge_aware.helper import *
 from batch_test import *
 from time import time
-
 from NFM import NFM
-from batch_test import data_generator
 
 import os
 import sys
@@ -26,7 +22,7 @@ def load_pretrained_data(args):
     if args.pretrain == -2:
         pre_model = 'kgat'
     pretrain_path = os.path.join(args.data_path, args.dataset, "preprocessed", "kgat", "pretrain", model.model_type,
-                                                  f"{pre_model}.npz")
+                                 f"{pre_model}.npz")
     try:
         pretrain_data = np.load(pretrain_path)
         print('load the pretrained bprmf model parameters.')
@@ -36,7 +32,7 @@ def load_pretrained_data(args):
 
 
 if __name__ == '__main__':
-
+    os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
     config = ConfigProto()
     config.gpu_options.allow_growth = True
     session = InteractiveSession(config=config)
@@ -47,8 +43,16 @@ if __name__ == '__main__':
     args = parse_args()
 
     STORAGE_DIR = f'{args.model_type}_{args.dataset}'
+    import os
+    import wandb
     os.makedirs(STORAGE_DIR, exist_ok=True)
 
+    if args.wandb :
+        wandb.init(project=STORAGE_DIR,
+                    config=vars(args),
+                       entity="chris1nexus",
+                       #name=args.dataset
+                       )
     """
     *********************************************************
     Load Data from data_generator function.
@@ -94,12 +98,14 @@ if __name__ == '__main__':
     """
     if args.save_flag == 1:
         if args.model_type in ['bprmf', 'cke', 'fm', 'cfkg']:
-            weights_save_path = os.path.join(args.data_path, args.dataset, "preprocessed/kgat/tmp", args.model_type, "weights", args.layer +
+            weights_save_path = os.path.join(args.data_path, args.dataset, "preprocessed/kgat/tmp", args.model_type,
+                                             "weights", args.layer +
                                              str(args.lr) + '-'.join([str(r) for r in eval(args.regs)]))
 
         elif args.model_type in ['ncf', 'nfm', 'kgat']:
             layer = '-'.join([str(l) for l in eval(args.layer_size)])
-            weights_save_path = os.path.join(args.data_path, args.dataset, "preprocessed/kgat/tmp", args.model_type, "weights",
+            weights_save_path = os.path.join(args.data_path, args.dataset, "preprocessed/kgat/tmp", args.model_type,
+                                             "weights",
                                              layer +
                                              str(args.lr) + '-'.join([str(r) for r in eval(args.regs)]))
 
@@ -116,12 +122,14 @@ if __name__ == '__main__':
     """
     if args.pretrain == 1:
         if args.model_type in ['bprmf', 'cke', 'fm', 'cfkg']:
-            pretrain_path = os.path.join(args.data_path, args.dataset, "preprocessed/kgat/tmp", args.model_type, "weights", args.layer +
-                                             str(args.lr) + '-'.join([str(r) for r in eval(args.regs)]))
+            pretrain_path = os.path.join(args.data_path, args.dataset, "preprocessed/kgat/tmp", args.model_type,
+                                         "weights", args.layer +
+                                         str(args.lr) + '-'.join([str(r) for r in eval(args.regs)]))
         elif args.model_type in ['ncf', 'nfm', 'kgat']:
             layer = '-'.join([str(l) for l in eval(args.layer_size)])
-            pretrain_path = os.path.join(args.data_path, args.dataset, "preprocessed/kgat/tmp", args.model_type, "weights", layer +
-                                             str(args.lr) + '-'.join([str(r) for r in eval(args.regs)]))
+            pretrain_path = os.path.join(args.data_path, args.dataset, "preprocessed/kgat/tmp", args.model_type,
+                                         "weights", layer +
+                                         str(args.lr) + '-'.join([str(r) for r in eval(args.regs)]))
 
         ckpt = tf.train.get_checkpoint_state(os.path.dirname(pretrain_path + '/checkpoint'))
         if ckpt and ckpt.model_checkpoint_path:
@@ -149,14 +157,15 @@ if __name__ == '__main__':
                 # save the pretrained model parameters of mf (i.e., only user & item embeddings) for pretraining other models.
                 if args.save_flag == -1:
                     user_embed, item_embed = sess.run(
-                        [model.weights['user_embed'], model.weights['entity_embed']],
+                        [model.weights['user_embedding'], model.weights['item_embedding']],
                         feed_dict={})
-                    temp_save_path = os.path.join(args.data_path, args.dataset, "preprocessed/kgat/pretrain", model.model_type,
+                    temp_save_path = os.path.join(args.data_path, args.dataset, "preprocessed/kgat/pretrain",
+                                                  model.model_type,
                                                   f"{model.model_type}.npz")
-
                     ensureDir(temp_save_path)
                     np.savez(temp_save_path, user_embed=user_embed, item_embed=item_embed)
                     print('save the weights of fm in path: ', temp_save_path)
+                    exit()
 
                 # *********************************************************
                 # save the pretrained model parameters of kgat (i.e., user & item & kg embeddings) for pretraining other models.
@@ -169,9 +178,10 @@ if __name__ == '__main__':
                                                   model.model_type,
                                                   f"{model.model_type}.npz")
                     ensureDir(temp_save_path)
-                    np.savez(temp_save_path, user_embed=user_embed, entity_embed=entity_embed,
-                             relation_embed=relation_embed)
+                    np.savez(temp_save_path, user_embed=user_embed, entity_embed=entity_embed, relation_embed=relation_embed)
                     print('save the weights of kgat in path: ', temp_save_path)
+                    exit()
+
         else:
             sess.run(tf.global_variables_initializer())
             cur_best_pre_0 = 0.
@@ -416,7 +426,7 @@ if __name__ == '__main__':
                   '\t'.join(['%.5f' % r for r in ndcgs[idx]]))
     print(final_perf)
 
-    save_path = os.path.join(args.proj_path, "output", args.dataset, "preprocessed", "kgat", f"{model.model_type.result}")
+    save_path = os.path.join(args.proj_path, "output", args.dataset, "preprocessed", "kgat", f"{model.model_type}.result")
     ensureDir(save_path)
     f = open(save_path, 'a')
 

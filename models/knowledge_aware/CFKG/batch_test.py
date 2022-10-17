@@ -4,13 +4,13 @@ Tensorflow Implementation of Knowledge Graph Attention Network (KGAT) model in:
 Wang Xiang et al. KGAT: Knowledge Graph Attention Network for Recommendation. In KDD 2019.
 @author: Xiang Wang (xiangwang@u.nus.edu)
 '''
-import models.traditional.metrics as metrics
+import models.knowledge_aware.metrics as metrics
 from parser import parse_args
-from models.traditional.load_data import Data
 import multiprocessing
 import heapq
 import numpy as np
 import random
+from itertools import cycle
 from torch.utils.data import DataLoader, RandomSampler
 import torch
 torch.multiprocessing.set_sharing_strategy('file_system')
@@ -40,32 +40,21 @@ def seed_worker(worker_id):
 g = torch.Generator(device='cpu')
 g.manual_seed(MANUAL_SEED)
 
-cfkg_a_ds = CFKG_loader(args=args, path=args.data_path + args.dataset)
-cfkg_ds = Data(args=args, path=args.data_path + args.dataset)
-data_generator['A_dataset'] = cfkg_a_ds
-data_generator['dataset'] = cfkg_a_ds
-data_generator['A_loader'] = DataLoader(cfkg_a_ds,
-                batch_size=cfkg_a_ds.batch_size_kg,
-                sampler=RandomSampler(cfkg_a_ds,
-                    replacement=True,
-                    generator=g) if args.with_replacement else None,
-                shuffle=False if args.with_replacement else True,
-                num_workers=train_cores,
-                drop_last=True,
-                persistent_workers=True
-                    )
-data_generator['loader'] = DataLoader(cfkg_ds,
-                batch_size=cfkg_ds.batch_size,
-                sampler=RandomSampler(cfkg_ds,
-                    replacement=True,
-                    generator=g) if args.with_replacement else None,
-                shuffle=False if args.with_replacement else True,
-                num_workers=train_cores,
-                drop_last=True,
-                persistent_workers=True
-                    )
 
-batch_test_flag = False
+ds = CFKG_loader(args=args, path=args.data_path + args.dataset)
+data_generator['dataset'] = ds
+data_generator['loader'] = DataLoader(ds,
+                batch_size=ds.batch_size,
+                sampler=RandomSampler(ds,
+                    replacement=True,
+                    generator=g) if args.with_replacement else None,
+                shuffle=False if args.with_replacement else True,
+                num_workers=train_cores,
+                drop_last=True,
+                persistent_workers=True
+                    )
+batch_test_flag = True
+
 
 USR_NUM, ITEM_NUM = data_generator['dataset'].n_users, data_generator['dataset'].n_items
 N_TRAIN, N_TEST = data_generator['dataset'].n_train, data_generator['dataset'].n_test

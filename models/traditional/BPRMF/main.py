@@ -14,7 +14,6 @@ tf.disable_v2_behavior()
 from models.traditional.helper import *
 from batch_test import *
 from time import time
-
 from BPRMF import BPRMF
 import os
 import sys
@@ -419,7 +418,7 @@ if __name__ == '__main__':
                   '\t'.join(['%.5f' % r for r in ndcgs[idx]]))
     print(final_perf)
 
-    save_path = os.path.join(args.proj_path, "output", args.dataset, "preprocessed", "kgat", f"{model.model_type.result}")
+    save_path = os.path.join(args.proj_path, "output", args.dataset, "preprocessed", "kgat", f"{model.model_type}.result")
     ensureDir(save_path)
     f = open(save_path, 'a')
 
