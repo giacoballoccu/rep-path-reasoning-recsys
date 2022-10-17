@@ -3,7 +3,7 @@ from __future__ import absolute_import, division, print_function
 import numpy as np
 import random
 
-from pgpr_utils import load_kg, load_embed, USER, SELF_LOOP, load_labels, MAIN_PRODUCT_INTERACTION, PATH_PATTERN, \
+from models.PGPR.pgpr_utils import load_kg, load_embed, USER, SELF_LOOP, load_labels, MAIN_PRODUCT_INTERACTION, PATH_PATTERN, \
     KG_RELATION
 
 
