@@ -89,8 +89,10 @@ def get_tmp_dir(dataset_name, model_name):
     return os.path.join(get_data_dir(dataset_name), model_name, "tmp")
 
 
-def get_result_dir(dataset_name, model_name):
+def get_result_dir(dataset_name, model_name=None):
     ensure_dataset_name(dataset_name)
+    if model_name == None:
+        return f"results/{dataset_name}/"
     return f"results/{dataset_name}/{model_name}/"
 
 
@@ -173,6 +175,17 @@ def get_item_genre(dataset_name, model_name):
     item_genre_df.pid = item_genre_df.pid.map(dataset_id2model_kg_id)
     return dict(zip(item_genre_df.pid, item_genre_df.genre))
 
+def get_mostpop_topk(dataset_name, model_name, k):
+    result_dir = get_result_dir(dataset_name)
+    with open(os.path.join(result_dir, "most_pop", "item_topks.pkl"), 'rb') as f:
+        most_pop_topks = pickle.load(f)
+    f.close()
+    dataset_uid2model_kg_id = get_dataset_id2model_kg_id(dataset_name, model_name, "user")
+    dataset_pid2model_kg_id = get_dataset_id2model_kg_id(dataset_name, model_name, "product")
+    most_pop_topks = {dataset_uid2model_kg_id[uid]: [dataset_pid2model_kg_id[pid] for pid in topk[:k]]
+                      for uid, topk in most_pop_topks.items()}
+    return most_pop_topks
+
 def get_item_count(dataset_name):
     data_dir = get_data_dir(dataset_name)
     df_items = pd.read_csv(data_dir + "products.txt", sep="\t")
@@ -205,7 +218,15 @@ def load_labels(dataset_name, model_name, split=TRAIN): #TODO MAKE IT AGNOSITC W
 
 
 def load_kg(dataset_name, model_name):
-    kg_path = os.path.join(get_data_dir(dataset_name), model_name, "tmp", "kg.pkl")  #TODO MAKE IT AGNOSITC WITH MODEL.CALLS
+    if model_name == PGPR:
+        from models.PGPR.knowledge_graph import KnowledgeGraph
+        kg_path = os.path.join(get_data_dir(dataset_name), model_name, "tmp", "kg.pkl")
+    if model_name == CAFE:
+        from models.CAFE.knowledge_graph import KnowledgeGraph
+        kg_path = os.path.join(get_data_dir(dataset_name), model_name, "tmp", "kg.pkl")
+    if model_name == UCPR:
+        from models.UCPR.preprocess.knowledge_graph import KnowledgeGraph
+        kg_path = os.path.join(get_data_dir(dataset_name), model_name, "tmp", "kg.pkl")
     kg = pickle.load(open(kg_path, 'rb'))
     return kg
 

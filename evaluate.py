@@ -1,6 +1,8 @@
 import argparse
 from collections import defaultdict
 
+from tqdm import tqdm
+
 from reasoning_path_utils import *
 from utils import *
 import pickle
@@ -68,7 +70,7 @@ def topk_from_paths(args, train_labels, test_labels):
                     continue
                 topk_pids.append(cand_pid)
                 topk_paths.append((cand_pid, scores[uid][cand_pid], None, None))  # Placeholder for no explanation
-                if len(topk_pids) >= 10:
+                if len(topk_pids) >= k:
                     break
         # end of add
         pred_labels[uid] = topk_pids[::-1]  # change order to from smallest to largest!
@@ -82,7 +84,7 @@ def topk_from_paths(args, train_labels, test_labels):
             pred_paths_topk = pickle.load(path_topk_file)
         path_topk_file.close()
     else:
-        pred_paths_topk = pathfy(dataset_name, args.model, pred_paths_topk)
+        pred_paths_topk = pathfy(args, pred_paths_topk)
         with open(path_topk_filepath, "wb") as path_topk_file:
             print(f"Saving reasoning path objects from {path_topk_filepath}")
             pickle.dump(pred_paths_topk, path_topk_file)
@@ -116,10 +118,13 @@ def evaluate_rec_quality(args, topk_items, test_labels):
     #Diversity
     pid2genre = get_item_genre(dataset_name, args.model)
 
+    #Serendipity
+    mostpop_topk = get_mostpop_topk(dataset_name, args.model, args.k)
+
     # Storage for results if saving to csv is specified (used for plotitng)
     distributions_rows = []
     avgs_rows = []
-
+    pbar = tqdm(desc="Evaluating rec quality", total=len(topk_items.keys()))
     # Evaluate recommendation quality for users' topk
     for uid, topk in topk_items.items():
         gender = uid2gender[uid]
@@ -139,7 +144,7 @@ def evaluate_rec_quality(args, topk_items, test_labels):
             if metric == MMR:
                 metric_value = mmr_at_k(hits, k)
             if metric == SERENDIPITY:
-                metric_value = 0 #serendipity_at_k() TODO
+                metric_value = serendipity_at_k(topk, mostpop_topk[uid], k)
             if metric == DIVERSITY:
                 metric_value = diversity_at_k(topk, pid2genre)
             if metric == NOVELTY:
@@ -151,28 +156,28 @@ def evaluate_rec_quality(args, topk_items, test_labels):
             rec_quality_metrics[metric][OVERALL].append(metric_value)
             if args.save_distrib:
                 distributions_rows.append([dataset_name, args.model, gender, age, metric, metric_value])
-
         # For coverage
         recommended_items_by_group[gender] |= set(topk)
         recommended_items_by_group[age] |= set(topk)
         recommended_items_by_group[OVERALL] |= set(topk)
+        pbar.update(1)
+
 
 
 
     # Save as csv if specified
     if args.save_distrib:
-        distributions_df = pd.DataFrame(distributions_rows, sep="\t",
-                                        header=["dataset", "model", "gender", "age", "metric", "value"])
+        distributions_df = pd.DataFrame(distributions_rows,
+                                        columns=["dataset", "model", "gender", "age", "metric", "value"])
         distributions_df.to_csv(results_dir + "rec_quality_group_distrib.csv", sep="\t", index=False)
 
     # Compute average values for metrics
     for metric, group_values in rec_quality_metrics.items():
         for group, values in group_values.items():
-
             avg_value = np.mean(values)
             avg_rec_quality_metrics[metric][group] = avg_value
             if args.save_avg:
-                avgs_rows.append([dataset_name, args.model, group, metric, metric_value])
+                avgs_rows.append([dataset_name, args.model, group, metric, avg_value])
 
     # Compute global metrics
     c_fairness = {}
@@ -187,8 +192,8 @@ def evaluate_rec_quality(args, topk_items, test_labels):
 
     # Save as csv if specified
     if args.save_avg:
-        avgs_df = pd.DataFrame(avgs_rows, sep="\t",
-                               header=["dataset", "model", "group", "metric", "value"])
+        avgs_df = pd.DataFrame(avgs_rows,
+                               columns=["dataset", "model", "group", "metric", "value"])
         avgs_df.to_csv(results_dir + "rec_quality_group_avg_values.csv", sep="\t", index=False)
 
     return rec_quality_metrics, avg_rec_quality_metrics
@@ -209,9 +214,9 @@ def evaluate_path_quality(args, topk_paths):
     # Storage for results if saving to csv is specified (used for plotitng)
     distributions_rows = []
     avgs_rows = []
-
+    pbar = tqdm(desc="Evaluating path quality", total=len(topk_paths.keys()))
     # Evaluate recommendation quality for users' topk
-    for uid, topk_reasoning_paths in topk_paths:
+    for uid, topk_reasoning_paths in topk_paths.items():
         gender = uid2gender[uid]
         age = uid2age[uid]
         for metric in PATH_QUALITY_METRICS:
@@ -229,59 +234,55 @@ def evaluate_path_quality(args, topk_paths):
                 metric_value = topk_reasoning_paths.topk_ptc()
             elif metric == PPT:
                 metric_value = topk_reasoning_paths.topk_ppt()
-
+            elif metric == FIDELITY:
+                metric_value = topk_reasoning_paths.topk_fidelity()
             path_quality_metrics[metric][gender].append(metric_value)
             path_quality_metrics[metric][age].append(metric_value)
             path_quality_metrics[metric][OVERALL].append(metric_value)
             if args.save_distrib:
                 distributions_rows.append([dataset_name, args.model, gender, age, metric, metric_value])
+        pbar.update(1)
+    # Save as csv if specified
+    if args.save_distrib:
+        distributions_df = pd.DataFrame(distributions_rows,
+                                        columns=["dataset", "model", "gender", "age", "metric", "value"])
+        distributions_df.to_csv(results_dir + "path_quality_group_distrib.csv", sep="\t", index=False)
 
-        # Save as csv if specified
-        if args.save_distribs:
-            distributions_df = pd.DataFrame(distributions_rows, sep="\t",
-                                            header=["dataset", "model", "gender", "age", "metric", "value"])
-            distributions_df.to_csv(results_dir + "path_quality_group_distrib.csv", sep="\t", index=False)
-
-        # Compute average values for metrics
-        for metric, group_values in path_quality_metrics.items():
-            group, values = group_values
+    # Compute average values for metrics
+    for metric, group_values in path_quality_metrics.items():
+        for group, values in group_values.items():
             avg_value = np.mean(values)
             avg_path_quality_metrics[metric][group] = avg_value
-            if args.save_avgs:
-                avgs_rows.append([dataset_name, args.model, group, metric, metric_value])
+            if args.save_avg:
+                avgs_rows.append([dataset_name, args.model, group, metric, avg_value])
 
-        # Print results
-        #print_path_quality_metrics(avg_path_quality_metrics) TODO
+    c_fairness = {}
+    for metric in REC_QUALITY_METRICS_GLOBAL:
+        if metric == CFAIRNESS:
+            c_fairness = consumer_fairness(path_quality_metrics, avg_path_quality_metrics)
 
-        # Save as csv if specified
-        if args.save_avgs:
-            avgs_df = pd.DataFrame(avgs_rows, sep="\t",
-                                   header=["dataset", "model", "group", "metric", "value"])
-            avgs_df.to_csv(results_dir + "path_quality_group_avg_values.csv", sep="\t", index=False)
+    # Print results
+    print_path_quality_metrics(avg_path_quality_metrics, c_fairness)
 
-        return path_quality_metrics, avg_path_quality_metrics
+    # Save as csv if specified
+    if args.save_avg:
+        avgs_df = pd.DataFrame(avgs_rows,
+                               columns=["dataset", "model", "group", "metric", "value"])
+        avgs_df.to_csv(results_dir + "path_quality_group_avg_values.csv", sep="\t", index=False)
+
+    return path_quality_metrics, avg_path_quality_metrics
 
 def evaluate(args, topk_items, test_labels, topk_paths=None):
     # NDCG, MMR, SERENDIPITY, COVERAGE, DIVERSITY, NOVELTY
     if args.evaluate_rec_quality:
-        rec_quality_metrics, avg_rec_quality_metrics = evaluate_rec_quality(args, topk_items, test_labels)
-
-    # CFairness, PFairness for rec quality
-    #if args.evaluate_rec_quality_fairness: TODO
-    #    evaluate_fairness_metrics(args, rec_quality_metrics, avg_rec_quality_metrics)
-
+        evaluate_rec_quality(args, topk_items, test_labels)
     """
      Evaluate path quality
      """
     if topk_paths != None:
         # LIR, SEP, PTD, LID, SED, PTC, PPTD, %EXP AMONG ITEMS
         if args.evaluate_path_quality:
-            path_quality_metric, avg_path_quality_metrics = evaluate_path_quality(args, topk_paths)
-
-        # CFairness, PFairness for path quality
-        if args.evaluate_path_quality_fairness:
-            pass
-            #evaluate_fairness_metrics(args, path_quality_metric, avg_path_quality_metrics) TODO
+            evaluate_path_quality(args, topk_paths)
 
 
 def main():
@@ -297,9 +298,9 @@ def main():
                         help='whether to evaluate rec quality of predicted topk')
     parser.add_argument('--evaluate_path_quality', default=True, type=bool,
                         help='whether to evaluate associated reasoning path quality of predicted topk paths')
-    parser.add_argument('--save_avg', default=False, type=bool,
+    parser.add_argument('--save_avg', default=True, type=bool,
                         help='whether to save the average value for every metric and group')
-    parser.add_argument('--save_distrib', default=False, type=bool,
+    parser.add_argument('--save_distrib', default=True, type=bool,
                         help='whether to save the distributions for every metric and group')
     parser.add_argument('--show_case_study', default=False, type=bool, help='whether to visualize a random user topk')
     args = parser.parse_args()

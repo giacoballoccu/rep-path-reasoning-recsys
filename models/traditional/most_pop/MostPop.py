@@ -9,6 +9,7 @@ name: string, default: 'most_pop'
 import argparse
 from collections import defaultdict
 from utils import *
+from tqdm import tqdm
 
 def load_labels(dataset_name, split=TRAIN):
     if split != TRAIN and split != VALID and split != TEST:
@@ -16,7 +17,7 @@ def load_labels(dataset_name, split=TRAIN):
     data_dir = get_data_dir(dataset_name)
     label_path = os.path.join(data_dir, f"{split}.txt")
     user_products = defaultdict(list)
-    with open("../../" + label_path, 'r') as f: #TODO spaghetto
+    with open("../../../" + label_path, 'r') as f:
         reader = csv.reader(f, delimiter="\t")
         for row in reader:
             uid, pid, interaction, time = row
@@ -25,28 +26,39 @@ def load_labels(dataset_name, split=TRAIN):
 
 def score(args, train_labels, valid_labels, test_labels):
     #Calculate pop for items
-    item_idxs = defaultdict(int)
+    item_idxs = {}
     for uid, pids in train_labels.items():
         for pid in pids:
-            item_idxs[pid] -= 1
-    
+            if pid not in item_idxs:
+                item_idxs[pid] = 0
+            item_idxs[pid] += 1
+    for uid, pids in valid_labels.items():
+        for pid in pids:
+            if pid not in item_idxs:
+                item_idxs[pid] = 0
+            item_idxs[pid] += 1
+
     #Sort item by popularity
-    most_pop_item_heap = list(zip(item_idxs.keys(), item_idxs.values()))
-    most_pop_item_heap.sort(key=lambda x: x[1])
+    most_pop_item_sorted = list(zip(item_idxs.keys(), item_idxs.values()))
+    most_pop_item_sorted.sort(key=lambda x: x[1], reverse=True)
     
     #Produce topks
+    pbar = tqdm(total=len(train_labels.keys()))
     user_topks = {}
     for uid in test_labels.keys():
         user_topks[uid] = []
         i = 0
-        while len(user_topks[uid]) < args.k:
-            item = most_pop_item_heap[i]
-            if item in train_labels[uid] or item in valid_labels[uid]: 
+        while len(user_topks[uid]) < args.k or i < len(most_pop_item_sorted):
+            pid, pop = most_pop_item_sorted[i]
+            if pid in train_labels[uid]:
+                i += 1
                 continue
-            user_topks[uid].append(item)
-            
+            user_topks[uid].append(pid)
+            i+=1
+        pbar.update(1)
+
     #Save topks
-    result_dir = "../../" + get_result_dir(args.data, args.name)
+    result_dir = "../../../" + get_result_dir(args.data, args.name)
     ensure_dir(result_dir)
     with open(os.path.join(result_dir, "item_topks.pkl"), 'wb') as f:
         pickle.dump(user_topks, f)
@@ -57,7 +69,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--data', type=str, default=ML1M, help='One of {ML1M}')
     parser.add_argument('--name', type=str, default='most_pop', help='directory name.')
-    parser.add_argument('--k', type=int, default=10, help='')
+    parser.add_argument('--k', type=int, default=100, help='')
     parser.add_argument('--evaluate', type=bool, default=True, help='')
     args = parser.parse_args()
     
@@ -65,7 +77,7 @@ def main():
     valid_labels = load_labels(args.data, 'valid')
     test_labels = load_labels(args.data, 'test')
 
-    result_dir = "../../" + get_result_dir(args.data, args.name)
+    result_dir = "../../../" + get_result_dir(args.data, args.name)
 
     most_pop_preds_filename = os.path.join(result_dir, "item_topks.pkl")
     if os.path.isfile(most_pop_preds_filename):
