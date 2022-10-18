@@ -29,7 +29,7 @@ class MetricsLogger:
         if self.wandb_entity is not None:
             assert wandb_entity is not None, f'Error {MetricsLogger.WANDB_ENTITY} is None, but is required for wandb logging.\n Please provide your account name as value of this member variable'
             assert project_name is not None, f'Error "{MetricsLogger.PROJECT_NAME}" is None, but is required for wandb logging'
-            wandb.init(project=project_name,
+            self.wandb_run = wandb.init(project=project_name,
                        entity=wandb_entity, config=config)   
         self.metrics = dict()
     
@@ -52,14 +52,19 @@ class MetricsLogger:
             for name in metric_names:
                 to_push[name] = self.metrics[name][-1]
             wandb.log(to_push)
+    def push_model(self, model_filepath, model_name):
+        artifact = wandb.Artifact(model_name, type='model')
+        artifact.add_file(model_filepath)
+        self.wandb_run.log_artifact(artifact)
+        self.wandb_run.join()
+
     def write(self, filepath):
         if not os.path.exists(os.path.dirname(filepath)):
             os.makedirs(os.path.dirname(filepath), exist_ok=True)
         with open(filepath, 'w') as f:
             import json
             import copy
-            json.dump(self.metrics, f)   
-
+            json.dump(self.metrics, f)  
 
 def set_logger(logname):
     global logger
@@ -76,7 +81,7 @@ def set_logger(logname):
 
 def train(args):
     train_dataloader = OnlinePathLoader(args.dataset, args.batch_size, topk=args.topk_candidates)
-    valid_dataloader = OnlinePathLoader(args.dataset, args.batch_size, topk=args.topk_candidates)
+    #valid_dataloader = OnlinePathLoader(args.dataset, args.batch_size, topk=args.topk_candidates)
     metapaths = train_dataloader.kg.metapaths
 
     "?????????????????????????????????????????????????????"
@@ -92,7 +97,7 @@ def train(args):
     
 
     metrics = MetricsLogger(args.wandb_entity, 
-                            f'pgpr_{args.dataset}',
+                            f'{MODEL}_{args.dataset}',
                             config=args)
     metrics.register('train_loss')
     metrics.register('train_regloss')
@@ -111,43 +116,37 @@ def train(args):
     metrics.register('avg_valid_rankloss')     
 
     loaders = {'train': train_dataloader,
-                'valid': valid_dataloader}
-    envs = {'train': train_env,
-            'valid':valid_env}
+                'valid': train_dataloader}#valid_dataloader}
+
     step_counter = {
                 'train': 0,
             'valid':0
     }
-    uids_split = {'train' :train_uids,
-                'valid':valid_uids}
-
     first_iterate = True
 
     torch.save(model.state_dict(), '{}/symbolic_model_epoch{}.ckpt'.format(args.log_dir, 0))
     start_time = time.time()
     first_iterate = True
     model.train()
+    
     for epoch in range(1, args.epochs + 1):
 
         splits_to_compute = list(loaders.items())
-        if first_iterate:
-            first_iterate = False
-            splits_to_compute.insert(0, ('valid', valid_dataloader))
+        #if first_iterate:
+        #    first_iterate = False
+        #    splits_to_compute.insert(0, ('valid', valid_dataloader))
         for split_name, dataloader in splits_to_compute:
             if split_name == 'valid':
                 model.eval()
             else:
                 model.train()
-            env = envs[split_name]
-            uids = uids_split[split_name]
-
             iter_counter = 0
             ### Start epoch ###
             dataloader.reset()
             while dataloader.has_next():
                 # Update learning rate
                 if split_name == 'train':
-                    lr = args.lr * max(1e-4, 1.0 - steps / total_steps)
+                    lr = args.lr * max(1e-4, 1.0 - step_counter[split_name] / total_steps)
                     for pg in optimizer.param_groups:
                         pg['lr'] = lr
 
@@ -165,17 +164,20 @@ def train(args):
                     optimizer.step()
 
 
-                cur_metrics = {f'{split_name}_loss': loss,
+                cur_metrics = {f'{split_name}_loss': loss.item(),
                                  f'{split_name}_regloss':reg_loss.item(), 
                                  f'{split_name}_rankloss':rank_loss.item(), 
                                 f'{split_name}_iter': step_counter[split_name]}
 
                 for k,v in cur_metrics.items():
                     metrics.log(k, v)
-                metrics.push(cur_metrics.keys())
+                #metrics.push(cur_metrics.keys())
                 
                 step_counter[split_name] += 1
                 iter_counter += 1
+
+                del pos_paths
+                del neg_pids
 
             cur_metrics = [f'{split_name}_epoch']
             cur_metrics.extend([f'{split_name}_loss',
@@ -186,7 +188,7 @@ def train(args):
                 metrics.log(f'avg_{k}', sum(metrics.history(k, iter_counter))/max(iter_counter,1) )
                 
             metrics.log(f'{split_name}_epoch', epoch)
-            metrics.log(f'std_{split_name}_reward',np.std(metrics.history( f'{split_name}_reward', iter_counter)) )
+            #metrics.log(f'std_{split_name}_reward',np.std(metrics.history( f'{split_name}_reward', iter_counter)) )
             info = ""
             for k in cur_metrics:
                 if isinstance(getattr(metrics,k)[-1],float):
@@ -195,12 +197,15 @@ def train(args):
                     x = '{:d}'.format(getattr(metrics, k)[-1])
                 info = info + f'| {k}={x} ' 
 
+
             metrics.push(cur_metrics)
             logger.info(info)
             if epoch % 10 == 0:
-                torch.save(model.state_dict(), '{}/symbolic_model_epoch{}.ckpt'.format(args.log_dir, epoch))
-
-    metrics.write(TMP_DIR[args.dataset])
+                policy_file = '{}/symbolic_model_epoch{}.ckpt'.format(args.log_dir, epoch)
+                torch.save(model.state_dict(), policy_file)
+                metrics.push_model(policy_file, f'{MODEL}_{args.dataset}_{epoch}')
+    makedirs(args.dataset)
+    metrics.write(TEST_METRICS_FILE_PATH[args.dataset])#metrics.write(os.path.join(TMP_DIR[args.dataset], VALID_METRICS_FILE_NAME))
 
 def main():
     args = parse_args()

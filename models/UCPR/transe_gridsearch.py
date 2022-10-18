@@ -57,17 +57,17 @@ def main(args):
 
     chosen_hyperparam_grid = {'batch_size': [64],
          'dataset': ['lfm1m','ml1m'],
-         'embed_size': [100],
-         'epochs': [1],
+         'embed_size': [100, 200],
+         'epochs': [40],
          'gpu': ['0'],
-         'l2_lambda': [0],
-         'lr': [0.5],
+         'l2_lambda': [0, 0.001],
+         'lr': [0.5, 0.005],
          'max_grad_norm': [5.0],
          'name': ['train_transe_model'],
          'num_neg_samples': [5],
          'seed': [123],
          'steps_per_checkpoint': [200],
-         'weight_decay': [0]}
+         'weight_decay': [0, 5e-4]}
     hparam_grids = ParameterGrid(chosen_hyperparam_grid)
     print('num_experiments: ', len(hparam_grids))
 
@@ -75,7 +75,7 @@ def main(args):
         dataset_name = configuration["dataset"]
         makedirs(dataset_name)
         if args.wandb:
-            wandb.init(project=f'{MODEL_NAME}_TRANSE_{dataset_name}',
+            wandb.init(project=f'grid_{MODEL}_TRANSE_{dataset_name}',
                            entity=args.wandb_entity, config=configuration)    
         #'''
         CMD = ["python3", TRAIN_FILE_NAME]
@@ -90,9 +90,10 @@ def main(args):
         test_metrics = load_metrics(TRANSE_TEST_METRICS_FILE_PATH[dataset_name])
         best_metrics = load_metrics(BEST_TRANSE_TEST_METRICS_FILE_PATH[dataset_name])
         save_best(best_metrics, test_metrics, configuration)
-    
+        
+        #print(test_metrics, TRANSE_CFG_FILE_PATH[dataset_name])
         if args.wandb:
-            wandb.log(test_metrics[TRANSE_OPT_METRIC])
+            wandb.log(test_metrics)
 
 
 

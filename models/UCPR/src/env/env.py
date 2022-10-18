@@ -10,7 +10,7 @@ import random
 import torch
 from datetime import datetime
 from collections import defaultdict
-from UCPR.utils import *
+from models.UCPR.utils import *
 # from preprocess.knowledge_graph import RW_based_KG, KG_based_KG
 # from preprocess import knowledge_graph
 # from preprocess import dataset

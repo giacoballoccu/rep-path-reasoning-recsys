@@ -14,15 +14,22 @@ ML1M = 'ml1m'
 LFM1M = 'lfm1m'
 CELL = 'cellphones'
 MODEL = 'cafe'
+
+
+ROOT_DIR = os.environ('TREX_DATA_ROOT') if 'TREX_DATA_ROOT' in os.environ else '../..'
+
+
 # Dataset directories.
 DATA_DIR = {
-    ML1M: f'../../data/{ML1M}/preprocessed/{MODEL}',
-    LFM1M: f'../../data/{LFM1M}/preprocessed/{MODEL}',
-    CELL: f'../../data/{CELL}/preprocessed/{MODEL}'
+    ML1M: f'{ROOT_DIR}/data/{ML1M}/preprocessed/{MODEL}',
+    LFM1M: f'{ROOT_DIR}/data/{LFM1M}/preprocessed/{MODEL}',
+    CELL: f'{ROOT_DIR}/data/{CELL}/preprocessed/{MODEL}'
 }
-OPTIM_HPARAMS_METRIC = 'ndcg'
+OPTIM_HPARAMS_METRIC = 'avg_valid_loss'
+VALID_METRICS_FILE_NAME = 'valid_metrics.json'
 
-LOG_DIR = f'../../results/{MODEL}'
+
+LOG_DIR = f'{ROOT_DIR}/results/{MODEL}'
 
 CFG_DIR = {
     ML1M: f'{LOG_DIR}/{ML1M}/hparams_cfg',

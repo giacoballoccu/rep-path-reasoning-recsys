@@ -200,7 +200,10 @@ class SymbolicNetwork(nn.Module):
         scores = torch.matmul(outputs[-1], products.t())  # [1, vocab_size]
         logprobs = F.log_softmax(scores, dim=1)  # [1, vocab_size]
         pid_logprobs = logprobs[0][pids_tensor]
-        return pid_logprobs.detach().cpu().numpy().tolist()
+        x = pid_logprobs.detach().cpu().numpy().tolist()
+        del uid_tensor
+        del pids_tensor
+        return x
 
     def infer_with_path(self, metapath, uid, kg_mask, excluded_pids=None, topk_paths=10):
         """Reasoning paths over kg."""
@@ -260,11 +263,11 @@ class SymbolicNetwork(nn.Module):
                     tmp_paths.append((new_path, new_value))
                     # Remember to add the node to visited list!!!
                     visited_ids.append(topk_et_ids[j])
-
+                del valid_et_ids
             if len(tmp_paths) <= 0:
                 return []
             result_paths = tmp_paths
-
+        del uid_tensor
         return result_paths
 
 

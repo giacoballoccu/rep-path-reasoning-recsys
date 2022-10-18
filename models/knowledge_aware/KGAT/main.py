@@ -15,7 +15,14 @@ from KGAT import KGAT
 
 import os
 import sys
+
+from utils import MetricsLogger
+import wandb
+from utils import *
+
 os.environ['TF_CPP_MIN_LOG_LEVEL']='2'
+
+
 
 def load_pretrained_data(args):
     pre_model = 'mf'
@@ -42,17 +49,33 @@ if __name__ == '__main__':
     np.random.seed(2019)
     args = parse_args()
 
-    STORAGE_DIR = f'{args.model_type}_{args.dataset}'
-    import os
-    import wandb
-    os.makedirs(STORAGE_DIR, exist_ok=True)
 
-    if args.wandb :
-        wandb.init(project=STORAGE_DIR,
-                    config=vars(args),
-                       entity="chris1nexus",
-                       #name=args.dataset
-                       )
+    os.makedirs(TMP_DIR[args.dataset], exist_ok=True)
+    makedirs(args.dataset)
+    with open(os.path.join(TMP_DIR[args.dataset],f'{MODEL}_hparams.json'), 'w') as f:
+        import json
+        import copy
+        args_dict = dict()
+        for x,y in copy.deepcopy(args._get_kwargs()):
+            args_dict[x] = y
+        if 'device' in args_dict:
+            del args_dict['device']
+        json.dump(args_dict,f)
+
+
+
+    metrics = MetricsLogger(args.wandb_entity, 
+                            f'{MODEL}_{args.dataset}',
+                            config=args)
+    metrics.register('train_loss')
+    metrics.register('train_base_loss')
+    metrics.register('train_reg_loss')
+    metrics.register('train_kge_loss')
+    metrics.register('ndcg')
+    metrics.register('hit')
+    metrics.register('recall')     
+    metrics.register('precision')
+   
     """
     *********************************************************
     Load Data from data_generator function.
@@ -98,13 +121,13 @@ if __name__ == '__main__':
     """
     if args.save_flag == 1:
         if args.model_type in ['bprmf', 'cke', 'fm', 'cfkg']:
-            weights_save_path = os.path.join(args.data_path, args.dataset, "preprocessed/kgat/tmp", args.model_type,
+            weights_save_path = os.path.join(TMP_DIR[args.dataset], args.model_type,
                                              "weights", args.layer +
                                              str(args.lr) + '-'.join([str(r) for r in eval(args.regs)]))
 
         elif args.model_type in ['ncf', 'nfm', 'kgat']:
             layer = '-'.join([str(l) for l in eval(args.layer_size)])
-            weights_save_path = os.path.join(args.data_path, args.dataset, "preprocessed/kgat/tmp", args.model_type,
+            weights_save_path = os.path.join(TMP_DIR[args.dataset], args.model_type,
                                              "weights",
                                              layer +
                                              str(args.lr) + '-'.join([str(r) for r in eval(args.regs)]))
@@ -122,12 +145,12 @@ if __name__ == '__main__':
     """
     if args.pretrain == 1:
         if args.model_type in ['bprmf', 'cke', 'fm', 'cfkg']:
-            pretrain_path = os.path.join(args.data_path, args.dataset, "preprocessed/kgat/tmp", args.model_type,
+            pretrain_path = os.path.join(TMP_DIR[args.dataset], args.model_type,
                                          "weights", args.layer +
                                          str(args.lr) + '-'.join([str(r) for r in eval(args.regs)]))
         elif args.model_type in ['ncf', 'nfm', 'kgat']:
             layer = '-'.join([str(l) for l in eval(args.layer_size)])
-            pretrain_path = os.path.join(args.data_path, args.dataset, "preprocessed/kgat/tmp", args.model_type,
+            pretrain_path = os.path.join(TMP_DIR[args.dataset], args.model_type,
                                          "weights", layer +
                                          str(args.lr) + '-'.join([str(r) for r in eval(args.regs)]))
 
@@ -159,7 +182,7 @@ if __name__ == '__main__':
                     user_embed, item_embed = sess.run(
                         [model.weights['user_embedding'], model.weights['item_embedding']],
                         feed_dict={})
-                    temp_save_path = os.path.join(args.data_path, args.dataset, "preprocessed/kgat/pretrain",
+                    temp_save_path = os.path.join(TMP_DIR[args.dataset], "pretrain",
                                                   model.model_type,
                                                   f"{model.model_type}.npz")
                     ensureDir(temp_save_path)
@@ -174,7 +197,7 @@ if __name__ == '__main__':
                         [model.weights['user_embed'], model.weights['entity_embed'], model.weights['relation_embed']],
                         feed_dict={})
 
-                    temp_save_path = os.path.join(args.data_path, args.dataset, "preprocessed/kgat/pretrain",
+                    temp_save_path = os.path.join(TMP_DIR[args.dataset], "pretrain",
                                                   model.model_type,
                                                   f"{model.model_type}.npz")
                     ensureDir(temp_save_path)
@@ -271,13 +294,7 @@ if __name__ == '__main__':
                 feed_dict = data_generator['A_dataset'].as_train_feed_dict(model, batch_data)
             else:
                 feed_dict = data_generator['dataset'].as_train_feed_dict(model, batch_data)
-            #    feed_dict = data_generator['dataset'].as_train_feed_dict(model,
-            #                                    batch_data)
-            #print(batch_data)
-            #feed_dict = data_generator['dataset'].as_train_feed_dict(model, batch_data)#*batch_data)
-            #print(feed_dict)
-            #import time as time_
-            #time_.sleep(5)
+
             _, batch_loss, batch_base_loss, batch_kge_loss, batch_reg_loss = model.train(sess, feed_dict=feed_dict)
 
             loss += batch_loss
@@ -287,16 +304,7 @@ if __name__ == '__main__':
 
 
         train_time += time()-train_start
-        if args.wandb:
-            log_dict = {'train_total_loss':loss,
-                'train_base_loss':base_loss,
-                'train_reg_loss':reg_loss,
-                'train_kge_loss':kge_loss,
-                'train_time': train_time}
-            if  args.model_type != 'kgat':
-                wandb.log(log_dict)
-            elif  args.model_type == 'kgat' and args.use_kge == False:
-                wandb.log(log_dict)
+
         if np.isnan(loss) == True:
             print('ERROR: loss@phase1 is nan.')
             sys.exit()
@@ -335,13 +343,6 @@ if __name__ == '__main__':
 
 
                 train_time += time() - train_start
-                log_dict = {'train_total_loss':loss,
-                    'train_base_loss':base_loss,
-                    'train_reg_loss':reg_loss,
-                    'train_kge_loss':kge_loss,
-                    'time':  train_time}
-                if args.wandb :
-                    wandb.log(log_dict)
 
             if args.use_att is True:
                 # updating attentive laplacian matrix.
@@ -373,6 +374,16 @@ if __name__ == '__main__':
         Performance logging.
         """
         t3 = time()
+        metrics.log('train_loss', loss.item())
+        metrics.log('train_base_loss', base_loss.item())
+        metrics.log('train_kge_loss', kge_loss.item())
+        metrics.log('train_reg_loss',reg_loss.item())
+        metrics.log('valid_ndcg',ret['ndcg'].item())
+        metrics.log('valid_hit',ret['hit_ratio'].item())
+        metrics.log('valid_recall',ret['recall'].item())     
+        metrics.log('valid_precision',ret['precision'].item())
+        metrics.push(['train_loss','train_base_loss', 'train_kge_loss','train_reg_loss',
+                        'valid_ndcg','valid_hit','valid_recall','valid_precision'])
 
         loss_loger.append(loss)
         rec_loger.append(ret['recall'])
@@ -386,8 +397,8 @@ if __name__ == '__main__':
                     metrics_logs[f'{metric_name}@{k}'] = metric_values[idx]
         test_time += t3 -t2
         metrics_logs['test_time'] = test_time
-        if args.wandb :
-            wandb.log(metrics_logs)
+        #if args.wandb :
+        #    wandb.log(metrics_logs)
 
         if args.verbose > 0:
             perf_str = 'Epoch %d [%.1fs + %.1fs]: train==[%.5f=%.5f + %.5f + %.5f], recall=[%.5f, %.5f], ' \
@@ -426,10 +437,13 @@ if __name__ == '__main__':
                   '\t'.join(['%.5f' % r for r in ndcgs[idx]]))
     print(final_perf)
 
-    save_path = os.path.join(args.proj_path, "output", args.dataset, "preprocessed", "kgat", f"{model.model_type}.result")
+    save_path = os.path.join(TMP_DIR[args.dataset], "output", f"{model.model_type}.result")
     ensureDir(save_path)
     f = open(save_path, 'a')
 
     f.write('embed_size=%d, lr=%.4f, layer_size=%s, node_dropout=%s, mess_dropout=%s, regs=%s, adj_type=%s, use_att=%s, use_kge=%s, pretrain=%d\n\t%s\n'
             % (args.embed_size, args.lr, args.layer_size, args.node_dropout, args.mess_dropout, args.regs, args.adj_type, args.use_att, args.use_kge, args.pretrain, final_perf))
     f.close()
+
+    metrics.push_model(save_path, f'{MODEL}_{args.dataset}')
+    metrics.write(TEST_METRICS_FILE_PATH[args.dataset])

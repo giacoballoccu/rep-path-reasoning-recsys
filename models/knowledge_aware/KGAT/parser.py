@@ -5,7 +5,7 @@ Wang Xiang et al. KGAT: Knowledge Graph Attention Network for Recommendation. In
 @author: Xiang Wang (xiangwang@u.nus.edu)
 '''
 import argparse
-
+import sys
 def parse_args():
     parser = argparse.ArgumentParser(description="Run KGAT.")
     parser.add_argument('--weights_path', nargs='?', default='',
@@ -81,6 +81,12 @@ def parse_args():
     
     parser.add_argument('--l1_flag', type=bool, default=True,
                         help='Flase: using the L2 norm, True: using the L1 norm.')
-    parser.add_argument('--wandb', type=bool, default=False,
+    parser.add_argument('--wandb', action="store_true",
                     help='whether to log to wandb (requires setting the api key from command line as wandb login YOUR-API-KEY)')
+    parser.add_argument(
+        "--wandb_entity",
+        required="--wandb" in sys.argv,
+        type=str,
+        help="Entity name to push to the wandb logged data, in case args.wandb is specified.",
+    )        
     return parser.parse_args()
