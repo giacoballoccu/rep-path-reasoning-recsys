@@ -278,11 +278,9 @@ def train(args):
             torch.save(model.state_dict(), policy_file)
             metrics.push_model(policy_file, f'{MODEL}_{args.dataset}_{epoch}')
 
-        cur_tim = time.strftime("%Y%m%d-%H%M%S")
-        logger.info("current time = " + str(cur_tim))
-        makedirs(args.dataset)
-        metrics.write(TEST_METRICS_FILE_PATH[args.dataset])#metrics.write(os.path.join(TMP_DIR[args.dataset], VALID_METRICS_FILE_NAME) )
-        metrics.close_wandb()
+    makedirs(args.dataset)
+    metrics.write(TEST_METRICS_FILE_PATH[args.dataset])#metrics.write(os.path.join(TMP_DIR[args.dataset], VALID_METRICS_FILE_NAME) )
+    metrics.close_wandb()
 
 if __name__ == '__main__':
     args = parse_args()
