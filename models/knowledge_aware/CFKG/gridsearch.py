@@ -68,7 +68,7 @@ def main(args):
     "layer_size": ["[64]"], 
     "lr": [0.0001], 
     "mess_dropout": ["[0.1]"], 
-    "model_type": ["kgat"], 
+    "model_type": ["cfkg"], 
     "node_dropout": ["[0.1]"], 
     "pretrain": [0],  
     "regs": ["[1e-5,1e-5,1e-2]"], 
