@@ -32,18 +32,18 @@ def metrics_average(metrics):
 def save_best(best_metrics, test_metrics, grid):
     dataset_name = grid["dataset"]
     if best_metrics is None:
+        shutil.rmtree(BEST_CFG_DIR[dataset_name])
+        shutil.copytree(TMP_DIR[dataset_name], BEST_CFG_DIR[dataset_name] )        
         save_metrics(test_metrics, f'{BEST_TRANSE_TEST_METRICS_FILE_PATH[dataset_name]}')
         save_cfg(grid, f'{BEST_TRANSE_CFG_FILE_PATH[dataset_name] }')
-        shutil.rmtree(BEST_CFG_DIR[dataset_name])
-        shutil.copytree(TMP_DIR[dataset_name], BEST_CFG_DIR[dataset_name] )
         return 
 
 
     if best_metrics[TRANSE_OPT_METRIC] > test_metrics[TRANSE_OPT_METRIC]:
+        shutil.rmtree(BEST_CFG_DIR[dataset_name])
+        shutil.copytree(TMP_DIR[dataset_name], BEST_CFG_DIR[dataset_name] )        
         save_metrics(test_metrics, f'{BEST_TRANSE_TEST_METRICS_FILE_PATH[dataset_name]}')
         save_cfg(grid, f'{BEST_TRANSE_CFG_FILE_PATH[dataset_name] }')
-        shutil.rmtree(BEST_CFG_DIR[dataset_name])
-        shutil.copytree(TMP_DIR[dataset_name], BEST_CFG_DIR[dataset_name] )
 
 
 def makedirs(dataset_name):
