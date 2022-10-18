@@ -163,7 +163,7 @@ def train(args):
                     optimizer.step()
 
 
-                cur_metrics = {f'{split_name}_loss': loss,
+                cur_metrics = {f'{split_name}_loss': loss.item(),
                                  f'{split_name}_regloss':reg_loss.item(), 
                                  f'{split_name}_rankloss':rank_loss.item(), 
                                 f'{split_name}_iter': step_counter[split_name]}
@@ -195,6 +195,7 @@ def train(args):
                 else:
                     x = '{:d}'.format(getattr(metrics, k)[-1])
                 info = info + f'| {k}={x} ' 
+
 
             metrics.push(cur_metrics)
             logger.info(info)
