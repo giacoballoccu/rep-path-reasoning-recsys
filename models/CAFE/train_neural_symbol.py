@@ -81,7 +81,7 @@ def set_logger(logname):
 
 def train(args):
     train_dataloader = OnlinePathLoader(args.dataset, args.batch_size, topk=args.topk_candidates)
-    valid_dataloader = OnlinePathLoader(args.dataset, args.batch_size, topk=args.topk_candidates)
+    #valid_dataloader = OnlinePathLoader(args.dataset, args.batch_size, topk=args.topk_candidates)
     metapaths = train_dataloader.kg.metapaths
 
     "?????????????????????????????????????????????????????"
@@ -97,7 +97,7 @@ def train(args):
     
 
     metrics = MetricsLogger(args.wandb_entity, 
-                            f'pgpr_{args.dataset}',
+                            f'{MODEL}_{args.dataset}',
                             config=args)
     metrics.register('train_loss')
     metrics.register('train_regloss')
@@ -116,7 +116,7 @@ def train(args):
     metrics.register('avg_valid_rankloss')     
 
     loaders = {'train': train_dataloader,
-                'valid': valid_dataloader}
+                'valid': train_dataloader}#valid_dataloader}
 
     step_counter = {
                 'train': 0,
@@ -132,9 +132,9 @@ def train(args):
     for epoch in range(1, args.epochs + 1):
 
         splits_to_compute = list(loaders.items())
-        if first_iterate:
-            first_iterate = False
-            splits_to_compute.insert(0, ('valid', valid_dataloader))
+        #if first_iterate:
+        #    first_iterate = False
+        #    splits_to_compute.insert(0, ('valid', valid_dataloader))
         for split_name, dataloader in splits_to_compute:
             if split_name == 'valid':
                 model.eval()
