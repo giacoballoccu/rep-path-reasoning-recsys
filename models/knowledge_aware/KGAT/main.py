@@ -120,8 +120,9 @@ if __name__ == '__main__':
     Save the model parameters.
     """
     #if args.save_flag == 1:
+    
+    ensureDir(TMP_DIR[args.dataset])
     weights_save_path =  os.path.join(TMP_DIR[args.dataset], "weights")
-    ensureDir(weights_save_path)
     save_saver = tf.train.Saver(max_to_keep=1)
 
     config = tf.ConfigProto()

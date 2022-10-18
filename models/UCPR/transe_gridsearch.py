@@ -61,7 +61,7 @@ def main(args):
          'epochs': [40],
          'gpu': ['0'],
          'l2_lambda': [0, 0.001],
-         'lr': [0.5, 0.005],
+         'lr': [0.5], #0.05 proved too slow
          'max_grad_norm': [5.0],
          'name': ['train_transe_model'],
          'num_neg_samples': [5],
