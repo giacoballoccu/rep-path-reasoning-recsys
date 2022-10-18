@@ -62,7 +62,7 @@ def main(args):
     "batch_size_kg": [2048],  
     "dataset": ["ml1m", 'lfm1m'], 
     "embed_size": [64], 
-    "epoch": [10], 
+    "epoch": [150], 
     "gpu_id": [0], 
     "kge_size": [64], 
     "l1_flag": [True], 

@@ -58,7 +58,7 @@ def main(args):
     chosen_hyperparam_grid = {'batch_size': [64],
          'dataset': ['lfm1m','ml1m'],
          'embed_size': [100, 200],
-         'epochs': [2],
+         'epochs': [40],
          'gpu': ['0'],
          'l2_lambda': [0, 0.001],
          'lr': [0.5, 0.005],

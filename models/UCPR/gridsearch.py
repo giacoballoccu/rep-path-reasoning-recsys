@@ -132,9 +132,10 @@ def main(args):
                 else:
                     CMD.extend( [f'--{k}', f'{v}'] )   
         print(f'Executing job {i+1}/{len(hparam_grids)}: ',configuration)
-        subprocess.call(CMD,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.STDOUT)
+        subprocess.call(CMD)
+        #,
+        #        stdout=subprocess.DEVNULL,
+        #        stderr=subprocess.STDOUT)
         
         '''     
         # cafe and ucpr have the same command line args, pgpr does not, so the call below will have to be 
