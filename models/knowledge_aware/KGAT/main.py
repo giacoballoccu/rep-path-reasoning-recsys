@@ -16,7 +16,7 @@ from KGAT import KGAT
 import os
 import sys
 
-from utils import MetricsLogger
+
 import wandb
 from utils import *
 from models.utils import MetricsLogger
