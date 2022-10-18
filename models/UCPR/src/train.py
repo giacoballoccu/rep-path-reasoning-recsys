@@ -284,7 +284,7 @@ def train(args):
 
                 for k,v in cur_metrics.items():
                     metrics.log(k, v)
-                metrics.push(cur_metrics.keys())
+                #metrics.push(cur_metrics.keys())
                 
                 step_counter[split_name] += 1
                 iter_counter += 1
