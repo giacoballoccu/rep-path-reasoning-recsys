@@ -62,10 +62,15 @@ def print_rec_quality_metrics(avg_metrics, c_fairness):
         print("")
     print("\n")
 
-    for x, y in c_fairness.items():
-        pass
-
-
+    print("\n***---Rec CFairness Differences---***")
+    for class_group, metric_tuple in c_fairness.items():
+        for metric, tuple in metric_tuple.items():
+            group1, group2, avg_value = tuple
+            if group1 == None:
+                print(f"{metric} Pairwise diff {class_group}: {avg_value:.3f}", end=" | ")
+            else:
+                print(f"{metric} {group1} vs {group2}: {avg_value:.3f}", end=" | ")
+        print("\n")
 
 def generate_latex_row(model_name, avg_metrics):
     row = [model_name]
@@ -90,8 +95,10 @@ def coverage(recommended_items_by_group, n_items_in_catalog):
     return group_metric_value
 
 
-def serendipity_at_k():
-    pass #TODO
+def serendipity_at_k(user_topk, most_pop_topk, k):
+    user_topk, most_pop_topk = set(user_topk), set(most_pop_topk)
+    intersection = user_topk.intersection(most_pop_topk)
+    return (k-len(intersection)) / k
 
 
 def diversity_at_k(topk_items, pid2genre):
@@ -109,20 +116,26 @@ def exposure_pfairness(topk_items, pid2provider_popularity):
 
 def consumer_fairness(metrics_distrib, avg_metrics):
     # Compute consumer fairness
+    group_name_values = {
+        GENDER: ["M", "F"],
+        AGE: ["50-55", "45-49", "25-34", "56+", "18-24", "Under 18", "35-44"]
+    }
     cfairness_metrics = {}
-    for metric, group_values in avg_metrics.items():
-        if len(group_values) == 2:
-            group1, group2 = list(group_values.keys())
-            #statistically_significant = statistical_test(metrics_distrib[metric][group1], metrics_distrib[metric][group2]) TODO
-            cfairness_metrics[metric] = (group1, group2, avg_metrics[metric][group1] -
-                                                   avg_metrics[metric][group2],) #statistically_significant) TODO
-        if len(group_values) > 2:
-            pairwise_diffs = []
-            for group1 in group_values.keys():
-                for group2 in group_values.keys():
-                    if group1 != group2:
-                        pairwise_diffs.append(group_values[group1] - group_values[group2])
-                cfairness_metrics[metric] = (np.NAN, np.NAN, np.mean(pairwise_diffs), ) #statistically_significant) TODO
+    for group_class in [GENDER, AGE]:
+        cfairness_metrics[group_class] = {}
+        for metric, group_values in avg_metrics.items():
+            if len(group_name_values[group_class]) == 2:
+                group1, group2 = group_name_values[group_class]
+                #statistically_significant = statistical_test(metrics_distrib[metric][group1], metrics_distrib[metric][group2]) TODO
+                cfairness_metrics[group_class][metric] = (group1, group2, avg_metrics[metric][group1] -
+                                                       avg_metrics[metric][group2],) #statistically_significant) TODO
+            if len(group_name_values[group_class]) > 2:
+                pairwise_diffs = []
+                for group1 in group_name_values[group_class]:
+                    for group2 in group_name_values[group_class]:
+                        if group1 != group2:
+                            pairwise_diffs.append(abs(group_values[group1] - group_values[group2]))
+                cfairness_metrics[group_class][metric] = (None, None, np.mean(pairwise_diffs), ) #statistically_significant) TODO
     return cfairness_metrics
 # REC_QUALITY_METRICS = [NDCG, MMR, SERENDIPITY, COVERAGE, DIVERSITY, NOVELTY]
 # FAIRNESS_METRICS = [CFAIRNESS, PFAIRNESS]

@@ -111,6 +111,19 @@ class KnowledgeGraph:
         self.relation_info = dict()
         self.metapaths = list()
         self._init(dataset)
+        self.compute_degrees()
+
+    def compute_degrees(self):
+        print('Compute node degrees...')
+        self.degrees = {}
+        self.max_degree = {}
+        for etype in self.G:
+            self.degrees[etype] = {}
+            for eid in self.G[etype]:
+                count = 0
+                for r in self.G[etype][eid]:
+                    count += len(self.G[etype][eid][r])
+                self.degrees[etype][eid] = count
 
     def _init(self, dataset):
         # Load entities
