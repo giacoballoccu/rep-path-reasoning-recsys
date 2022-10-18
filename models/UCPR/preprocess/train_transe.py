@@ -57,7 +57,7 @@ def train(args):
                             'Smooth loss: {:.5f}'.format(smooth_loss))
                 train_loss_history.append(smooth_loss)
                 smooth_loss = 0.0
-        if epoch % 1 == 0:
+        if epoch % 10 == 0:
             if args.do_validation:
                 model.eval()
                 total_val_loss = 0

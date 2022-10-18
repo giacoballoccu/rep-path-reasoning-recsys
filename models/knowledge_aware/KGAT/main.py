@@ -64,7 +64,7 @@ if __name__ == '__main__':
 
 
 
-    metrics = MetricsLogger(args.wandb_entity, 
+    metrics = MetricsLogger(args.wandb_entity if args.wandb else None, 
                             f'{MODEL}_{args.dataset}',
                             config=args)
     metrics.register('train_loss')
@@ -119,21 +119,10 @@ if __name__ == '__main__':
     *********************************************************
     Save the model parameters.
     """
-    if args.save_flag == 1:
-        if args.model_type in ['bprmf', 'cke', 'fm', 'cfkg']:
-            weights_save_path = os.path.join(TMP_DIR[args.dataset], args.model_type,
-                                             "weights", args.layer +
-                                             str(args.lr) + '-'.join([str(r) for r in eval(args.regs)]))
-
-        elif args.model_type in ['ncf', 'nfm', 'kgat']:
-            layer = '-'.join([str(l) for l in eval(args.layer_size)])
-            weights_save_path = os.path.join(TMP_DIR[args.dataset], args.model_type,
-                                             "weights",
-                                             layer +
-                                             str(args.lr) + '-'.join([str(r) for r in eval(args.regs)]))
-
-        ensureDir(weights_save_path)
-        save_saver = tf.train.Saver(max_to_keep=1)
+    #if args.save_flag == 1:
+    weights_save_path =  os.path.join(TMP_DIR[args.dataset], "weights")
+    ensureDir(weights_save_path)
+    save_saver = tf.train.Saver(max_to_keep=1)
 
     config = tf.ConfigProto()
     config.gpu_options.allow_growth = True
@@ -144,15 +133,8 @@ if __name__ == '__main__':
     Reload the model parameters to fine tune.
     """
     if args.pretrain == 1:
-        if args.model_type in ['bprmf', 'cke', 'fm', 'cfkg']:
-            pretrain_path = os.path.join(TMP_DIR[args.dataset], args.model_type,
-                                         "weights", args.layer +
-                                         str(args.lr) + '-'.join([str(r) for r in eval(args.regs)]))
-        elif args.model_type in ['ncf', 'nfm', 'kgat']:
-            layer = '-'.join([str(l) for l in eval(args.layer_size)])
-            pretrain_path = os.path.join(TMP_DIR[args.dataset], args.model_type,
-                                         "weights", layer +
-                                         str(args.lr) + '-'.join([str(r) for r in eval(args.regs)]))
+        pretrain_path = os.path.join(TMP_DIR[args.dataset], "weights")
+
 
         ckpt = tf.train.get_checkpoint_state(os.path.dirname(pretrain_path + '/checkpoint'))
         if ckpt and ckpt.model_checkpoint_path:
@@ -160,6 +142,7 @@ if __name__ == '__main__':
             saver.restore(sess, ckpt.model_checkpoint_path)
             print('load the pretrained model parameters from: ', pretrain_path)
 
+            '''         
             # *********************************************************
             # get the performance from the model to fine tune.
             if args.report != 1:
@@ -204,6 +187,7 @@ if __name__ == '__main__':
                     np.savez(temp_save_path, user_embed=user_embed, entity_embed=entity_embed, relation_embed=relation_embed)
                     print('save the weights of kgat in path: ', temp_save_path)
                     exit()
+            '''
 
         else:
             sess.run(tf.global_variables_initializer())
@@ -420,10 +404,11 @@ if __name__ == '__main__':
 
         # *********************************************************
         # save the user & item embeddings for pretraining.
-        if ret['recall'][0] == cur_best_pre_0 and args.save_flag == 1:
-            save_saver.save(sess, weights_save_path + '/weights', global_step=epoch)
-            print('save the weights in path: ', weights_save_path)
+        #if ret['recall'][0] == cur_best_pre_0 and args.save_flag == 1:
+        save_saver.save(sess, weights_save_path , global_step=epoch)
+        print('save the weights in path: ', weights_save_path)
 
+    ''' 
     recs = np.array(rec_loger)
     pres = np.array(pre_loger)
     ndcgs = np.array(ndcg_loger)
@@ -446,7 +431,7 @@ if __name__ == '__main__':
     f.write('embed_size=%d, lr=%.4f, layer_size=%s, node_dropout=%s, mess_dropout=%s, regs=%s, adj_type=%s, use_att=%s, use_kge=%s, pretrain=%d\n\t%s\n'
             % (args.embed_size, args.lr, args.layer_size, args.node_dropout, args.mess_dropout, args.regs, args.adj_type, args.use_att, args.use_kge, args.pretrain, final_perf))
     f.close()
-
-    metrics.push_model(save_path, f'{MODEL}_{args.dataset}')
+    '''
+    metrics.push_model(weights_save_path, f'{MODEL}_{args.dataset}')
     metrics.write(TEST_METRICS_FILE_PATH[args.dataset])
     metrics.close_wandb()

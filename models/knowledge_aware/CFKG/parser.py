@@ -71,7 +71,7 @@ def parse_args():
     parser.add_argument('--Ks', nargs='?', default='[100]',
                         help='Output sizes of every layer')
 
-    parser.add_argument('--save_flag', type=int, default=0,
+    parser.add_argument('--save_flag', type=int, default=1,
                         help='0: Disable model saver, 1: Activate model saver')
 
     parser.add_argument('--test_flag', nargs='?', default='part',

@@ -30,6 +30,7 @@ import numpy as np
 from models.UCPR.utils import *
 from models.UCPR.src.env.sp_user_tri_set import kg_based_get_user_triplet_set#, rw_get_user_triplet_set
 from models.UCPR.preprocess.knowledge_graph import KnowledgeGraph
+from models.UCPR.preprocess.dataset import Dataset
 # validated wrt pgpr
 class PATH_PTN(object):
     def __init__(self, dataset_name):
