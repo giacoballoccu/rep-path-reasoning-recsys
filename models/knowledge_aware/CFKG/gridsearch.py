@@ -40,7 +40,7 @@ def save_best(best_metrics, test_metrics, grid):
     x = test_metrics[OPTIM_HPARAMS_METRIC][-1]
     best_x = best_metrics[OPTIM_HPARAMS_METRIC][-1]
     # if avg total reward is higher than current best
-    if best_x > x :
+    if best_x < x :
         save_metrics(test_metrics, f'{BEST_TEST_METRICS_FILE_PATH[dataset_name]}')
         save_cfg(grid, f'{BEST_CFG_FILE_PATH[dataset_name] }')
         shutil.rmtree(BEST_CFG_DIR[dataset_name])
