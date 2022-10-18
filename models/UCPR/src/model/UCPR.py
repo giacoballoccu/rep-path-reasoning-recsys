@@ -190,28 +190,32 @@ class UCPR(AC_lstm_mf_dummy):
         return acts.cpu().numpy().tolist()
 
     def rn_query_st(self, state, relation_embed_dual, rn_step):
-
+        #print('RN QUERY ST')
         user_embeddings = self.memories_h[0][:,0]
-
+        #print(user_embeddings.shape)
         # state = th.cat([state.squeeze(), user_embeddings], -1)
-        state = th.cat([state.squeeze()], -1)
-        relation_embed_dual = th.cat([relation_embed_dual.squeeze()], -1)
-
+        state = th.cat([state.squeeze(1)], -1)
+        relation_embed_dual = th.cat([relation_embed_dual.squeeze(1)], -1)
+        #print(state.shape)
+        #print(relation_embed_dual.shape)
         o_list = []
         for hop in range(self.p_hop):
             
             h_expanded = torch.unsqueeze(self.memories_t[hop], dim=3)
-
+            #print(f'\t hop={hop} ', h_expanded.shape)
+            #print(f'\t hop={hop} ', self.memories_r[hop].shape)
             Rh = torch.squeeze(torch.matmul(self.memories_r[hop], h_expanded))
             # [batch_size, dim, 1]
+            #print(f'\t hop={hop} Rh ', Rh.shape)
+            #print(f'\t hop={hop} take tail shape', self.memories_t[0].shape)
             v =  state.unsqueeze(1).repeat(1, self.memories_t[0].shape[1], 1)
-
+            #print(f'\t hop={hop} Rh ', v.shape)
             r_v = relation_embed_dual.unsqueeze(1).repeat(1, self.memories_t[0].shape[1], 1, 1)
-
+            #print(f'\t hop={hop} r_v ', r_v.shape)
             r_vh = torch.squeeze(torch.matmul(r_v, h_expanded))
-
+            #print(f'\t hop={hop}  r_vh', r_vh.shape)
             t_u = user_embeddings.unsqueeze(1).repeat(1, self.memories_t[0].shape[1], 1)
-
+            #print(f'\t hop={hop} Rh ', t_u.shape)
             q_Rh = self.rh_query[rn_step](Rh)
             q_v = self.v_query[rn_step](v)
             t_u = self.t_u_query[rn_step](t_u)
@@ -219,8 +223,9 @@ class UCPR(AC_lstm_mf_dummy):
 
             t_state = torch.tanh(q_Rh + q_v + t_u + o_r)
             # print('t_state = ', t_state.shape)
-            probs = torch.squeeze(self.rn_cal_state_prop(t_state))
-
+            #print('rn_cal_prop: ', self.rn_cal_state_prop(t_state).shape)
+            probs = torch.squeeze(self.rn_cal_state_prop(t_state),-1)
+            #print('probs: ', probs.shape)
             probs_normalized = F.softmax(probs, dim=1)
 
             probs_expanded = torch.unsqueeze(probs_normalized, dim=2)
@@ -272,31 +277,39 @@ class UCPR(AC_lstm_mf_dummy):
         tmp_state = [self._get_state_update(index, path) for index, path in enumerate(batch_path)]
 
         all_state = th.cat([ts[3].unsqueeze(0) for ts in tmp_state], 0)
-
+        #print(all_state.shape)
         if len(batch_path[0]) != 1:
             selc_entitiy = th.cat([ts[0].unsqueeze(0) for ts in tmp_state], 0)
+            #print(selc_entitiy.shape)
             self.update_query_embedding(selc_entitiy)
-
+        #print('Prev state: ', all_state.shape, self.prev_state_h.shape,  self.prev_state_c.shape)
         state_output, self.prev_state_h, self.prev_state_c = self.state_lstm(all_state, 
                     self.prev_state_h,  self.prev_state_c)
-
+        #print('New state: ', state_output.shape, self.prev_state_h.shape,  self.prev_state_c.shape)
         curr_node_embed = th.cat([ts[0].unsqueeze(0) for ts in tmp_state], 0)
         relation_embed = th.cat([ts[1].unsqueeze(0) for ts in tmp_state], 0)
         relation_embed_dual = th.cat([ts[2].unsqueeze(0) for ts in tmp_state], 0)
+        #print('Rel: ', curr_node_embed.shape, relation_embed.shape, relation_embed_dual.shape)
 
+        #print('Reasoning step')
         state_tmp = relation_embed
-
+        #print(state_tmp.shape)
         for rn_step in range(self.reasoning_step):
             query_state = self.rn_query_st(state_tmp, relation_embed_dual, rn_step)
+            #print(rn_step, ' ', query_state.shape)
             if rn_step < self.reasoning_step - 1: 
                 state_tmp_ = th.cat([query_state, state_tmp], -1)
+                #print('s1.1: ', state_tmp_.shape)
                 state_tmp = self.update_rn_state[rn_step](state_tmp_)
+                #print('s1.2: ', state_tmp.shape)
         # input()
         res_user_emb = query_state
-
-        state_output = state_output.squeeze()
-        res_user_emb = res_user_emb.squeeze()
-
+        #print('Res user emb: ', query_state.shape)
+        state_output = state_output.squeeze(1)#state_output.squeeze() #results in crash if batch size is 1,
+        # furthermore the squeeze is useless, as for normal batches the tensors before squeeze do not have collapsable dimensions
+        res_user_emb = res_user_emb.squeeze(1)# res_user_emb.squeeze() #results in crash if batch size is 1
+        # furthermore the squeeze is useless, as for normal batches the tensors before squeeze do not have collapsable dimensions
+        #print('Squeeze: ', state_output.shape, res_user_emb.shape)
         return [state_output, res_user_emb]
 
     def generate_act_emb(self, batch_path, batch_curr_actions):

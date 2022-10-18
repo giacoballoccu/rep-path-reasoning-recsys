@@ -159,7 +159,7 @@ def batch_beam_search(args, env, model, uids, device, topk=[25, 5, 1]):
             act_mask[:num_acts] = 1
             batch_masks.append(act_mask)
         return np.vstack(batch_masks)
-
+    topk = [1,1,1]
     state_pool = env.reset(args.epochs,uids)  # numpy of [bs, dim]
     
     model.reset(uids)
@@ -222,7 +222,9 @@ def batch_beam_search(args, env, model, uids, device, topk=[25, 5, 1]):
                 new_index_pool.append(index_ori)
                 new_idx.append(row)
 
-
+        print(len(new_path_pool))
+        print(len(new_idx))
+        print()
         path_pool = new_path_pool
         probs_pool = new_probs_pool
         index_ori_list = new_index_pool
@@ -236,7 +238,7 @@ def batch_beam_search(args, env, model, uids, device, topk=[25, 5, 1]):
 def predict_paths(args, policy_file, path_file, train_labels, test_labels, pretest):
     print('Predicting paths...')
         
-    env = KG_Env(args, args.dataset, args.max_acts, max_path_len=args.max_path_len, state_history=args.state_history)
+    env = KG_Env(args, Dataset(args), args.max_acts, max_path_len=args.max_path_len, state_history=args.state_history)
     print(policy_file)
     pretrain_sd = torch.load(policy_file)
     model = Memory_Model(args, env.user_triplet_set, env.rela_2_index, 
@@ -258,7 +260,7 @@ def predict_paths(args, policy_file, path_file, train_labels, test_labels, prete
         # print(' bar state/text_uid = ', start_idx, '/', len(test_uids), end = '\r')
         end_idx = min(start_idx + batch_size, len(test_uids))
         batch_uids = test_uids[start_idx:end_idx]
-
+        print(f'{start_idx}/{ len(test_uids)}')
         paths, probs = batch_beam_search(args, env, model, batch_uids, args.device, topk=args.topk)
         all_paths.extend(paths)
         all_probs.extend(probs)
@@ -521,8 +523,8 @@ def test(args, train_labels, valid_labels, test_labels, best_recall, pretest = 1
     #for top_k in [10, 20, 25,50]:
     TOP_N_LOGGING = 100    
     
-    #if args.run_path or os.path.exists(path_file) == False:
-        #predict_paths(args, policy_file, path_file, train_labels, test_labels, pretest)#predict_paths(policy_file, path_file, args)
+    if True:#args.run_path or os.path.exists(path_file) == False:
+        predict_paths(args, policy_file, path_file, train_labels, test_labels, pretest)#predict_paths(policy_file, path_file, args)
     if args.save_paths or args.run_eval():
         pred_paths, scores = extract_paths(args.dataset, path_file, train_labels, valid_labels, test_labels)
     if args.run_eval:

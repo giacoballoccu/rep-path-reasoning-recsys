@@ -202,6 +202,8 @@ def train(args):
             first_iterate = False
             splits_to_compute.insert(0, ('valid', valid_dataloader))        
         for split_name, dataloader in splits_to_compute:
+            if split_name == 'valid' and epoch%10 != 0:
+                continue            
             if split_name == 'valid':
                 model.eval()
             else:
