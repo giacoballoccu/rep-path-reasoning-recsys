@@ -389,16 +389,17 @@ if __name__ == '__main__':
         Performance logging.
         """
         t3 = time()
-        metrics.log('train_loss', loss)
-        metrics.log('train_base_loss', base_loss)
-        metrics.log('train_kge_loss', kge_loss)
-        metrics.log('train_reg_loss',reg_loss)
-        metrics.log('valid_ndcg',ret['ndcg'])
-        metrics.log('valid_hit',ret['hit_ratio'])
-        metrics.log('valid_recall',ret['recall'])     
-        metrics.log('valid_precision',ret['precision'])
+        metrics.log('train_loss', loss.item())
+        metrics.log('train_base_loss', base_loss.item())
+        metrics.log('train_kge_loss', kge_loss.item())
+        metrics.log('train_reg_loss',reg_loss.item())
+        metrics.log('valid_ndcg',ret['ndcg'].item())
+        metrics.log('valid_hit',ret['hit_ratio'].item())
+        metrics.log('valid_recall',ret['recall'].item())     
+        metrics.log('valid_precision',ret['precision'].item())
         metrics.push(['train_loss','train_base_loss', 'train_kge_loss','train_reg_loss',
                         'valid_ndcg','valid_hit','valid_recall','valid_precision'])
+
 
         loss_loger.append(loss)
         rec_loger.append(ret['recall'])
