@@ -128,6 +128,7 @@ def train(args):
     start_time = time.time()
     first_iterate = True
     model.train()
+    
     for epoch in range(1, args.epochs + 1):
 
         splits_to_compute = list(loaders.items())
@@ -145,7 +146,7 @@ def train(args):
             while dataloader.has_next():
                 # Update learning rate
                 if split_name == 'train':
-                    lr = args.lr * max(1e-4, 1.0 - steps / total_steps)
+                    lr = args.lr * max(1e-4, 1.0 - step_counter[split_name] / total_steps)
                     for pg in optimizer.param_groups:
                         pg['lr'] = lr
 
