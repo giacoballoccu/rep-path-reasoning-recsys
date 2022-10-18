@@ -64,7 +64,7 @@ def main(args):
     "embed_size": [32, 64, 128], 
     "epoch": [150], 
     "gpu_id": [0], 
-    "kge_size": [32. 64, 128], 
+    "kge_size": [32, 64, 128], 
     "l1_flag": [True], 
     "layer_size": ["[64]"], 
     "lr": [0.0001], 
