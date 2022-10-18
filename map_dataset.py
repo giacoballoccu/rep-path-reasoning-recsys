@@ -21,6 +21,13 @@ def main():
         MapperUCPR(args)
     elif args.model == KGAT:
         MapperKGAT(args)
+    elif args.model == CKE:
+        # Kgat mapper holds correct also for cke
+        MapperKGAT(args)
+    elif args.model == CFKG:
+        # Kgat mapper holds correct also for cfkg
+        MapperKGAT(args)
+
     elif args.model == MLR:
         pass
 
