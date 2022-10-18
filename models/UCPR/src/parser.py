@@ -63,8 +63,8 @@ def parse_args():
 
     parser.add_argument('--sam_type',  type=str, default='alet', help='number of negative samples.')
 
-    parser.add_argument('--topk', type=int, nargs='*', default=[10, 10, 1], help='number of samples')
-    parser.add_argument('--topk_list', type=int, nargs='*', default=[1, 10, 100, 100], help='number of samples')
+    parser.add_argument('--topk', type=int, nargs='*', default=[25, 5, 1], help='number of samples')
+    #parser.add_argument('--topk_list', type=int, nargs='*', default=[1, 10, 100, 100], help='number of samples')
     parser.add_argument('--run_path', type=boolean, default=True, help='Generate predicted path? (takes long time)')
     parser.add_argument('--run_eval', type=boolean, default=True, help='Run evaluation?')
     parser.add_argument('--save_paths', type=boolean, default=True, help='Save paths')

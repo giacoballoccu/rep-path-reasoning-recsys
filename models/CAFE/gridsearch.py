@@ -60,7 +60,7 @@ def main(args):
             "do_execute": [False], 
             "do_infer": [False], 
             "embed_size": [100,200], 
-            "epochs": [40], 
+            "epochs": [20], 
             "gpu": [0], 
             "lr": [0.1], 
             "name": ["neural_symbolic_model"],

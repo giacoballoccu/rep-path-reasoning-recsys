@@ -159,7 +159,6 @@ def batch_beam_search(args, env, model, uids, device, topk=[25, 5, 1]):
             act_mask[:num_acts] = 1
             batch_masks.append(act_mask)
         return np.vstack(batch_masks)
-    topk = [1,1,1]
     state_pool = env.reset(args.epochs,uids)  # numpy of [bs, dim]
     
     model.reset(uids)
