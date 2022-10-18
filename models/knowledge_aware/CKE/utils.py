@@ -6,7 +6,7 @@ ML1M = 'ml1m'
 LFM1M = 'lfm1m'
 CELL = 'cellphones'
 MODEL = 'cke'
-ROOT_DIR = os.environ('TREX_DATA_ROOT') if 'TREX_DATA_ROOT' in os.environ else '../../../'
+ROOT_DIR = os.environ('TREX_DATA_ROOT') if 'TREX_DATA_ROOT' in os.environ else '../../..'
 # Dataset directories.
 DATA_DIR = {
     ML1M: f'{ROOT_DIR}/data/{ML1M}/preprocessed/{MODEL}',
