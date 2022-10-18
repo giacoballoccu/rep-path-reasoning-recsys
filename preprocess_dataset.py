@@ -257,25 +257,25 @@ def categorigal_to_categorigal_age(age_group_number):
 
 
 def test_dataset_integrity(dataset_name):
-    i2kg_filepath = f"{dataset_name}/preprocessed/i2kg_map.txt"
+    i2kg_filepath = f"data/{dataset_name}/preprocessed/i2kg_map.txt"
     i2kg_df = pd.read_csv(i2kg_filepath, sep="\t", dtype="object")
     if i2kg_df.shape[0] != i2kg_df.pid.unique().shape[0]:
         print("i2kg contains duplicates")
         drop_i2kg_map_duplicates(i2kg_filepath, i2kg_df)
 
-    products_filepath = f"{dataset_name}/preprocessed/products.txt"
+    products_filepath = f"data/{dataset_name}/preprocessed/products.txt"
     products_df = pd.read_csv(products_filepath, sep="\t")
     if i2kg_df.shape[0] != products_df.shape[0]:
         print("i2kg/product len missmatch")
         drop_products_not_in_i2kg(products_filepath, products_df, i2kg_df)
 
-    interactions_filepath = f"{dataset_name}/preprocessed/ratings.txt"
+    interactions_filepath = f"data/{dataset_name}/preprocessed/ratings.txt"
     interactions_df = pd.read_csv(interactions_filepath, sep="\t", dtype="object")
     if interactions_df[~interactions_df.pid.isin(i2kg_df.pid)].shape[0] > 0:
         print("Ratings contain interactions that involve a removed product or user")
         remove_interactions_with_removed_product(interactions_filepath, interactions_df, i2kg_df)
 
-    e_map_filepath = f"{dataset_name}/preprocessed/e_map.txt"
+    e_map_filepath = f"data/{dataset_name}/preprocessed/e_map.txt"
     entity_df = pd.read_csv(e_map_filepath, sep="\t", dtype="object", names=["eid", "name", "entity"])
     entity_item = entity_df[entity_df.entity.isin(i2kg_df.entity)]
     if entity_item.shape[0] != i2kg_df.shape[0]:
@@ -292,7 +292,7 @@ def test_dataset_integrity(dataset_name):
     other_entities = entity_df[~entity_df.entity.isin(i2kg_df.entity)]
     assert other_entities.shape[0] + entity_item.shape[0] == entity_df.shape[0]
 
-    kg_final_filename = f"{dataset_name}/preprocessed/kg_final.txt"
+    kg_final_filename = f"data/{dataset_name}/preprocessed/kg_final.txt"
     triplets_df = pd.read_csv(kg_final_filename, sep="\t", dtype="object",)
     print(other_entities.entity.unique().shape[0]-1, triplets_df.entity_tail.unique().shape[0])
     triplets_with_removed_head = triplets_df[~triplets_df.entity_head.isin(i2kg_df.eid)]
@@ -337,7 +337,7 @@ def main():
     args = parser.parse_args()
 
     if args.data == ML1M:
-        #preprocess_ml1m(args)
+        preprocess_ml1m(args)
         preprocess_kg_ml1m(args)
     if args.data == LFM1M:
         preprocess_kg_lfm1m(args)

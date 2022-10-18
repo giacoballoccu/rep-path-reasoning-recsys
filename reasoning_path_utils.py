@@ -12,7 +12,8 @@ LID = "lid"
 SED = "sed"
 PTC = "ptc"
 PPT = "ppt"
-PATH_QUALITY_METRICS = [LIR, SEP, PTD, LID, SED, PTC, PPT]
+FIDELITY = "fidelity"
+PATH_QUALITY_METRICS = [LIR, SEP, PTD, LID, SED, PTC, PPT, FIDELITY]
 
 
 def entity2plain_text(dataset_name, model_name):
@@ -56,6 +57,9 @@ def get_no_path_types_in_kg(dataset_name):
     df_kg = pd.read_csv(os.path.join(get_data_dir(dataset_name), "kg_final.txt"), sep="\t")
     return len(df_kg.relation.unique())
 
+def get_no_path_patterns_in_kg(dataset_name):
+    from models.PGPR.pgpr_utils import PATH_PATTERN
+    return len(PATH_PATTERN[dataset_name].keys())
 
 def load_LIR_matrix(dataset_name, model_name):
     data_dir = get_data_dir(dataset_name)
@@ -194,3 +198,29 @@ def generate_SEP_matrix(dataset_name, model_name):
             pid_weigth[pid] = ema_es[idx]
 
         SEP_matrix[type] = pid_weigth
+
+    return SEP_matrix
+
+def print_path_quality_metrics(avg_metrics, c_fairness):
+    print("\n***---Path Quality---***")
+    print("Average for the entire user base:", end=" ")
+    for metric, group_value in avg_metrics.items():
+        print(f"{metric}: {group_value[OVERALL]:.3f}", end=" | ")
+    print("")
+
+    for metric, groups_value in avg_metrics.items():
+        print(f"\n--- {metric}---")
+        for group, value in groups_value.items():
+            print(f"{group}: {value:.3f}", end=" | ")
+        print("")
+    print("\n")
+
+    print("\n***---Rec CFairness Differences---***")
+    for class_group, metric_tuple in c_fairness.items():
+        for metric, tuple in metric_tuple.items():
+            group1, group2, avg_value = tuple
+            if group1 == None:
+                print(f"{metric} Pairwise diff {class_group}: {avg_value:.3f}", end=" | ")
+            else:
+                print(f"{metric} {group1} vs {group2}: {avg_value:.3f}", end=" | ")
+        print("\n")
