@@ -120,8 +120,8 @@ def main(args):
         best_metrics = load_metrics(BEST_TEST_METRICS_FILE_PATH[dataset_name])
         save_best(best_metrics, test_metrics, configuration)
     
-        if args.wandb:
-            wandb.log(test_metrics)
+        #if args.wandb:
+        #    wandb.log(test_metrics)
 
 
 

@@ -272,11 +272,11 @@ def train(args):
             logger.info(info)
 
         ### END of epoch ###
-        if epoch % 5 == 0:
+        if epoch % 10 == 0:
             policy_file = '{}/policy_model_epoch_{}.ckpt'.format(TMP_DIR[args.dataset], epoch)
             logger.info("Save model to " + policy_file)
             torch.save(model.state_dict(), policy_file)
-            metrics.push_model(policy_file, f'{MODEL}_{args.dataset}_{epoch}')
+            #metrics.push_model(policy_file, f'{MODEL}_{args.dataset}_{epoch}')
 
     makedirs(args.dataset)
     metrics.write(TEST_METRICS_FILE_PATH[args.dataset])#metrics.write(os.path.join(TMP_DIR[args.dataset], VALID_METRICS_FILE_NAME) )

@@ -19,6 +19,12 @@ def parse_args():
                         help='Choose a dataset from {ml1m, lfm1m}')
     parser.add_argument('--pretrain', type=int, default=0,
                         help='0: No pretrain, -1: Pretrain with the learned embeddings, 1:Pretrain with stored models.')
+    parser.add_argument(
+        "--pretrained_weights",
+        type=str,
+        default=None,
+        help="Path to the model weights",
+    )                
     parser.add_argument('--verbose', type=int, default=1,
                         help='Interval of evaluation.')
     parser.add_argument('--epoch', type=int, default=100,

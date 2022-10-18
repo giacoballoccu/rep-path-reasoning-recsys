@@ -48,5 +48,5 @@ class MetricsLogger:
             import copy
             json.dump(self.metrics, f)  
     def close_wandb(self):
-        if self.wandb_entity is not None:
+        if self.wandb_entity is not None and self.wandb_run is not None:
             self.wandb_run.finish()

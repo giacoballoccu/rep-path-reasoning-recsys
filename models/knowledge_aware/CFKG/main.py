@@ -115,7 +115,7 @@ if __name__ == '__main__':
     if args.save_flag == 1:
         if args.model_type in ['bprmf', 'cke', 'fm', 'cfkg']:
             weights_save_path = os.path.join(args.data_path, args.dataset, "preprocessed/kgat/tmp", args.model_type,
-                                             "weights", args.layer +
+                                             "weights", 
                                              str(args.lr) + '-'.join([str(r) for r in eval(args.regs)]))
 
         elif args.model_type in ['ncf', 'nfm', 'kgat']:
@@ -139,7 +139,7 @@ if __name__ == '__main__':
     if args.pretrain == 1:
         if args.model_type in ['bprmf', 'cke', 'fm', 'cfkg']:
             pretrain_path = os.path.join(args.data_path, args.dataset, "preprocessed/kgat/tmp", args.model_type,
-                                         "weights", args.layer +
+                                         "weights", 
                                          str(args.lr) + '-'.join([str(r) for r in eval(args.regs)]))
         elif args.model_type in ['ncf', 'nfm', 'kgat']:
             layer = '-'.join([str(l) for l in eval(args.layer_size)])
@@ -158,7 +158,7 @@ if __name__ == '__main__':
             if args.report != 1:
                 users_to_test = list(data_generator['dataset'].test_user_dict.keys())
 
-                ret = test(sess, model, users_to_test, drop_flag=False, batch_test_flag=batch_test_flag)
+                ret,_ = test(sess, model, users_to_test, drop_flag=False, batch_test_flag=batch_test_flag)
                 cur_best_pre_0 = ret['recall'][0]
 
                 pretrain_ret = 'pretrained model recall=[%.5f, %.5f], precision=[%.5f, %.5f], hit=[%.5f, %.5f],' \
@@ -211,6 +211,7 @@ if __name__ == '__main__':
     *********************************************************
     Get the final performance w.r.t. different sparsity levels.
     """
+    """ 
     if args.report == 1:
         assert args.test_flag == 'full'
         users_to_test_list, split_state = data_generator['dataset'].get_sparsity_split()
@@ -225,7 +226,7 @@ if __name__ == '__main__':
                                                                        args.loss_type))
 
         for i, users_to_test in enumerate(users_to_test_list):
-            ret = test(sess, model, users_to_test, drop_flag=False, batch_test_flag=batch_test_flag)
+            ret = test(sess, model, users_to_test, args.dataset, drop_flag=False, batch_test_flag=batch_test_flag)
 
             final_perf = "recall=[%s], precision=[%s], hit=[%s], ndcg=[%s]" % \
                          ('\t'.join(['%.5f' % r for r in ret['recall']]),
@@ -237,6 +238,7 @@ if __name__ == '__main__':
             f.write('\t%s\n\t%s\n' % (split_state[i], final_perf))
         f.close()
         exit()
+    """
 
     """
     *********************************************************
@@ -381,7 +383,7 @@ if __name__ == '__main__':
         t2 = time()
         users_to_test = list(data_generator['dataset'].test_user_dict.keys())
 
-        ret = test(sess, model, users_to_test, drop_flag=False, batch_test_flag=batch_test_flag)
+        ret,_ = test(sess, model, users_to_test, drop_flag=False, batch_test_flag=batch_test_flag)
 
         """
         *********************************************************

@@ -88,39 +88,41 @@ def get_auc(item_score, user_pos_test):
     auc = metrics.auc(ground_truth=r, prediction=posterior)
     return auc
 
-def ranklist_by_heapq(user_pos_test, test_items, rating, Ks):
+def ranklist_by_heapq(user_pos_test, test_items, rating, Ks, save_topk=True):
     item_score = {}
     for i in test_items:
         item_score[i] = rating[i]
 
     K_max = max(Ks)
     K_max_item_score = heapq.nlargest(K_max, item_score, key=item_score.get)
-
+    pids = []
     r = []
     for i in K_max_item_score:
+        pids.append(i)
         if i in user_pos_test:
             r.append(1)
         else:
             r.append(0)
     auc = 0.
-    return r, auc
+    return r, auc,pids
 
-def ranklist_by_sorted(user_pos_test, test_items, rating, Ks):
+def ranklist_by_sorted(user_pos_test, test_items, rating, Ks, save_topk=True):
     item_score = {}
     for i in test_items:
         item_score[i] = rating[i]
 
     K_max = max(Ks)
     K_max_item_score = heapq.nlargest(K_max, item_score, key=item_score.get)
-
+    pids = []
     r = []
     for i in K_max_item_score:
+        pids.append(i)
         if i in user_pos_test:
             r.append(1)
         else:
             r.append(0)
     auc = get_auc(item_score, user_pos_test)
-    return r, auc
+    return r, auc, pids
 
 
 def get_performance(user_pos_test, r, auc, Ks):
@@ -156,9 +158,9 @@ def test_one_user(x):
     test_items = list((all_items - set(training_items)) - set(valid_items) )
 
     if args.test_flag == 'part':
-        r, auc = ranklist_by_heapq(user_pos_test, test_items, rating, Ks)
+        r, auc, pids = ranklist_by_heapq(user_pos_test, test_items, rating, Ks, save_topk=True)
     else:
-        r, auc = ranklist_by_sorted(user_pos_test, test_items, rating, Ks)
+        r, auc, pids = ranklist_by_sorted(user_pos_test, test_items, rating, Ks, save_topk=True)
 
     # # .......checking.......
     # try:
@@ -169,8 +171,10 @@ def test_one_user(x):
     #     print(user_pos_test)
     #     exit()
     # # .......checking.......
-
-    return get_performance(user_pos_test, r, auc, Ks)
+    result_dict = get_performance(user_pos_test, r, auc, Ks)
+    result_dict['uid'] = u
+    result_dict['pids'] = pids
+    return result_dict
 
 
 def test(sess, model, users_to_test, drop_flag=False, batch_test_flag=False):
@@ -195,6 +199,10 @@ def test(sess, model, users_to_test, drop_flag=False, batch_test_flag=False):
     n_user_batchs = n_test_users // u_batch_size + 1
 
     count = 0
+
+    from collections import defaultdict
+    user_topk_dict = defaultdict(list)
+
 
     DATASET_KEY = 'A_dataset' if args.model_type == 'cke' else 'dataset'
     for u_batch_id in range(n_user_batchs):
@@ -246,8 +254,11 @@ def test(sess, model, users_to_test, drop_flag=False, batch_test_flag=False):
             result['ndcg'] += re['ndcg']/n_test_users
             result['hit_ratio'] += re['hit_ratio']/n_test_users
             result['auc'] += re['auc']/n_test_users
+            u = re['uid']
+            pids = re['pids']
+            user_topk_dict[u] = pids
 
 
     assert count == n_test_users
     pool.close()
-    return result
+    return result, user_topk_dict

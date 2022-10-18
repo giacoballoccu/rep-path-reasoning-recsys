@@ -92,8 +92,8 @@ def main(args):
         save_best(best_metrics, test_metrics, configuration)
         
         #print(test_metrics, TRANSE_CFG_FILE_PATH[dataset_name])
-        if args.wandb:
-            wandb.log(test_metrics)
+        #if args.wandb:
+        #    wandb.log(test_metrics)
 
 
 

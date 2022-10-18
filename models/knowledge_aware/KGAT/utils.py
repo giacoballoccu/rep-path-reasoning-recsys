@@ -69,3 +69,15 @@ def makedirs(dataset_name):
     os.makedirs(CFG_DIR[dataset_name], exist_ok=True)
 
 
+def load_pretrained_data(args):
+    pre_model = 'mf'
+    if args.pretrain == -2:
+        pre_model = 'kgat'
+    pretrain_path = os.path.join(args.data_path, args.dataset, "preprocessed", "kgat", "pretrain", model.model_type,
+                                 f"{pre_model}.npz")
+    try:
+        pretrain_data = np.load(pretrain_path)
+        print('load the pretrained bprmf model parameters.')
+    except Exception:
+        pretrain_data = None
+    return pretrain_data
