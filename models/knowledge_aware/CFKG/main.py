@@ -12,9 +12,10 @@ from models.knowledge_aware.helper import *
 from batch_test import *
 from time import time
 from CFKG import CFKG
-
+import wandb
 import os
 import sys
+from utils import *
 os.environ['TF_CPP_MIN_LOG_LEVEL']='2'
 
 def load_pretrained_data(args):
@@ -42,17 +43,31 @@ if __name__ == '__main__':
     np.random.seed(2019)
     args = parse_args()
 
-    STORAGE_DIR = f'{args.model_type}_{args.dataset}'
-    import os
-    import wandb
-    os.makedirs(STORAGE_DIR, exist_ok=True)
+    os.makedirs(TMP_DIR[args.dataset], exist_ok=True)
+    makedirs(args.dataset)
+    with open(os.path.join(TMP_DIR[args.dataset],f'{MODEL}_hparams.json'), 'w') as f:
+        import json
+        import copy
+        args_dict = dict()
+        for x,y in copy.deepcopy(args._get_kwargs()):
+            args_dict[x] = y
+        if 'device' in args_dict:
+            del args_dict['device']
+        json.dump(args_dict,f)
 
-    if args.wandb :
-        wandb.init(project=STORAGE_DIR,
-                    config=vars(args),
-                       entity="chris1nexus",
-                       #name=args.dataset
-                       )
+
+
+    metrics = MetricsLogger(args.wandb_entity, 
+                            f'{MODEL}_{args.dataset}',
+                            config=args)
+    metrics.register('train_loss')
+    metrics.register('train_base_loss')
+    metrics.register('train_reg_loss')
+    metrics.register('train_kge_loss')
+    metrics.register('ndcg')
+    metrics.register('hit')
+    metrics.register('recall')     
+    metrics.register('precision')
     """
     *********************************************************
     Load Data from data_generator function.
@@ -372,6 +387,16 @@ if __name__ == '__main__':
         Performance logging.
         """
         t3 = time()
+        metrics.log('train_loss', loss)
+        metrics.log('train_base_loss', base_loss)
+        metrics.log('train_kge_loss', kge_loss)
+        metrics.log('train_reg_loss',reg_loss)
+        metrics.log('valid_ndcg',ret['ndcg'])
+        metrics.log('valid_hit',ret['hit_ratio'])
+        metrics.log('valid_recall',ret['recall'])     
+        metrics.log('valid_precision',ret['precision'])
+        metrics.push(['train_loss','train_base_loss', 'train_kge_loss','train_reg_loss',
+                        'valid_ndcg','valid_hit','valid_recall','valid_precision'])
 
         loss_loger.append(loss)
         rec_loger.append(ret['recall'])
@@ -432,3 +457,6 @@ if __name__ == '__main__':
     f.write('embed_size=%d, lr=%.4f, layer_size=%s, node_dropout=%s, mess_dropout=%s, regs=%s, adj_type=%s, use_att=%s, use_kge=%s, pretrain=%d\n\t%s\n'
             % (args.embed_size, args.lr, args.layer_size, args.node_dropout, args.mess_dropout, args.regs, args.adj_type, args.use_att, args.use_kge, args.pretrain, final_perf))
     f.close()
+
+    metrics.push_model(save_path, f'{MODEL}_{args.dataset}')
+    metrics.write(TEST_METRICS_FILE_PATH[args.dataset])
