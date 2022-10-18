@@ -16,6 +16,7 @@ import wandb
 import os
 import sys
 from utils import *
+from models.utils import MetricsLogger
 os.environ['TF_CPP_MIN_LOG_LEVEL']='2'
 
 def load_pretrained_data(args):
@@ -461,3 +462,4 @@ if __name__ == '__main__':
 
     metrics.push_model(save_path, f'{MODEL}_{args.dataset}')
     metrics.write(TEST_METRICS_FILE_PATH[args.dataset])
+    metrics.close_wandb()
