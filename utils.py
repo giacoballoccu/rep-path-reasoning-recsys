@@ -211,9 +211,18 @@ def get_item_provider_pop(dataset_name, model_name):
 def load_labels(dataset_name, model_name, split=TRAIN): #TODO MAKE IT AGNOSITC WITH MODEL.CALLS
     if split != TRAIN and split != VALID and split != TEST:
         raise Exception('mode should be one of {train, valid, test}.')
-    tmp_dir = get_tmp_dir(dataset_name, model_name)
-    label_path = os.path.join(tmp_dir, f"{split}_label.pkl")
-    user_products = pickle.load(open(label_path, 'rb'))
+    if model_name == PGPR or model_name == UCPR:
+        tmp_dir = get_tmp_dir(dataset_name, model_name)
+        label_path = os.path.join(tmp_dir, f"{split}_label.pkl")
+        user_products = pickle.load(open(label_path, 'rb'))
+    elif model_name == CAFE:
+        user_products = {}
+        model_data_dir = get_model_data_dir(model_name, dataset_name)
+        label_path = os.path.join(model_data_dir, f"{split}.txt.gz")
+        with gzip.open(label_path, 'rt') as f:
+            reader = csv.reader(f, delimiter="\t")
+            for row in reader:
+                user_products[int(row[0])] = [int(pid) for pid in row[1:]]
     return user_products
 
 
@@ -233,7 +242,10 @@ def load_kg(dataset_name, model_name):
 
 def load_embed(dataset_name, model_name): #TODO MAKE IT AGNOSITC WITH MODEL.CALLS
     tmp_dir = get_tmp_dir(dataset_name, model_name)
-    embed_file = os.path.join(tmp_dir, f"transe_embed.pkl")
+    if model_name == PGPR or model_name == UCPR:
+        embed_file = os.path.join(tmp_dir, f"transe_embed.pkl")
+    elif model_name == CAFE:
+        embed_file = os.path.join(tmp_dir, f"embed.pkl")
     embeds = pickle.load(open(embed_file, 'rb'))
     return embeds
 

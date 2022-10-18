@@ -397,7 +397,7 @@ def save_pred_paths(dataset, pred_paths):
     if not os.path.isdir(extracted_path_dir):
         os.makedirs(extracted_path_dir)
 
-    print(f"Sabing predicted paths in {extracted_path_dir} + /pred_paths.pkl")
+    print(f"Saving predicted paths in {extracted_path_dir} + /pred_paths.pkl")
 
     with open(extracted_path_dir + "/pred_paths.pkl", 'wb') as pred_paths_file:
         pickle.dump(pred_paths, pred_paths_file)
@@ -420,25 +420,24 @@ def run_program(args):
 
     pred_labels = {}
     pbar = tqdm(total=len(test_labels))
-    pred_paths_istances = []
+    pred_paths_istances = {}
     for uid in test_labels:
+        pred_paths_istances[uid] = {}
         program = create_heuristic_program(kg.metapaths, raw_paths[uid], path_counts[uid], args.sample_size)
         program_exe.execute(program, uid, train_labels[uid])
         paths = program_exe.collect_results(program)
         tmp = [(r[0][-1], np.mean(r[1][-1])) for r in paths]
         for r in paths:
-            path = ['user'] + [str(r[0][0])]
+            path = [("self_loop", 'user', r[0][0])]
             for i in range(len(r[-1])):
-                path.append(r[-1][i])
-                path.append(r[2][i])
-                path.append(r[0][i + 1])
+                path.append((r[-1][i], r[2][i], r[0][i + 1]))
                 if i == len(r[-1]) - 1: continue
-            pred_paths_istances.append([r[0][0], r[0][-1], np.mean(r[1][-1]), np.mean(r[1]), path])
+            pred_paths_istances[r[0][0]][r[0][-1]] = [(np.mean(r[1][-1]), np.mean(r[1]), path)]
         tmp = sorted(tmp, key=lambda x: x[1], reverse=True)[:10]
 
         pred_labels[uid] = [t[0] for t in tmp]
         pbar.update(1)
-    #save_pred_paths(args.dataset, pred_paths_istances)
+    save_pred_paths(args.dataset, pred_paths_istances)
     msg = evaluate_with_insufficient_pred(pred_labels, test_labels, dataset_name)
     logger.info(msg)
 

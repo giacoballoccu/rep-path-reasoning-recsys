@@ -46,6 +46,8 @@ def topk_from_paths(args, train_labels, test_labels):
             if pid in train_pids:
                 continue
             # Get the path with highest probability
+            #(-7.2741203, -5.727427, [('self_loop', 'user', 0), ('watched', 'product', 2215), ('rev_watched', 'user', 1711), ('watched', 'product', 447)])
+            #
             sorted_path = sorted(pred_paths[uid][pid], key=lambda x: x[1], reverse=True)
             best_pred_paths[uid].append(sorted_path[0])
 
