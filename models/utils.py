@@ -9,6 +9,7 @@ class MetricsLogger:
         self.wandb_entity = wandb_entity 
         # extra care should be taken to call the wandb method only from
         # main process if distributed training is on
+        self.wandb_run = None
         if self.wandb_entity is not None:
             assert wandb_entity is not None, f'Error {MetricsLogger.WANDB_ENTITY} is None, but is required for wandb logging.\n Please provide your account name as value of this member variable'
             assert project_name is not None, f'Error "{MetricsLogger.PROJECT_NAME}" is None, but is required for wandb logging'
@@ -36,10 +37,13 @@ class MetricsLogger:
                 to_push[name] = self.metrics[name][-1]
             wandb.log(to_push)
     def push_model(self, model_filepath, model_name):
-        artifact = wandb.Artifact(model_name, type='model')
-        artifact.add_file(model_filepath)
-        self.wandb_run.log_artifact(artifact)
-
+        if self.wandb_entity is not None and self.wandb_run is not None:
+            artifact = wandb.Artifact(model_name, type='model')
+            artifact.add_file(model_filepath)
+            self.wandb_run.log_artifact(artifact)
+    def save_dir(self, dirpath):
+        if self.wandb_entity is not None and self.wandb_run is not None:
+            self.wandb_run.save(dirpath)
     def write(self, filepath):
         if not os.path.exists(os.path.dirname(filepath)):
             os.makedirs(os.path.dirname(filepath), exist_ok=True)
