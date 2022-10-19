@@ -94,9 +94,9 @@ TMP_DIR = {
 }
 
 LABEL_FILE = {
-    ML1M: (DATA_DIR[ML1M] + '/train.txt.gz', DATA_DIR[ML1M] + '/test.txt.gz'),
-    LFM1M: (DATA_DIR[LFM1M] + '/train.txt.gz', DATA_DIR[LFM1M] + '/test.txt.gz'),
-    CELL: (DATA_DIR[CELL] + '/train.txt.gz', DATA_DIR[CELL] + '/test.txt.gz'),
+    ML1M: (DATA_DIR[ML1M] + '/train.txt.gz', DATA_DIR[ML1M] + '/valid.txt.gz', DATA_DIR[ML1M] + '/test.txt.gz'),
+    LFM1M: (DATA_DIR[LFM1M] + '/train.txt.gz', DATA_DIR[LFM1M] + '/valid.txt.gz', DATA_DIR[LFM1M] + '/test.txt.gz'),
+    CELL: (DATA_DIR[CELL] + '/train.txt.gz', DATA_DIR[CELL] + '/valid.txt.gz', DATA_DIR[CELL] + '/test.txt.gz'),
 }
 
 EMBED_FILE = {
@@ -117,17 +117,17 @@ def parse_args():
 
     # Hyperparamters for training neural-symbolic model.
     parser.add_argument('--epochs', type=int, default=20, help='Number of epochs to train.')
-    parser.add_argument('--batch_size', type=int, default=128, help='batch size.')
+    parser.add_argument('--batch_size', type=int, default=64, help='batch size.')
     parser.add_argument('--lr', type=float, default=0.1, help='learning rate.')
     parser.add_argument('--steps_per_checkpoint', type=int, default=100, help='Number of steps for checkpoint.')
-    parser.add_argument('--embed_size', type=int, default=100, help='KG embedding size.')
+    parser.add_argument('--embed_size', type=int, default=200, help='KG embedding size.')
     parser.add_argument('--deep_module', type=boolean, default=True, help='Use deep module or not')
     parser.add_argument('--use_dropout', type=boolean, default=True, help='use dropout or not.')
-    parser.add_argument('--rank_weight', type=float, default=10.0, help='weighting factor for ranking loss.')
+    parser.add_argument('--rank_weight', type=float, default=1.0, help='weighting factor for ranking loss.')
     parser.add_argument('--topk_candidates', type=int, default=10, help='weighting factor for ranking loss.')
 
     # Hyperparameters for execute neural programs (inference).
-    parser.add_argument('--sample_size', type=int, default=15, help='sample size for model.')
+    parser.add_argument('--sample_size', type=int, default=500, help='sample size for model.')
     parser.add_argument('--do_infer', type=boolean, default=False, help='whether to infer paths after training.')
     parser.add_argument('--do_execute', type=boolean, default=False, help='whether to execute neural programs.')
     parser.add_argument('--do_validation', type=bool, default=True, help='Whether to perform validation')
@@ -208,8 +208,10 @@ def save_user_products(dataset, up, up_type='pos'):
 def load_labels(dataset, mode='train'):
     if mode == 'train':
         label_file = LABEL_FILE[dataset][0]
-    elif mode == 'test':
+    elif mode == 'valid':
         label_file = LABEL_FILE[dataset][1]
+    elif mode == 'test':
+        label_file = LABEL_FILE[dataset][2]
     else:
         raise Exception('mode should be one of {train, test}.')
     # user_products = pickle.load(open(label_file, 'rb'))

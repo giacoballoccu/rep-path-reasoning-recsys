@@ -410,6 +410,8 @@ def run_program(args):
     kg_mask = KGMask(kg)
 
     train_labels = load_labels(args.dataset, 'train')
+    valid_labels = load_labels(args.dataset, 'valid')
+    train_valid_labels = dict(zip(train_labels.keys(), list(train_labels.values()) + list(valid_labels.values())))
     test_labels = load_labels(args.dataset, 'test')
     path_counts = load_path_count(args.dataset)  # Training path freq
     with open(args.infer_path_data, 'rb') as f:
@@ -424,7 +426,7 @@ def run_program(args):
     for uid in test_labels:
         pred_paths_istances[uid] = {}
         program = create_heuristic_program(kg.metapaths, raw_paths[uid], path_counts[uid], args.sample_size)
-        program_exe.execute(program, uid, train_labels[uid])
+        program_exe.execute(program, uid, train_valid_labels[uid])
         paths = program_exe.collect_results(program)
         tmp = [(r[0][-1], np.mean(r[1][-1])) for r in paths]
         for r in paths:

@@ -1,6 +1,7 @@
 import argparse
 from collections import defaultdict
 
+import pandas as pd
 from tqdm import tqdm
 
 from reasoning_path_utils import *
@@ -25,6 +26,7 @@ def statistical_test(distrib1, distrib2):
 
 
 def topk_from_paths(args, train_labels, test_labels):
+    K = 100
     k = args.k
     dataset_name = args.data
     embeds = load_embed(dataset_name, args.model)
@@ -55,16 +57,17 @@ def topk_from_paths(args, train_labels, test_labels):
     sort_by = 'score'
     pred_labels = {}
     pred_paths_topk = {}
+    fidelity = {}
     for uid in best_pred_paths:
         if sort_by == 'score':
             sorted_path = sorted(best_pred_paths[uid], key=lambda x: (x[0], x[1]), reverse=True)
         elif sort_by == 'prob':
             sorted_path = sorted(best_pred_paths[uid], key=lambda x: (x[1], x[0]), reverse=True)
-        topk_pids = [p[-1][2] for _, _, p in sorted_path[:k]]  # from largest to smallest
-        topk_paths = [(path_tuple[-1][-1][2],) + path_tuple for path_tuple in sorted_path[:k]] # paths for the top10
+        topk_pids = [p[-1][2] for _, _, p in sorted_path[:K]]  # from largest to smallest
+        topk_paths = [(path_tuple[-1][-1][2],) + path_tuple for path_tuple in sorted_path[:K]] # paths for the top10
 
         # add up to 10 pids if not enough, this product will not be explainable by a path
-        if args.add_products and len(topk_pids) < k:
+        if args.add_products and len(topk_pids) < K:
             train_pids = set(train_labels[uid])
             cand_pids = np.argsort(scores[uid])
             for cand_pid in cand_pids[::-1]:
@@ -72,11 +75,24 @@ def topk_from_paths(args, train_labels, test_labels):
                     continue
                 topk_pids.append(cand_pid)
                 topk_paths.append((cand_pid, scores[uid][cand_pid], None, None))  # Placeholder for no explanation
-                if len(topk_pids) >= k:
+                if len(topk_pids) >= K:
                     break
+        for cutoff in [10,20,50,100]:
+            x = sum([1 for path in topk_paths[:cutoff] if path[-1] != None])
+            if cutoff not in fidelity:
+                fidelity[cutoff] = []
+            fidelity[cutoff].append(x/cutoff)
         # end of add
-        pred_labels[uid] = topk_pids[::-1]  # change order to from smallest to largest!
-        pred_paths_topk[uid] = topk_paths[::-1]
+        pred_labels[uid] = topk_pids[:k]  # change order to from smallest to largest!
+        pred_paths_topk[uid] = topk_paths[:k]
+
+    rows = []
+    for cutoff in [10, 20, 50, 100]:
+        avg_fidelity = np.mean(fidelity[cutoff])
+        print(f"fidelity top-{cutoff}: {avg_fidelity}")
+        rows.append([args.model, cutoff, avg_fidelity])
+    df = pd.DataFrame(rows, columns=["model", "cutoff", "fidelity"])
+    df.to_csv(os.path.join("results", args.data, args.model, "fidelity_cutoff.csv"), index=False, sep="\t")
 
     result_dir = get_result_dir(dataset_name, args.model)
     path_topk_filepath = os.path.join(result_dir, "path_topk.pkl")
@@ -133,7 +149,7 @@ def evaluate_rec_quality(args, topk_items, test_labels):
         age = uid2age[uid]
 
         hits = []
-        for pid in topk:
+        for pid in topk[:k]:
             hits.append(1 if pid in test_labels[uid] else 0)
 
         # If the model has predicted less than 10 items pad with zeros
@@ -173,6 +189,8 @@ def evaluate_rec_quality(args, topk_items, test_labels):
                                         columns=["dataset", "model", "gender", "age", "metric", "value"])
         distributions_df.to_csv(results_dir + "rec_quality_group_distrib.csv", sep="\t", index=False)
 
+
+
     # Compute average values for metrics
     for metric, group_values in rec_quality_metrics.items():
         for group, values in group_values.items():
@@ -182,12 +200,24 @@ def evaluate_rec_quality(args, topk_items, test_labels):
                 avgs_rows.append([dataset_name, args.model, group, metric, avg_value])
 
     # Compute global metrics
-    c_fairness = {}
-    for metric in REC_QUALITY_METRICS_GLOBAL:
-        if metric == CFAIRNESS:
-            c_fairness = consumer_fairness(rec_quality_metrics, avg_rec_quality_metrics)
-        if metric == COVERAGE:
-            avg_rec_quality_metrics[metric] = coverage(recommended_items_by_group, n_items_in_catalog)
+    avg_rec_quality_metrics[COVERAGE] = coverage(recommended_items_by_group, n_items_in_catalog)
+    if args.save_avg:
+        for group, avg_value in avg_rec_quality_metrics[COVERAGE].items():
+            avgs_rows.append([dataset_name, args.model, group, COVERAGE, avg_value])
+    c_fairness = consumer_fairness(rec_quality_metrics, avg_rec_quality_metrics)
+
+    if args.save_avg:
+        c_fairness_rows = []
+        for group_class, metric_values in c_fairness.items():
+            for metric, values in metric_values.items():
+                if values[0] != None:
+                    group1, group2, value = values
+                    c_fairness_rows.append([dataset_name, args.model, f"{group1} - {group2}", metric, value])
+                else:
+                    c_fairness_rows.append([dataset_name, args.model, f"pairwise_diff", metric, value])
+        c_fairness_df = pd.DataFrame(c_fairness_rows,
+                               columns=["dataset", "model", "diff", "metric", "value"])
+        c_fairness_df.to_csv(results_dir + "cfairness_rec_quality_avg_values.csv", sep="\t", index=False)
 
     # Print results
     print_rec_quality_metrics(avg_rec_quality_metrics, c_fairness)
@@ -263,6 +293,19 @@ def evaluate_path_quality(args, topk_paths):
         if metric == CFAIRNESS:
             c_fairness = consumer_fairness(path_quality_metrics, avg_path_quality_metrics)
 
+    if args.save_avg:
+        c_fairness_rows = []
+        for group_class, metric_values in c_fairness.items():
+            for metric, values in metric_values.items():
+                if values[0] != None:
+                    group1, group2, value = values
+                    c_fairness_rows.append([dataset_name, args.model, f"{group1} - {group2}", metric, value])
+                else:
+                    c_fairness_rows.append([dataset_name, args.model, f"pairwise_diff", metric, value])
+        c_fairness_df = pd.DataFrame(c_fairness_rows,
+                               columns=["dataset", "model", "diff", "metric", "value"])
+        c_fairness_df.to_csv(results_dir + "cfairness_path_quality_avg_values.csv", sep="\t", index=False)
+
     # Print results
     print_path_quality_metrics(avg_path_quality_metrics, c_fairness)
 
@@ -315,25 +358,16 @@ def main():
 
     if args.model in PATH_REASONING_METHODS:
         topk_from_paths(args, train_labels, test_labels)
-    exit()
-    evaluate(args, None, None)  # USED FOR TESTING
 
     # Check if args inputted are correct
     if args.model not in KNOWLEDGE_AWARE_METHODS and args.model not in PATH_REASONING_METHODS:
         raise Exception("Model selected not found among available ones")
 
-    with open(results_dir + "topk_items.pkl", 'rb') as topk_items_file:
-        topk_items = pickle.load(topk_items_file)
-    topk_items_file.close()
-
-    if args.model in PATH_REASONING_METHODS:
-        with open(results_dir + "pred_paths.pkl", 'rb') as topk_paths_file:
-            topk_paths = pickle.load(topk_paths_file)
-        topk_paths_file.close()
-    else:
-        topk_paths = None
-
-    evaluate(args, topk_items, topk_paths)
+    if args.model in KNOWLEDGE_AWARE_METHODS:
+        with open(results_dir + "item_topk.pkl", 'rb') as topk_items_file:
+            topk_items = pickle.load(topk_items_file)
+        topk_items_file.close()
+        evaluate(args, topk_items, test_labels)
 
 
 if __name__ == '__main__':
