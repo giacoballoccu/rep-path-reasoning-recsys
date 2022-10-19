@@ -433,6 +433,7 @@ if __name__ == '__main__':
             % (args.embed_size, args.lr, args.layer_size, args.node_dropout, args.mess_dropout, args.regs, args.adj_type, args.use_att, args.use_kge, args.pretrain, final_perf))
     f.close()
     '''
-    metrics.push_model(weights_save_path, f'{MODEL}_{args.dataset}')
     metrics.write(TEST_METRICS_FILE_PATH[args.dataset])
+    metrics.save_dir(weights_save_path)
+    #metrics.push_model(weights_save_path, f'{MODEL}_{args.dataset}')
     metrics.close_wandb()
