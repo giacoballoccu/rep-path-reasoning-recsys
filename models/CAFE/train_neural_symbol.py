@@ -160,7 +160,7 @@ def train(args):
             if epoch % 10 == 0:
                 policy_file = '{}/symbolic_model_epoch{}.ckpt'.format(args.log_dir, epoch)
                 torch.save(model.state_dict(), policy_file)
-                metrics.push_model(policy_file, f'{MODEL}_{args.dataset}_{epoch}')
+                #metrics.push_model(policy_file, f'{MODEL}_{args.dataset}_{epoch}')
     makedirs(args.dataset)
     metrics.write(TEST_METRICS_FILE_PATH[args.dataset])#metrics.write(os.path.join(TMP_DIR[args.dataset], VALID_METRICS_FILE_NAME))
     metrics.close_wandb()

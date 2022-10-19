@@ -25,7 +25,7 @@ DATA_DIR = {
     LFM1M: f'{ROOT_DIR}/data/{LFM1M}/preprocessed/{MODEL}',
     CELL: f'{ROOT_DIR}/data/{CELL}/preprocessed/{MODEL}'
 }
-OPTIM_HPARAMS_METRIC = 'avg_valid_loss'
+OPTIM_HPARAMS_METRIC = 'avg_train_loss'
 VALID_METRICS_FILE_NAME = 'valid_metrics.json'
 
 
@@ -42,6 +42,13 @@ BEST_CFG_DIR = {
     CELL: f'{LOG_DIR}/{CELL}/best_hparams_cfg',
 }
 TEST_METRICS_FILE_NAME = 'test_metrics.json'
+RECOM_METRICS_FILE_NAME = 'recommender_metrics.json'
+RECOM_METRICS_FILE_PATH = {
+    ML1M: f'{CFG_DIR[ML1M]}/{RECOM_METRICS_FILE_NAME}',
+    LFM1M: f'{CFG_DIR[LFM1M]}/{RECOM_METRICS_FILE_NAME}',
+    CELL: f'{CFG_DIR[CELL]}/{RECOM_METRICS_FILE_NAME}',
+}
+
 TEST_METRICS_FILE_PATH = {
     ML1M: f'{CFG_DIR[ML1M]}/{TEST_METRICS_FILE_NAME}',
     LFM1M: f'{CFG_DIR[LFM1M]}/{TEST_METRICS_FILE_NAME}',

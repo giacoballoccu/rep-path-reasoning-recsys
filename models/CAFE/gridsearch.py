@@ -38,8 +38,10 @@ def save_best(best_metrics, test_metrics, grid):
         shutil.copytree(TMP_DIR[dataset_name], BEST_CFG_DIR[dataset_name] )        
         save_metrics(test_metrics, f'{BEST_TEST_METRICS_FILE_PATH[dataset_name]}')
         save_cfg(grid, f'{BEST_CFG_FILE_PATH[dataset_name] }')
-        return 
+        return
+    assert len(test_metrics[OPTIM_HPARAMS_METRIC]) > 0, f'Error, {OPTIM_HPARAMS_METRIC} on test metrics has size 0' 
     x = test_metrics[OPTIM_HPARAMS_METRIC][-1]
+    assert len(best_metrics[OPTIM_HPARAMS_METRIC]) > 0, f'Error, {OPTIM_HPARAMS_METRIC} on best saved run metrics has size 0'
     best_x = best_metrics[OPTIM_HPARAMS_METRIC][-1]
     # if avg total reward is higher than current best
     if best_x > x :
@@ -55,12 +57,12 @@ def main(args):
 
 
     chosen_hyperparam_grid = {"batch_size": [64],#128], 
-           "dataset": ["lfm1m", "ml1m"], 
+           "dataset": ["ml1m"], #['ml1m', 'lfm1m'] 
             "deep_module": [True], 
             "do_execute": [False], 
             "do_infer": [False], 
             "embed_size": [100,200], 
-            "epochs": [20], 
+            "epochs": [20], #[20],
             "gpu": [0], 
             "lr": [0.1], 
             "name": ["neural_symbolic_model"],

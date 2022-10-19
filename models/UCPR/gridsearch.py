@@ -72,8 +72,8 @@ def main(args):
      "max_path_len": [3], 
      "model": ["UCPR"],  
      "n_memory": [32], 
-"p_hop": [1],  
- "sub_batch_size": [1], 
+    "p_hop": [1],  
+     "sub_batch_size": [1], 
 
 
     "add_products": [True], 

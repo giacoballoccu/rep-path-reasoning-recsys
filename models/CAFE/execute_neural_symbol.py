@@ -151,7 +151,7 @@ def evaluate_with_insufficient_pred(topk_matches, test_user_products, dataset_na
     our_recall = np.mean(recalls)
 
     makedirs(dataset_name)
-    with open(TEST_METRICS_FILE_PATH[dataset_name], 'w') as f:
+    with open(RECOM_METRICS_FILE_PATH[dataset_name], 'w') as f:
         json.dump(metrics,f)
     print(f"Our ndcg: {our_ndcg}, Our recall: {our_recall}")
     avg_precision = np.mean(precisions) * 100

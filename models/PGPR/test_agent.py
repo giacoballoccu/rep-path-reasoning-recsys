@@ -78,7 +78,7 @@ def evaluate(dataset_name, topk_matches, test_user_products):
                                                           avg_metric_value))
         print("\n")
     makedirs(dataset_name)
-    with open(TEST_METRICS_FILE_PATH[dataset_name], 'w') as f:
+    with open(RECOM_METRICS_FILE_PATH[dataset_name], 'w') as f:
         json.dump(metrics,f)
 
 def dcg_at_k(r, k, method=1):

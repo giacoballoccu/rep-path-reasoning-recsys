@@ -143,7 +143,7 @@ def evaluate(topk_matches, test_user_products, no_skip_user, dataset_name):
                                                           avg_metric_value))
         print("\n")
     makedirs(dataset_name)
-    with open(TEST_METRICS_FILE_PATH[dataset_name], 'w') as f:
+    with open(RECOM_METRICS_FILE_PATH[dataset_name], 'w') as f:
         json.dump(metrics,f)
 
     return avg_metrics.precision, avg_metrics.recall, avg_metrics.ndcg, avg_metrics.hr,\

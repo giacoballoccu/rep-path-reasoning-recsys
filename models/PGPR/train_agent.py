@@ -282,7 +282,7 @@ def train(args):
             policy_file = '{}/policy_model_epoch_{}.ckpt'.format(args.log_dir, epoch)
             logger.info("Save models to " + policy_file)
             torch.save(model.state_dict(), policy_file)
-            metrics.push_model(policy_file, f'{MODEL}_{args.dataset}_{epoch}')
+            #metrics.push_model(policy_file, f'{MODEL}_{args.dataset}_{epoch}')
     makedirs(args.dataset)
     metrics.write(TEST_METRICS_FILE_PATH[args.dataset])#os.path.join(TMP_DIR[args.dataset], VALID_METRICS_FILE_NAME))
     metrics.close_wandb()
