@@ -39,8 +39,8 @@ def save_best(best_metrics, test_metrics, grid):
         save_cfg(grid, f'{BEST_CFG_FILE_PATH[dataset_name] }')
         return 
 
-    x = test_metrics[OPTIM_HPARAMS_METRIC][-OPTIM_HPARAMS_LAST_K:]/OPTIM_HPARAMS_LAST_K
-    best_x = best_metrics[OPTIM_HPARAMS_METRIC][-OPTIM_HPARAMS_LAST_K:]/OPTIM_HPARAMS_LAST_K
+    x = sum(test_metrics[OPTIM_HPARAMS_METRIC][-OPTIM_HPARAMS_LAST_K:])/OPTIM_HPARAMS_LAST_K
+    best_x = sum(best_metrics[OPTIM_HPARAMS_METRIC][-OPTIM_HPARAMS_LAST_K:])/OPTIM_HPARAMS_LAST_K
     # if avg total reward is higher than current best
     if x > best_x :
         shutil.rmtree(BEST_CFG_DIR[dataset_name])

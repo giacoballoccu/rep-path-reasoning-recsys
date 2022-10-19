@@ -69,7 +69,8 @@ def train(args):
     metrics.register('avg_valid_rankloss')     
 
     loaders = {'train': train_dataloader,
-                'valid': train_dataloader}#valid_dataloader}
+                'valid': train_dataloader
+                }#valid_dataloader}
 
     step_counter = {
                 'train': 0,
@@ -89,6 +90,9 @@ def train(args):
         #    first_iterate = False
         #    splits_to_compute.insert(0, ('valid', valid_dataloader))
         for split_name, dataloader in splits_to_compute:
+            if split_name == 'valid':
+                # skip temporarily
+                continue                        
             if split_name == 'valid':
                 model.eval()
             else:
