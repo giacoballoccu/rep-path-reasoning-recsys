@@ -35,7 +35,7 @@ def set_logger(logname):
     logger.addHandler(fh)
 
 
-def infer_paths(args):
+def infer_paths(args, topk_paths=250):
     kg = load_kg(args.dataset)
     model = create_symbolic_model(args, kg, train=False)
 
@@ -51,7 +51,7 @@ def infer_paths(args):
             metapath = kg.metapaths[mpid]
             paths = model.infer_with_path(metapath, uid, kg_mask,
                                           excluded_pids=train_labels[uid],
-                                          topk_paths=20)
+                                          topk_paths=topk_paths)
             predicts[uid][mpid] = paths
         pbar.update(1)
     with open(args.infer_path_data, 'wb') as f:
