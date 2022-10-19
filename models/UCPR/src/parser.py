@@ -99,6 +99,7 @@ def parse_args():
         type=str,
         help="Entity name to push to the wandb logged data, in case args.wandb is specified.",
     )  
+    parser.add_argument('--policy_path', type=str, default=None, help='Path to the .pt file of the trained agent ')
 
 
     args = parser.parse_args()

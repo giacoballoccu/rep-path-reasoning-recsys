@@ -63,7 +63,7 @@ def main(args):
     "ent_weight": [0.001],   
     "epochs": [40],  
     "gamma": [0.99], 
- "hidden": [[64, 32], [128, 64]], 
+    "hidden": [[64, 32], [128, 64]], 
      "l2_lambda": [0], 
      "l2_weight": [1e-06], 
      "lambda_num": [0.5], 

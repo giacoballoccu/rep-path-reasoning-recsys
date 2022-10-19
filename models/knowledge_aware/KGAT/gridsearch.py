@@ -54,9 +54,9 @@ def main(args):
 
 
     chosen_hyperparam_grid = {"Ks": ["[100]"],# do not modify,it is the topK 
-    "adj_type": ["si", 'bi'], 
+    "adj_type": ['si'],#'bi'], 
     "adj_uni_type": ["sum"], 
-    "alg_type": ["kgat", 'bi', 'gcn', 'graphsage'], 
+    "alg_type": ["kgat", 'bi'], 
     "batch_size": [1024], 
     "batch_size_kg": [2048],  
     "dataset": ["ml1m", 'lfm1m'], 

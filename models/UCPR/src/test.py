@@ -192,7 +192,7 @@ def batch_beam_search(args, env, model, uids, device, topk=[25, 5, 1]):
             probs, _ = model((state_tensor, batch_next_action_emb, actmask_tensor))  # Tensor of [bs, act_dim]
         
         probs = probs + actmask_tensor.float()  # In order to differ from masked actions
-        
+        del actmask_tensor
         topk_probs, topk_idxs = torch.topk(probs, topk[hop], dim=1)  # LongTensor of [bs, k]
         topk_idxs = topk_idxs.detach().cpu().numpy()
         topk_probs = topk_probs.detach().cpu().numpy()
@@ -239,13 +239,15 @@ def predict_paths(args, policy_file, path_file, train_labels, test_labels, prete
         
     env = KG_Env(args, Dataset(args), args.max_acts, max_path_len=args.max_path_len, state_history=args.state_history)
     print(policy_file)
+    print('Loading pretrain')
     pretrain_sd = torch.load(policy_file)
+    print('Loading model')
     model = Memory_Model(args, env.user_triplet_set, env.rela_2_index, 
                             env.act_dim, gamma=args.gamma, hidden_sizes=args.hidden).to(args.device)
     model_sd = model.state_dict()
     model_sd.update(pretrain_sd)
     model.load_state_dict(model_sd)
-
+    print('Model loaded')
     test_uids = list(test_labels.keys())
     test_uids = [uid for uid in test_uids if uid in train_labels and uid in env.user_list]
 
@@ -510,9 +512,9 @@ def test(args, train_labels, valid_labels, test_labels, best_recall, pretest = 1
     print('start predict')
 
 
-    policy_file = args.save_model_dir + '/policy_model_epoch_{}.ckpt'.format(35)#args.eva_epochs)
-    path_file = args.save_model_dir + '/' + 'pre' + str(pretest) + 'policy_paths_epoch{}_{}.pkl'.format(args.eva_epochs, args.topk_string)
-    print(policy_file)
+    policy_file = args.policy_path  #args.save_model_dir + '/policy_model_epoch_{}.ckpt'.format(35)#args.eva_epochs)
+    path_file = os.path.join(TMP_DIR[args.dataset], 'policy_paths_epoch{}_{}.pkl'.format(args.eva_epochs, args.topk_string)) #args.save_model_dir + '/' + 'pre' + str(pretest) + 'policy_paths_epoch{}_{}.pkl'.format(args.eva_epochs, args.topk_string)
+    
 
     #if args.dataset in [BEAUTY_CORE, CELL_CORE, CLOTH_CORE]: 
     #sort_by_2 = 'prob'
@@ -522,7 +524,7 @@ def test(args, train_labels, valid_labels, test_labels, best_recall, pretest = 1
     #for top_k in [10, 20, 25,50]:
     TOP_N_LOGGING = 100    
     
-    if True:#args.run_path or os.path.exists(path_file) == False:
+    if args.run_path or os.path.exists(path_file) == False:
         predict_paths(args, policy_file, path_file, train_labels, test_labels, pretest)#predict_paths(policy_file, path_file, args)
     if args.save_paths or args.run_eval():
         pred_paths, scores = extract_paths(args.dataset, path_file, train_labels, valid_labels, test_labels)
