@@ -141,7 +141,7 @@ def evaluate_with_insufficient_pred(topk_matches, test_user_products, dataset_na
         precisions.append(precision)
         hits.append(hit)
 
-        metrics.ndcg.append(ndcg)
+        metrics.ndcg.append(our_ndcg)
         metrics.recall.append(recall)
         metrics.precision.append(precision)
         metrics.hit.append(hit)
@@ -386,14 +386,14 @@ def create_heuristic_program(metapaths, raw_paths_with_scores, prior_count, samp
 
 
 def save_pred_paths(dataset, pred_paths):
-    if not os.path.isdir("../../results/"):
-        os.makedirs("../../results/")
+    #if not os.path.isdir("../../results/"):
+    #    os.makedirs("../../results/")
 
-    extracted_path_dir = f"../../results/{dataset}"
-    if not os.path.isdir(extracted_path_dir):
-        os.makedirs(extracted_path_dir)
+    #extracted_path_dir = f"../../results/{dataset}"
+    #if not os.path.isdir(extracted_path_dir):
+    #    os.makedirs(extracted_path_dir)
 
-    extracted_path_dir = extracted_path_dir + "/cafe"
+    extracted_path_dir = LOG_DATASET_DIR[dataset]#extracted_path_dir + "/cafe"
     if not os.path.isdir(extracted_path_dir):
         os.makedirs(extracted_path_dir)
 

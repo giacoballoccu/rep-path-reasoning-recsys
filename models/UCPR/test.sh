@@ -1,0 +1,1 @@
+python3 src/test.py --dataset lfm1m --policy_path  ../../results/ucpr/lfm1m/best_hparams_cfg/policy_model_epoch_35.ckpt --hidden 128 64 --embed_size 100

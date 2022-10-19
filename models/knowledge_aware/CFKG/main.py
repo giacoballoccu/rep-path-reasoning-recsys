@@ -132,52 +132,7 @@ if __name__ == '__main__':
             saver.restore(sess, ckpt.model_checkpoint_path)
             print('load the pretrained model parameters from: ', pretrain_path)
 
-            '''         
-            # *********************************************************
-            # get the performance from the model to fine tune.
-            if args.report != 1:
-                users_to_test = list(data_generator['dataset'].test_user_dict.keys())
 
-                ret,_ = test(sess, model, users_to_test, drop_flag=False, batch_test_flag=batch_test_flag)
-                cur_best_pre_0 = ret['recall'][0]
-
-                pretrain_ret = 'pretrained model recall=[%.5f, %.5f], precision=[%.5f, %.5f], hit=[%.5f, %.5f],' \
-                               'ndcg=[%.5f, %.5f], auc=[%.5f]' % \
-                               (ret['recall'][0], ret['recall'][-1],
-                                ret['precision'][0], ret['precision'][-1],
-                                ret['hit_ratio'][0], ret['hit_ratio'][-1],
-                                ret['ndcg'][0], ret['ndcg'][-1], ret['auc'])
-                print(pretrain_ret)
-
-                # *********************************************************
-                # save the pretrained model parameters of mf (i.e., only user & item embeddings) for pretraining other models.
-                if args.save_flag == -1:
-                    user_embed, item_embed = sess.run(
-                        [model.weights['user_embedding'], model.weights['item_embedding']],
-                        feed_dict={})
-                    temp_save_path = os.path.join(args.data_path, args.dataset, "preprocessed/kgat/pretrain",
-                                                  model.model_type,
-                                                  f"{model.model_type}.npz")
-                    ensureDir(temp_save_path)
-                    np.savez(temp_save_path, user_embed=user_embed, item_embed=item_embed)
-                    print('save the weights of fm in path: ', temp_save_path)
-                    exit()
-
-                # *********************************************************
-                # save the pretrained model parameters of kgat (i.e., user & item & kg embeddings) for pretraining other models.
-                if args.save_flag == -2:
-                    user_embed, entity_embed, relation_embed = sess.run(
-                        [model.weights['user_embed'], model.weights['entity_embed'], model.weights['relation_embed']],
-                        feed_dict={})
-
-                    temp_save_path = os.path.join(args.data_path, args.dataset, "preprocessed/kgat/pretrain",
-                                                  model.model_type,
-                                                  f"{model.model_type}.npz")
-                    ensureDir(temp_save_path)
-                    np.savez(temp_save_path, user_embed=user_embed, entity_embed=entity_embed, relation_embed=relation_embed)
-                    print('save the weights of kgat in path: ', temp_save_path)
-                    exit()
-            '''
 
         else:
             sess.run(tf.global_variables_initializer())
@@ -188,38 +143,7 @@ if __name__ == '__main__':
         cur_best_pre_0 = 0.
         print('without pretraining.')
 
-    """
-    *********************************************************
-    Get the final performance w.r.t. different sparsity levels.
-    """
-    """ 
-    if args.report == 1:
-        assert args.test_flag == 'full'
-        users_to_test_list, split_state = data_generator['dataset'].get_sparsity_split()
 
-        users_to_test_list.append(list(data_generator['dataset'].test_user_dict.keys()))
-        split_state.append('all')
-
-        save_path = os.path.join(args.proj_path, "results", args.dataset, model.model_type, f"{model.model_type}.result")
-        ensureDir(save_path)
-        f = open(save_path, 'w')
-        f.write('embed_size=%d, lr=%.4f, regs=%s, loss_type=%s, \n' % (args.embed_size, args.lr, args.regs,
-                                                                       args.loss_type))
-
-        for i, users_to_test in enumerate(users_to_test_list):
-            ret = test(sess, model, users_to_test, args.dataset, drop_flag=False, batch_test_flag=batch_test_flag)
-
-            final_perf = "recall=[%s], precision=[%s], hit=[%s], ndcg=[%s]" % \
-                         ('\t'.join(['%.5f' % r for r in ret['recall']]),
-                          '\t'.join(['%.5f' % r for r in ret['precision']]),
-                          '\t'.join(['%.5f' % r for r in ret['hit_ratio']]),
-                          '\t'.join(['%.5f' % r for r in ret['ndcg']]))
-            print(final_perf)
-
-            f.write('\t%s\n\t%s\n' % (split_state[i], final_perf))
-        f.close()
-        exit()
-    """
 
     """
     *********************************************************
@@ -419,30 +343,7 @@ if __name__ == '__main__':
         #if ret['recall'][0] == cur_best_pre_0 and args.save_flag == 1:
         save_saver.save(sess, weights_save_path + '/weights', global_step=epoch)
         print('save the weights in path: ', weights_save_path)
-    '''
-    recs = np.array(rec_loger)
-    pres = np.array(pre_loger)
-    ndcgs = np.array(ndcg_loger)
-    hit = np.array(hit_loger)
 
-    best_rec_0 = max(recs[:, 0])
-    idx = list(recs[:, 0]).index(best_rec_0)
-
-    final_perf = "Best Iter=[%d]@[%.1f]\trecall=[%s], precision=[%s], hit=[%s], ndcg=[%s]" % \
-                 (idx, time() - t0, '\t'.join(['%.5f' % r for r in recs[idx]]),
-                  '\t'.join(['%.5f' % r for r in pres[idx]]),
-                  '\t'.join(['%.5f' % r for r in hit[idx]]),
-                  '\t'.join(['%.5f' % r for r in ndcgs[idx]]))
-    print(final_perf)
-
-    save_path = os.path.join(args.proj_path, "output", args.dataset, "preprocessed", "kgat", f"{model.model_type}.result")
-    ensureDir(save_path)
-    f = open(save_path, 'a')
-
-    f.write('embed_size=%d, lr=%.4f, layer_size=%s, node_dropout=%s, mess_dropout=%s, regs=%s, adj_type=%s, use_att=%s, use_kge=%s, pretrain=%d\n\t%s\n'
-            % (args.embed_size, args.lr, args.layer_size, args.node_dropout, args.mess_dropout, args.regs, args.adj_type, args.use_att, args.use_kge, args.pretrain, final_perf))
-    f.close()
-    '''
     metrics.write(TEST_METRICS_FILE_PATH[args.dataset])
-    metrics.save_dir(weights_save_path)
+
     metrics.close_wandb()

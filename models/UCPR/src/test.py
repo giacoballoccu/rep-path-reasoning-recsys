@@ -46,10 +46,12 @@ def ndcg_at_k(r, k, method=1):
 
 
 def save_output(dataset_name, pred_paths):
-    if not os.path.isdir(SAVE_MODEL_DIR[dataset_name]):
-        os.makedirs(SAVE_MODEL_DIR[dataset_name])
-    extracted_path_dir = SAVE_MODEL_DIR[dataset_name]
-
+    #if not os.path.isdir(SAVE_MODEL_DIR[dataset_name]):
+    #    os.makedirs(SAVE_MODEL_DIR[dataset_name])
+    #extracted_path_dir = SAVE_MODEL_DIR[dataset_name]
+    extracted_path_dir = LOG_DATASET_DIR[dataset_name]
+    if not os.path.isdir(extracted_path_dir):
+        os.makedirs(extracted_path_dir)
     print("Normalizing items scores...")
     # Get min and max score to performe normalization between 0 and 1
     score_list = []
@@ -175,11 +177,6 @@ def batch_beam_search(args, env, model, uids, device, topk=[25, 5, 1]):
         actmask_pool = _batch_acts_to_masks(acts_pool)  # numpy of [bs, dim]
         
         state_tensor = model.generate_st_emb(path_pool, up_date_hop = idx_list) 
-
-        # if args.test_lstm_up == True:
-        #     state_tensor = model.generate_st_emb(path_pool, up_date_hop = idx_list) 
-        # else:
-        #     state_tensor = model.generate_st_emb(path_pool, test_hop = index_ori_list)
 
         batch_next_action_emb = model.generate_act_emb(path_pool, acts_pool)
         
@@ -324,10 +321,7 @@ def extract_paths(dataset_name, path_file, train_labels, valid_labels, test_labe
     print(results.keys())
     x = defaultdict(int)
     for idx, (path, probs) in enumerate(zip(results['paths'], results['probs'])):
-        #print(probs, path)
-        #print()
-        #print(idx, end=' ')
-        #print(path, path[-1][1], main_product )
+
         if path[-1][1] != main_product:
             #print('a')
             x['a'] += 1
@@ -444,17 +438,10 @@ def evaluate_paths(topk,dataset_name, pred_paths, scores, train_labels,
             keygetter = prob_keyget
 
         sorted_path = sorted(best_pred_paths[uid], key=keygetter, reverse=True)
-        #top_k_pids = [p[-1][2] for _, _, p in sorted_path[:top_k]]  # from largest to smallest
-
 
         top10_pids = [p[-1][2] for _, _, p in sorted_path[:10]] 
         top10_paths = [p for _, _, p in sorted_path[:10]]
-        #print( {key: list(group) for key,group in itertools.groupby(sorted(best_pred_paths_logging[uid],  key=lambda x: x[1], reverse=True)[:top_k],
-        #                    key=lambda x: x[2][-1][2])}  )
-        #best_pred_paths_logging[uid] = itertools.groupby(sorted(best_pred_paths_logging[uid],  key=lambda x: x[1], reverse=True)[:top_k],
-        #                    key=lambda x: x[2][-1][2])
-        #best_pred_paths_logging[uid] = {key: list(group) for key,group in itertools.groupby(sorted(best_pred_paths_logging[uid],  key=lambda x: x[1], reverse=True)[:top_k],
-        #                    key=lambda x: x[2][-1][2])}
+
         if args.add_products and len(top10_pids) < 10:
             train_pids = set(train_labels[uid])
             cand_pids = np.argsort(scores[uid])
@@ -483,19 +470,7 @@ def evaluate_paths(topk,dataset_name, pred_paths, scores, train_labels,
     print('recall: ',  avg_recall) 
     print('ndcg: ', avg_ndcg)
     print('hit: ', avg_hit)
-    '''
-    model_name = 'ucpr'
-    pred_paths_root_dir = os.path.join(TEST[args.dataset], 'log_dir_preds')#os.getenv('PREDS_ROOT_DIR', '../../log_dir_preds')
-    model_path_dir = os.path.join(pred_paths_root_dir, f'{model_name}/{args.dataset}')
-    if not os.path.exists(model_path_dir):
-        os.makedirs(model_path_dir)
-    pickle.dump(best_pred_paths_logging, open(os.path.join(model_path_dir, 'pred_paths.pkl'), 'wb') )
 
-    if args.dataset in [BEAUTY_CORE, CELL_CORE, CLOTH_CORE, MOVIE_CORE]:
-        return avg_recall
-    else:
-        return avg_ndcg
-    '''
 
 # In formula w of pi log(2 + (number of patterns of same pattern type among uv paths / total number of paths among uv paths))
 def get_path_pattern_weigth(path_pattern_name, pred_uv_paths):
@@ -521,7 +496,6 @@ def test(args, train_labels, valid_labels, test_labels, best_recall, pretest = 1
 
     #eva_file_2 = args.log_dir + '/' + 'pre' + str(pretest) + sort_by_2 + '_eva'+ '_' + args.topk_string + '.txt'
 
-    #for top_k in [10, 20, 25,50]:
     TOP_N_LOGGING = 100    
     
     if args.run_path or os.path.exists(path_file) == False:
@@ -532,24 +506,6 @@ def test(args, train_labels, valid_labels, test_labels, best_recall, pretest = 1
         evaluate_paths(TOP_N_LOGGING,args.dataset, pred_paths, scores,
                         train_labels, test_labels, args, path_file, pretest=pretest)
 
-    '''    
-    recall_eva = recall
-    
-    eva_file_2 = open(eva_file_2, "a")
-    eva_file_2.write('*' * 50)
-    eva_file_2.write('\n')
-    eva_file_2.close()
-
-
-    if args.eva_epochs >= 20 and recall_eva >= best_recall:
-        args.best_save_model_dir = args.save_model_dir + '/policy_model_epoch_{}.ckpt'.format(args.eva_epochs)
-        best_recall = recall_eva
-        args.best_model_epoch = args.eva_epochs
-
-    
-
-    return best_recall
-    '''
 
 
 if __name__ == '__main__':
@@ -581,14 +537,4 @@ if __name__ == '__main__':
     args.eva_epochs = args.best_model_epoch
     test(args, train_labels, valid_labels, test_labels, best_recall, pretest = 0)
 
-    '''
-    # save pretrained md
-    if args.model == 'lstm' and args.save_pretrain_model == True:
-        best_model_json = {}
-        best_model_json['pretrained_file'] = args.best_save_model_dir
-        print('best_model_json = ', best_model_json)
-        print(args.pretrained_dir + '/' + args.sort_by + '_pretrained_md_json_' + args.topk_string + '.txt')
-        with open(args.pretrained_dir + '/' + args.sort_by + '_pretrained_md_json_' + args.topk_string + '.txt', 'w') as outfile:
-            json.dump(best_model_json, outfile)
-    '''
 

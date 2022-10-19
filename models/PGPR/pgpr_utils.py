@@ -92,7 +92,7 @@ HPARAMS_FILE = f'{MODEL}_hparams_file.json'
 LOG_DATASET_DIR = {
     ML1M: f'{LOG_DIR}/{ML1M}/',
     LFM1M: f'{LOG_DIR}/{LFM1M}',
-    CELL: f'{LOG_DIR}/{MODEL}/{CELL}',
+    CELL: f'{LOG_DIR}/{CELL}',
 }
 
 

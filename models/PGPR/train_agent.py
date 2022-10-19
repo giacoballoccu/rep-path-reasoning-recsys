@@ -52,7 +52,7 @@ class ActorCritic(nn.Module):
 
         actor_logits = self.actor(x)
         #actor_logits[1 - act_mask] = -999999.0
-        actor_logits[~act_mask] = -999999.0
+        actor_logits[1-act_mask] = -999999.0
         act_probs = F.softmax(actor_logits, dim=-1)  # Tensor of [bs, act_dim]
 
         state_values = self.critic(x)  # Tensor of [bs, 1]
@@ -60,7 +60,7 @@ class ActorCritic(nn.Module):
 
     def select_action(self, batch_state, batch_act_mask, device):
         state = torch.FloatTensor(batch_state).to(device)  # Tensor [bs, state_dim]
-        act_mask = torch.BoolTensor(batch_act_mask).to(device)  # Tensor of [bs, act_dim]
+        act_mask = torch.ByteTensor(batch_act_mask).to(device)  # Tensor of [bs, act_dim]
 
         probs, value = self((state, act_mask))  # act_probs: [bs, act_dim], state_value: [bs, 1]
         m = Categorical(probs)
@@ -282,9 +282,9 @@ def train(args):
             policy_file = '{}/policy_model_epoch_{}.ckpt'.format(args.log_dir, epoch)
             logger.info("Save models to " + policy_file)
             torch.save(model.state_dict(), policy_file)
-            #metrics.push_model(policy_file, f'{MODEL}_{args.dataset}_{epoch}')
+
     makedirs(args.dataset)
-    metrics.write(TEST_METRICS_FILE_PATH[args.dataset])#os.path.join(TMP_DIR[args.dataset], VALID_METRICS_FILE_NAME))
+    metrics.write(TEST_METRICS_FILE_PATH[args.dataset])
     metrics.close_wandb()
 def main():
     parser = argparse.ArgumentParser()

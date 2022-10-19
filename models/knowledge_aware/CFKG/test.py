@@ -55,7 +55,8 @@ if __name__ == '__main__':
     if args.pretrained_weights is not None  and os.path.exists(args.pretrained_weights):
         pretrain_path =  args.pretrained_weights    
     else:
-        pretrain_path= f'../../../data/{args.dataset}/preprocessed/kgat/tmp/{MODEL}/weights/0.00011e-05-1e-05-0.01'
+        exit(-1)
+        #pretrain_path= f'../../../data/{args.dataset}/preprocessed/kgat/tmp/{MODEL}/weights/0.00011e-05-1e-05-0.01'
 
     ckpt = tf.train.get_checkpoint_state(os.path.dirname(pretrain_path + '/checkpoint'))
     if ckpt and ckpt.model_checkpoint_path:
@@ -65,5 +66,7 @@ if __name__ == '__main__':
 
 
     ret, top_k = test(sess, model, users_to_test, drop_flag=False, batch_test_flag=batch_test_flag)
-    with open(f'{TMP_DIR[args.dataset]}/item_topk.pkl', 'wb') as f:
+    topk_path = f'{TMP_DIR[args.dataset]}/item_topk.pkl'
+    with open(topk_path, 'wb') as f:
         pickle.dump(top_k, f)
+        print('Saved topK to: ', topk_path)
