@@ -27,6 +27,13 @@ def main():
     elif args.model == CFKG:
         # Kgat mapper holds correct also for cfkg
         MapperKGAT(args)
+    elif args.model == BPRMF:
+        # Kgat mapper holds correct also for cfkg
+        MapperKGAT(args)        
+    elif args.model == NFM:
+        # Kgat mapper holds correct also for cfkg
+        MapperKGAT(args)        
+
 
     elif args.model == MLR:
         pass

@@ -52,7 +52,9 @@ CKE = 'cke'
 CFKG = 'cfkg'
 KGAT = 'kgat'
 RIPPLE = 'ripple'
-KNOWLEDGE_AWARE_METHODS = [CKE, CFKG, KGAT, RIPPLE]
+BPRMF = "bprmf"
+NFM = "nfm"
+KNOWLEDGE_AWARE_METHODS = [CKE, CFKG, KGAT, RIPPLE, NFM, BPRMF]
 """
 Path reasoning methods
 """
