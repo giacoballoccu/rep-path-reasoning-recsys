@@ -29,7 +29,13 @@ OPTIM_HPARAMS_METRIC = 'avg_train_loss'
 VALID_METRICS_FILE_NAME = 'valid_metrics.json'
 
 
-LOG_DIR = f'{ROOT_DIR}/results/{MODEL}'
+LOG_DIR = f'{ROOT_DIR}/results/'
+
+LOG_DATASET_DIR = {
+    ML1M: f'{LOG_DIR}/{ML1M}/{MODEL}',
+    LFM1M: f'{LOG_DIR}/{LFM1M}/{MODEL}',
+    CELL: f'{LOG_DIR}/{CELL}/{MODEL}',
+}
 
 CFG_DIR = {
     ML1M: f'{LOG_DIR}/{ML1M}/hparams_cfg',
@@ -80,11 +86,7 @@ HPARAMS_FILE = f'{MODEL}_hparams_file.json'
 
 
 
-LOG_DATASET_DIR = {
-    ML1M: f'{LOG_DIR}/{ML1M}/',
-    LFM1M: f'{LOG_DIR}/{LFM1M}',
-    CELL: f'{LOG_DIR}/{MODEL}/{CELL}',
-}
+
 
 # Model result directories.
 TMP_DIR = {
@@ -128,8 +130,8 @@ def parse_args():
 
     # Hyperparameters for execute neural programs (inference).
     parser.add_argument('--sample_size', type=int, default=500, help='sample size for model.')
-    parser.add_argument('--do_infer', type=boolean, default=False, help='whether to infer paths after training.')
-    parser.add_argument('--do_execute', type=boolean, default=False, help='whether to execute neural programs.')
+    parser.add_argument('--do_infer', type=boolean, default=True, help='whether to infer paths after training.')
+    parser.add_argument('--do_execute', type=boolean, default=True, help='whether to execute neural programs.')
     parser.add_argument('--do_validation', type=bool, default=True, help='Whether to perform validation')
     parser.add_argument("--wandb", action="store_true", help="If passed, will log to Weights and Biases.")
     parser.add_argument(

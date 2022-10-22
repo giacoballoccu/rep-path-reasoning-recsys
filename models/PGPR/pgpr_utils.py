@@ -36,7 +36,13 @@ VALID_METRICS_FILE_NAME = 'valid_metrics.json'
 
 OPTIM_HPARAMS_METRIC = 'valid_reward'
 OPTIM_HPARAMS_LAST_K = 100 # last 100 episodes
-LOG_DIR = f'{ROOT_DIR}/results/{MODEL}'
+LOG_DIR = f'{ROOT_DIR}/results/'
+
+LOG_DATASET_DIR = {
+    ML1M: f'{LOG_DIR}/{ML1M}/{MODEL}',
+    LFM1M: f'{LOG_DIR}/{LFM1M}/{MODEL}',
+    CELL: f'{LOG_DIR}/{CELL}/{MODEL}',
+}
 
 CFG_DIR = {
     ML1M: f'{LOG_DIR}/{ML1M}/hparams_cfg',
@@ -83,18 +89,6 @@ BEST_CFG_FILE_PATH = {
 
 TRANSE_HPARAMS_FILE = f'{LOG_DIR}/transe_{MODEL}_hparams_file.json'
 HPARAMS_FILE = f'{MODEL}_hparams_file.json'
-
-
-
-
-
-
-LOG_DATASET_DIR = {
-    ML1M: f'{LOG_DIR}/{ML1M}/',
-    LFM1M: f'{LOG_DIR}/{LFM1M}',
-    CELL: f'{LOG_DIR}/{CELL}',
-}
-
 
 # Model result directories.
 TMP_DIR = {
