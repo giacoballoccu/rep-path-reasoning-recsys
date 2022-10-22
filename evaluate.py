@@ -88,26 +88,37 @@ def topk_from_paths(args, train_labels, test_labels):
                 topk_paths.append((cand_pid, scores[uid][cand_pid], None, None))  # Placeholder for no explanation
                 if len(topk_pids) >= K:
                     break
-        for cutoff in [10,20,50,100]:
-            x = sum([1 for path in topk_paths[:cutoff] if path[-1] != None])
-            if cutoff not in fidelity:
-                fidelity[cutoff] = []
-            fidelity[cutoff].append(x/cutoff)
         # end of add
         pred_labels[uid] = topk_pids[:k]  # change order to from smallest to largest!
         pred_paths_topk[uid] = topk_paths[:k]
         pred_paths_topk_full[uid] = topk_paths
-    rows = []
-    cutoffs = [10, 20, 50, 100]
-    cutoff_pred_paths = {cutoff: {} for cutoff in cutoffs}
-    for cutoff in cutoffs:
-        cutoff_pred_paths[cutoff] = pathfy(args, {uid: pred_paths[:cutoff] for uid, pred_paths in pred_paths_topk_full.items()})
-        avg_fidelity = np.mean(fidelity[cutoff])
-        #print(f"fidelity top-{cutoff}: {avg_fidelity}")
-        print(f"{avg_fidelity:.2f}", end=" & ")
-        rows.append([args.model, cutoff, avg_fidelity])
-    df = pd.DataFrame(rows, columns=["model", "cutoff", "fidelity"])
-    df.to_csv(os.path.join("results", args.data, args.model, "fidelity_cutoff.csv"), index=False, sep="\t")
+
+        if args.evaluate_overall_fidelity:
+            for cutoff in [10,20,50,100]:
+                x = sum([1 for path in topk_paths[:cutoff] if path[-1] != None])
+                if cutoff not in fidelity:
+                    fidelity[cutoff] = []
+                fidelity[cutoff].append(x/cutoff)
+
+
+
+    if args.evaluate_group_fidelity or args.evaluate_overall_fidelity:
+        rows = []
+        cutoffs = [10, 20, 50, 100]
+        cutoff_pred_paths = {cutoff: {} for cutoff in cutoffs}
+        for cutoff in cutoffs:
+            if args.evaluate_group_fidelity:
+                cutoff_pred_paths[cutoff] = pathfy(args, {uid: pred_paths[:cutoff] for uid, pred_paths in
+                                                      pred_paths_topk_full.items()})
+            avg_fidelity = np.mean(fidelity[cutoff])
+            print(f"fidelity top-{cutoff}: {avg_fidelity}")
+            #print(f"{avg_fidelity:.2f}", end=" & ")
+            rows.append([args.model, cutoff, avg_fidelity])
+        if args.evaluate_overall_fidelity:
+            df = pd.DataFrame(rows, columns=["model", "cutoff", "fidelity"])
+            df.to_csv(os.path.join("results", args.data, args.model, "fidelity_cutoff.csv"), index=False, sep="\t")
+        if args.evaluate_group_fidelity:
+            evaluate_fidelity(args, cutoff_pred_paths)
 
     result_dir = get_result_dir(dataset_name, args.model)
     path_topk_filepath = os.path.join(result_dir, "path_topk.pkl")
@@ -122,9 +133,8 @@ def topk_from_paths(args, train_labels, test_labels):
             print(f"Saving reasoning path objects from {path_topk_filepath}")
             pickle.dump(pred_paths_topk, path_topk_file)
         path_topk_file.close()
-    #evaluate(args, pred_labels, test_labels, pred_paths_topk)
-    pred_paths_topk_full = pathfy(args, pred_paths_topk_full)
-    evaluate_fidelity(args, cutoff_pred_paths)
+    evaluate(args, pred_labels, test_labels, pred_paths_topk)
+
 
 def evaluate_rec_quality(args, topk_items, test_labels):
     dataset_name = args.data
@@ -408,6 +418,10 @@ def main():
                         help='whether to fill the top-k (if there are less predicted path) with items that have no explanation path')
     parser.add_argument('--evaluate_rec_quality', default=True, type=bool,
                         help='whether to evaluate rec quality of predicted topk')
+    parser.add_argument('--evaluate_overall_fidelity', default=True, type=bool,
+                        help='whether to evaluate fidelity on different cutoffs, requires time')
+    parser.add_argument('--evaluate_group_fidelity', default=True, type=bool,
+                        help='whether to evaluate fidelity on different cutoffs, requires time')
     parser.add_argument('--evaluate_path_quality', default=True, type=bool,
                         help='whether to evaluate associated reasoning path quality of predicted topk paths')
     parser.add_argument('--save_avg', default=True, type=bool,
