@@ -1,5 +1,6 @@
 # T-REX_TextualRecEXp
 
+
 # Usage
 The base workflow is:
 1. Dataset creation
@@ -27,14 +28,15 @@ python3 preprocess.py --data $DATASET_NAME
 ```bash
 python3 train_transe.py --dataset $DATASET_NAME
 ```
-### (Optional) Hyperparameter optimization of the embedding model 
+### (Optional) Hyperparameter optimization of the embedding model  
 In order to properly track all configurations, additional logging functionalities are provided by means of wandb.
 To perform wandb logging, use the below arguments, otherwise run transe_gridsearch.py without any additional command line arguments.
 ```bash
 python3 transe_gridsearch.py --wandb --wandb_entity YOUR_WANDB_ACCOUNT_NAME 
 ```
 Note:
-In order to use wandb, you have to already be logged in from the command line.
+1) As a approximation we selected the best hyper paramter setting as the ones used by the model that achieves the best i) average total validation reward of the last 100 episode for PGPR, UCPR as well agreed practice in RL literature \cite{10.5555/3312046, Schulman2017ProximalPO} ii) validation loss for CAFE.
+2) In order to use wandb, you have to already be logged in from the command line.
 It can be done by simply running, with your API_KEY obtained by register for free to their service.
 ```bash
 wandb login [OPTIONS] [KEY]
