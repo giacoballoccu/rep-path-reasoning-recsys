@@ -133,6 +133,8 @@ DATASET_SENSIBLE_ATTRIBUTE_MATRIX = {
 
 def get_dataset_id2model_kg_id(dataset_name, model_name, what="user"):
     model_data_dir = get_model_data_dir(model_name, dataset_name)
+    if model_name in KNOWLEDGE_AWARE_METHODS:
+        model_data_dir = get_model_data_dir(KGAT, dataset_name)
     file = open(os.path.join(model_data_dir, f"mappings/{what}_mapping.txt"), "r")
     csv_reader = csv.reader(file, delimiter='\t')
     dataset_pid2model_kg_pid = {}
@@ -221,6 +223,14 @@ def load_labels(dataset_name, model_name, split=TRAIN): #TODO MAKE IT AGNOSITC W
         label_path = os.path.join(model_data_dir, f"{split}.txt.gz")
         with gzip.open(label_path, 'rt') as f:
             reader = csv.reader(f, delimiter="\t")
+            for row in reader:
+                user_products[int(row[0])] = [int(pid) for pid in row[1:]]
+    elif model_name in [KGAT, CKE, CFKG]:
+        user_products = {}
+        model_data_dir = get_model_data_dir(KGAT, dataset_name)
+        label_path = os.path.join(model_data_dir, f"{split}.txt")
+        with open(label_path, 'rt') as f:
+            reader = csv.reader(f, delimiter=" ")
             for row in reader:
                 user_products[int(row[0])] = [int(pid) for pid in row[1:]]
     return user_products
