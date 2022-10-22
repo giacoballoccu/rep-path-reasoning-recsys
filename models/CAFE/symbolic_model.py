@@ -205,7 +205,7 @@ class SymbolicNetwork(nn.Module):
         del pids_tensor
         return x
 
-    def infer_with_path(self, metapath, uid, kg_mask, excluded_pids=None, topk_paths=10):
+    def infer_with_path(self, metapath, uid, kg_mask, excluded_pids=None, topk_paths=5):
         """Reasoning paths over kg."""
         modules = self._get_modules(metapath)
         uid_tensor = torch.LongTensor([uid]).to(self.device)
@@ -222,10 +222,14 @@ class SymbolicNetwork(nn.Module):
         num_valid_ids = len(kg_mask.get_ids(USER, uid, modules[0].name))
         if num_valid_ids <= 0:
             return []
-        if topk_paths <= num_valid_ids:
-            sample_sizes = [topk_paths, 1, 1]
-        else:
-            sample_sizes = [num_valid_ids, int(topk_paths / num_valid_ids) + 1, 1]
+        #if topk_paths <= num_valid_ids:
+        sample_sizes = [topk_paths, 5, 1]
+        #else:
+            #sample_sizes = [num_valid_ids, int(topk_paths / num_valid_ids) + 1, 1]
+        # if topk_paths <= num_valid_ids:
+            #sample_sizes = [topk_paths, 5, 1]
+        # else:
+        # sample_sizes = [num_valid_ids, int(topk_paths / num_valid_ids) + 1, 1]
 
         result_paths = [([uid], [])]  # (list of ids, list of scores)
         for i, module in enumerate(modules):  # iterate over each level

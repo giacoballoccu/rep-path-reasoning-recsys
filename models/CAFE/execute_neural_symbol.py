@@ -3,6 +3,7 @@ from __future__ import absolute_import, division, print_function
 import csv
 import sys
 from collections import defaultdict
+from functools import reduce
 
 import numpy as np
 import pickle
@@ -35,11 +36,13 @@ def set_logger(logname):
     logger.addHandler(fh)
 
 
-def infer_paths(args, topk_paths=250):
+def infer_paths(args, topk_paths=25):
     kg = load_kg(args.dataset)
     model = create_symbolic_model(args, kg, train=False)
 
     train_labels = load_labels(args.dataset, 'train')
+    valid_labels = load_labels(args.dataset, 'valid')
+    train_valid_labels = dict(zip(train_labels.keys(), list(train_labels.values()) + list(valid_labels.values())))
     train_uids = list(train_labels.keys())
     kg_mask = KGMask(kg)
 
@@ -50,7 +53,7 @@ def infer_paths(args, topk_paths=250):
         for mpid in range(len(kg.metapaths)):
             metapath = kg.metapaths[mpid]
             paths = model.infer_with_path(metapath, uid, kg_mask,
-                                          excluded_pids=train_labels[uid],
+                                          excluded_pids=train_valid_labels[uid],
                                           topk_paths=topk_paths)
             predicts[uid][mpid] = paths
         pbar.update(1)
@@ -175,7 +178,7 @@ class MetaProgramExecutor(object):
     def _get_module(self, relation):
         return getattr(self.symbolic_model, relation)
 
-    def execute(self, program, uid, excluded_pids=None):
+    def execute(self, program, uid, excluded_pids=None, adaptive_topk=False, manual_topk=5):
         """Execute the program to generate node representations and real nodes.
         Args:
             program: an instance of MetaProgram.
@@ -221,7 +224,10 @@ class MetaProgramExecutor(object):
                 # Compute top k nodes.
                 valid_ids = torch.LongTensor(valid_ids).to(self.device)
                 valid_scores = scores.index_select(0, valid_ids)
-                k = min(node.sample_size, len(valid_ids))
+                if adaptive_topk:
+                    k = min(node.sample_size, len(valid_ids))
+                else:
+                    k = min(manual_topk, len(valid_ids))
                 topk_scores, topk_idxs = valid_scores.topk(k)
                 topk_ids = valid_ids.index_select(0, topk_idxs)
 
@@ -428,15 +434,14 @@ def run_program(args):
         program = create_heuristic_program(kg.metapaths, raw_paths[uid], path_counts[uid], args.sample_size)
         program_exe.execute(program, uid, train_valid_labels[uid])
         paths = program_exe.collect_results(program)
-        tmp = [(r[0][-1], np.mean(r[1][-1])) for r in paths]
+        tmp = [(r[0][-1], reduce(lambda x, y: x * y, r[1])) for r in paths]
         for r in paths:
             path = [("self_loop", 'user', r[0][0])]
             for i in range(len(r[-1])):
                 path.append((r[-1][i], r[2][i], r[0][i + 1]))
                 if i == len(r[-1]) - 1: continue
-            pred_paths_istances[r[0][0]][r[0][-1]] = [(np.mean(r[1][-1]), np.mean(r[1]), path)]
+            pred_paths_istances[r[0][0]][r[0][-1]] = [(reduce(lambda x, y: x * y, r[1]), np.mean(r[1][-1]), path)]
         tmp = sorted(tmp, key=lambda x: x[1], reverse=True)[:10]
-
         pred_labels[uid] = [t[0] for t in tmp]
         pbar.update(1)
     save_pred_paths(args.dataset, pred_paths_istances)
