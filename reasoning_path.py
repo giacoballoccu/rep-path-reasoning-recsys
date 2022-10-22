@@ -33,6 +33,8 @@ class TopkReasoningPaths:
         lirs_topk = []
         for path in self.topk:
             lirs_topk.append(path.lir)
+        if len(lirs_topk) == 0:
+            return 0.
         return np.mean(lirs_topk)
 
     def topk_fidelity(self):
@@ -42,6 +44,8 @@ class TopkReasoningPaths:
         seps_topk = []
         for path in self.topk:
             seps_topk.append(path.sep)
+        if len(seps_topk) == 0:
+            return 0.
         return np.mean(seps_topk)
 
     # Diversity of linked interaction
@@ -50,7 +54,9 @@ class TopkReasoningPaths:
         for path in self.topk:
             linked_interaction_id, linked_interaction_rel, linked_interaction_type = get_linked_interaction_triple(path.path)
             unique_linking_interaction.add(linked_interaction_id)
-        return len(unique_linking_interaction) / self.k
+        if len(self.topk) == 0:
+            return 0.
+        return len(unique_linking_interaction) / len(self.topk)
 
     # Diversity of shared entities
     def topk_sed(self):
@@ -58,14 +64,18 @@ class TopkReasoningPaths:
         for path in self.topk:
             shared_entity_id, _ = get_shared_entity_tuple(path.path)
             unique_shared_entity.add(shared_entity_id)
-        return len(unique_shared_entity) / self.k
+        if len(unique_shared_entity) == 0:
+            return 0.
+        return len(unique_shared_entity) / len(self.topk)
 
     # Diversity of path type
     def topk_ptd(self):
+        if len(self.topk) == 0:
+            return 0.
         unique_path_type = set()
         for path in self.topk:
             unique_path_type.add(path.path_type)
-        return len(unique_path_type) / max(self.k, self.max_path_type)
+        return len(unique_path_type) / min(len(self.topk), self.max_path_type)
 
     def topk_ptc(self):
         def simpson_index(topk):
@@ -94,7 +104,7 @@ class TopkReasoningPaths:
         for path in self.topk:
             _, _, linked_interaction_type = get_linked_interaction_triple(path)
             unique_linking_interaction_types.add(linked_interaction_type)
-        return len(unique_linking_interaction_types) / self.k
+        return len(unique_linking_interaction_types) / len(self.topk)
 
     # Diversity of shared entities type
     def topk_setd(self):
@@ -102,13 +112,15 @@ class TopkReasoningPaths:
         for path in self.topk:
             _, shared_entity_type = get_shared_entity_tuple(path)
             unique_shared_entity_type.add(shared_entity_type)
-        return len(unique_shared_entity_type) / self.k
+        return len(unique_shared_entity_type) / len(self.topk)
 
     def topk_ppt(self):
+        if len(self.topk) == 0:
+            return 0.
         unique_path_patter = set()
         for path in self.topk:
             unique_path_patter.add('_'.join(path.pattern))
-        return len(unique_path_patter) / min(self.k, self.max_path_pattern)
+        return len(unique_path_patter) / min(len(self.topk), self.max_path_pattern)
     """
      # (self_loop user 0) (watched movie 2408) (watched user 1953) (watched movie 277) #hop3
      # (self_loop user 0) (mention word 2408) (described_as product 1953) (self_loop product 1953) #hop2

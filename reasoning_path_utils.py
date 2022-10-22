@@ -218,9 +218,6 @@ def print_path_quality_metrics(avg_metrics, c_fairness):
     print("\n***---Rec CFairness Differences---***")
     for class_group, metric_tuple in c_fairness.items():
         for metric, tuple in metric_tuple.items():
-            group1, group2, avg_value = tuple
-            if group1 == None:
-                print(f"{metric} Pairwise diff {class_group}: {avg_value:.3f}", end=" | ")
-            else:
-                print(f"{metric} {group1} vs {group2}: {avg_value:.3f}", end=" | ")
+            group_class, avg_value = tuple
+            print(f"{metric} Pairwise diff {class_group}: {avg_value:.3f}", end=" | ")
         print("\n")
