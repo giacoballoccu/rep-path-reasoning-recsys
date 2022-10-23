@@ -117,6 +117,7 @@ if __name__ == '__main__':
     *********************************************************
     Train.
     """
+    cur_best_pre_0 = 0.
     loss_loger, pre_loger, rec_loger, ndcg_loger, hit_loger = [], [], [], [], []
     stopping_step = 0
     should_stop = False
