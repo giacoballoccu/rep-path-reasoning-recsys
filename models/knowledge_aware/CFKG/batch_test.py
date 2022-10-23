@@ -13,6 +13,7 @@ import random
 from itertools import cycle
 from torch.utils.data import DataLoader, RandomSampler
 import torch
+from utils import *
 torch.multiprocessing.set_sharing_strategy('file_system')
 from loader_cfkg import CFKG_loader
 
