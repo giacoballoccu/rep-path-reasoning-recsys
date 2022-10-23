@@ -12,7 +12,7 @@ import csv
 # import scipy.sparse as sp
 import torch
 from collections import defaultdict
-
+import shutil
 # Dataset names.
 # from sklearn.feature_extraction.text import TfidfTransformer
 
@@ -30,6 +30,7 @@ CLOTH_CORE = 'cloth'
 MOVIE_CORE = 'ml1m'
 AZ_BOOK_CORE = 'book'
 MODEL = 'ucpr'
+TRANSE='transe'
 # Dataset directories.
 DATASET_DIR = {
     ML1M: f'{ROOT_DIR}/data/{ML1M}/preprocessed/{MODEL}',
@@ -487,9 +488,12 @@ def save_embed(dataset, embed):
     pickle.dump(embed, open(embed_file, 'wb'))
 
 
-def load_embed(dataset):
+def load_embed(dataset, embed_model=TRANSE):
     embed_file = '{}/transe_embed.pkl'.format(TMP_DIR[dataset])
     print('Load embedding:', embed_file)
+    if not os.path.exists(embed_file):
+        default_emb_path = os.path.join(ROOT_DIR, 'pretrained', dataset, embed_model, 'transe_embed.pkl')
+        shutil.copyfile(default_emb_path, embed_file)
     embed = pickle.load(open(embed_file, 'rb'))
     return embed
 
