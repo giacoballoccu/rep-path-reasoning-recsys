@@ -29,11 +29,11 @@ class Data(Dataset):
 
         self.batch_size = args.batch_size
 
-        train_file = os.path.join(path, 'preprocessed/kgat/train.txt')
-        valid_file = os.path.join(path, 'preprocessed/kgat/valid.txt')
-        test_file = os.path.join(path, 'preprocessed/kgat/test.txt')
+        train_file = os.path.join(path,'train.txt')
+        valid_file = os.path.join(path, 'valid.txt')
+        test_file = os.path.join(path, 'test.txt')
 
-        kg_file = os.path.join(path, 'preprocessed/kgat/kg_final.txt')
+        kg_file = os.path.join(path, 'kg_final.txt')
 
         # ----------get number of users and items & then load rating data from train_file & test_file------------.
         self.n_train, self.n_valid, self.n_test = 0, 0, 0
