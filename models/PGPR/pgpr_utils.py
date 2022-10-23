@@ -398,7 +398,7 @@ def load_embed(dataset, embed_model=TRANSE):
     embed_file = '{}/transe_embed.pkl'.format(TMP_DIR[dataset])
     print('Load embedding:', embed_file)
     if not os.path.exists(embed_file):
-        default_emb_path = os.path.join(ROOT_DIR, 'pretrained', dataset, embed_model, 'transe_embed.pkl')
+        default_emb_path = os.path.join(ROOT_DIR, 'pretrained', dataset, MODEL, embed_model, 'transe_embed.pkl')
         shutil.copyfile(default_emb_path, embed_file)
     embed = pickle.load(open(embed_file, 'rb'))
     return embed

@@ -52,7 +52,7 @@ if __name__ == '__main__':
     sess = tf.Session(config=config)
     saver = tf.train.Saver()
 
-    pretrain_path= os.path.join(TMP_DIR[args.dataset], 'weights') #'../../../data/ml1m/preprocessed/kgat/tmp/kgat/weights/640.00011e-05-1e-05-0.01'
+    pretrain_path= os.path.join(TMP_DIR[args.dataset], 'weights') 
     ckpt = tf.train.get_checkpoint_state(os.path.dirname(pretrain_path + '/checkpoint'))
     if ckpt and ckpt.model_checkpoint_path:
         sess.run(tf.global_variables_initializer())
@@ -61,7 +61,8 @@ if __name__ == '__main__':
 
 
     ret, top_k = test(sess, model, users_to_test, drop_flag=False, batch_test_flag=batch_test_flag)
-    topk_path = f'{TMP_DIR[args.dataset]}/item_topk.pkl'
+    os.makedirs(LOG_DATASET_DIR[args.dataset], exist_ok=True)
+    topk_path = f'{LOG_DATASET_DIR[args.dataset]}/item_topk.pkl'
     with open(topk_path, 'wb') as f:
         pickle.dump(top_k, f)
         print('Saved topK to: ', topk_path)

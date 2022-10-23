@@ -167,7 +167,7 @@ def parse_args():
 def load_embed_sd(dataset, embed_model=TRANSE):
     print('Load embedding:', EMBED_FILE[dataset])
     if not os.path.exists(EMBED_FILE[dataset]):
-        default_emb_path = os.path.join(ROOT_DIR, 'pretrained', dataset, embed_model, os.path.basename(EMBED_FILE[dataset]) )
+        default_emb_path = os.path.join(ROOT_DIR, 'pretrained', dataset, MODEL, embed_model, os.path.basename(EMBED_FILE[dataset]) )
         shutil.copyfile(default_emb_path, EMBED_FILE[dataset])
     state_dict = torch.load(EMBED_FILE[dataset], map_location=lambda storage, loc: storage)
     return state_dict
@@ -177,7 +177,7 @@ def load_embed(dataset, embed_model=TRANSE):
     embed_file = '{}/embed.pkl'.format(TMP_DIR[dataset])
     print('Load embedding:', embed_file)
     if not os.path.exists(embed_file):
-        default_emb_path = os.path.join(ROOT_DIR, 'pretrained', dataset, embed_model, 'embed.pkl')
+        default_emb_path = os.path.join(ROOT_DIR, 'pretrained', dataset, MODEL, embed_model, 'embed.pkl')
         shutil.copyfile(default_emb_path, embed_file)
     embed = pickle.load(open(embed_file, 'rb'))
     return embed
