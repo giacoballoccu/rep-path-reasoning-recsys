@@ -23,7 +23,7 @@ def main(args):
             FM : 'models/matrix_factorization/FM/main.py',
     }
     assert args.model in train_files, 'Error, given model name {args.model} not found in available models'
-
+    ensure_dataset_name(args.dataset)
     TRAIN_FILE_NAME = train_files[args.model]
     CMD = ["python3", os.path.basename(TRAIN_FILE_NAME) , "--dataset" , args.dataset]
 

@@ -5,7 +5,7 @@ import pickle
 import pandas as pd
 import json
 import gzip
-
+import shutil
 """
 File reading and os
 """

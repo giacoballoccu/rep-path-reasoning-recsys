@@ -22,7 +22,7 @@ def main(args):
             FM : 'models/matrix_factorization/FM/test.py',
     }
     assert args.model in test_files, 'Error, given model name {args.model} not found in available models'
-    assert ensure_dataset_name(args.dataset), f'Error dataset {args.dataset} not found in {DATASETS}'
+    ensure_dataset_name(args.dataset)
     TEST_FILE_NAME = test_files[args.model]
     CMD = ["python3", os.path.basename(TEST_FILE_NAME) , "--dataset" , args.dataset]
 
