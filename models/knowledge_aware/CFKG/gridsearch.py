@@ -127,6 +127,8 @@ def main(args):
                     cmd_args = [f'--{k}'] + [f" {val} " for val in v]
                     CMD.extend( cmd_args )
                 else:
+                    if k == 'wandb_entity' and not configuration['wandb']:
+                        continue                    
                     CMD.extend( [f'--{k}', f'{v}'] )     
         print(f'Executing job {i+1}/{len(hparam_grids)}: ',configuration)
         subprocess.call(CMD)#,
