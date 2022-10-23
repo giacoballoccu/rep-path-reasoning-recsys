@@ -258,7 +258,8 @@ if __name__ == '__main__':
         users_to_test = list(data_generator['dataset'].test_user_dict.keys())
 
         ret, top_k = test(sess, model, users_to_test, drop_flag=False, batch_test_flag=batch_test_flag)
-        topk_path = f'{TMP_DIR[args.dataset]}/item_topk.pkl'
+        os.makedirs(LOG_DATASET_DIR[args.dataset], exist_ok=True)
+        topk_path = f'{LOG_DATASET_DIR[args.dataset]}/item_topk.pkl'
         with open(topk_path, 'wb') as f:
             pickle.dump(top_k, f)
             print('Saved topK to: ', topk_path)

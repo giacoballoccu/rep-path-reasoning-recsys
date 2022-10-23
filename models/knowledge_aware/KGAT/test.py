@@ -52,10 +52,7 @@ if __name__ == '__main__':
     sess = tf.Session(config=config)
     saver = tf.train.Saver()
 
-    if args.pretrained_weights is not None  and os.path.exists(args.pretrained_weights):
-        pretrain_path =  args.pretrained_weights    
-    else:
-        pretrain_path= '../../../data/ml1m/preprocessed/kgat/tmp/kgat/weights/640.00011e-05-1e-05-0.01'
+    pretrain_path= os.path.join(TMP_DIR[args.dataset], 'weights') #'../../../data/ml1m/preprocessed/kgat/tmp/kgat/weights/640.00011e-05-1e-05-0.01'
     ckpt = tf.train.get_checkpoint_state(os.path.dirname(pretrain_path + '/checkpoint'))
     if ckpt and ckpt.model_checkpoint_path:
         sess.run(tf.global_variables_initializer())
