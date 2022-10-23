@@ -87,7 +87,7 @@ def main(args):
         answer = input("Continue (deletes content)? (y/n)")
         if answer.upper() in ["Y", "YES"]:
             return True
-        else if answer.upper() in ["N", "NO"]:
+        elif answer.upper() in ["N", "NO"]:
             return False
     def can_run(dataset_name):
         if len(os.listdir(BEST_CFG_DIR[dataset_name])) > 0:
@@ -102,6 +102,7 @@ def main(args):
     for dataset_name in chosen_hyperparam_grid['dataset']:
         if not can_run(dataset_name):
             return 
+
 
 
 

@@ -82,12 +82,11 @@ def main(args):
     "with_replacement": [True],
     "wandb": [True if args.wandb else False], 
     "wandb_entity": [args.wandb_entity]}
-
     def prompt():
         answer = input("Continue (deletes content)? (y/n)")
         if answer.upper() in ["Y", "YES"]:
             return True
-        else if answer.upper() in ["N", "NO"]:
+        elif answer.upper() in ["N", "NO"]:
             return False
     def can_run(dataset_name):
         if len(os.listdir(BEST_CFG_DIR[dataset_name])) > 0:
