@@ -67,3 +67,14 @@ The main purpose of the test phase is to evaluate the metrics on each embedding 
 python3 test.py --model $MODEL_NAME --dataset $DATASET_NAME
 ```
 
+
+#### 5. Evaluation
+As last step, with the computed top10 or the paths predicted by the models, evaluation can be run to obtain the evaluation metrics.
+Note that this step requires training of the models and at least a testing phase for path reasoning models.
+This is because the path-based ones require pre-computation of paths before the topK items can be obtained. 
+After paths are computed, creation of the topK is computationally inexpensive.
+Knowledge aware models generate the topK by default after each epoch of training.
+```python
+python3 evaluate.py --model $MODEL_NAME --dataset $DATASET_NAME
+```
+
