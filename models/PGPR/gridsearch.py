@@ -75,7 +75,7 @@ def main(args):
 
     #test_args ={'dataset','seed','gpu','epochs','max_acts','max_acts', 'max_path_len','gamma','state_history',
     #            'hidden','add_products','top_k','run_path', 'run_eval', 'save_paths'}
-
+    makedirs(args.dataset)
     def prompt():
         answer = input("Continue (deletes content)? (y/n)")
         if answer.upper() in ["Y", "YES"]:

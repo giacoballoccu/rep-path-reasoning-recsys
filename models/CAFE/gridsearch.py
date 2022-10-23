@@ -76,6 +76,7 @@ def main(args):
      "wandb_entity": [args.wandb_entity]}
 
 
+    makedirs(args.dataset)
 
     def prompt():
         answer = input("Continue (deletes content)? (y/n)")
@@ -103,7 +104,7 @@ def main(args):
 
     for i, configuration in enumerate(tqdm(hparam_grids)):
         dataset_name = configuration["dataset"]
-        makedirs(dataset_name)
+        
         if args.wandb:
             wandb.init(project=f'grid_cafe_{dataset_name}',
                            entity=args.wandb_entity, config=configuration)    

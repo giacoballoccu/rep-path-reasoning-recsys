@@ -69,6 +69,7 @@ def main(args):
          'steps_per_checkpoint': [200],
          'weight_decay': [0, 5e-4]}
 
+    makedirs(args.dataset)
     def prompt():
         answer = input("Continue (deletes content)? (y/n)")
         if answer.upper() in ["Y", "YES"]:

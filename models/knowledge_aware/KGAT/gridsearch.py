@@ -81,7 +81,7 @@ def main(args):
     "with_replacement": [True],
     "wandb": [True if args.wandb else False], 
     "wandb_entity": [args.wandb_entity]}
-
+    makedirs(args.dataset)
     def prompt():
         answer = input("Continue (deletes content)? (y/n)")
         if answer.upper() in ["Y", "YES"]:

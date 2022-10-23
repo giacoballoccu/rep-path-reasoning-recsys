@@ -109,6 +109,8 @@ def main(args):
      #"user_o": [False], 
      "wandb": [True if args.wandb else False], 
      "wandb_entity": [args.wandb_entity]}
+
+    makedirs(args.dataset)
     hparam_grids = ParameterGrid(chosen_hyperparam_grid)
 
     def prompt():
