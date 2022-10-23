@@ -121,15 +121,13 @@ def main(args):
         CMD = ["python3", TRAIN_FILE_NAME]
 
         for k,v in configuration.items():
-                if k == 'wandb' and v:
-                    CMD.extend([f'--{k}'])
-                elif isinstance(v,list):
+                if isinstance(v,list):
                     cmd_args = [f'--{k}'] + [f" {val} " for val in v]
                     CMD.extend( cmd_args )
                 else:
-                    if k == 'wandb_entity' and not configuration['wandb']:
+                    if k in ['wandb_entity','wandb']  and not configuration['wandb']:
                         continue                    
-                    CMD.extend( [f'--{k}', f'{v}'] )     
+                    CMD.extend( [f'--{k}', f'{v}'] )    
         print(f'Executing job {i+1}/{len(hparam_grids)}: ',configuration)
         subprocess.call(CMD)#,
         #        stdout=subprocess.DEVNULL,
