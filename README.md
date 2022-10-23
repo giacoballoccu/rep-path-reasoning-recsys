@@ -23,6 +23,8 @@ Alternatively, the data can be downloaded from the following drive:
 ```bash
 https://drive.google.com/file/d/1VUVkU1RLaJWUVqReox6cT6N9dcQ6nTd7/view?usp=sharing
 ```
+The setup also downloads automatically the pretrained weights for the embeddings.
+
 # Usage
 To **facilitate the use of the codebase**, a set of scripts are provided to seamlessly execute all stages of the machine learning pipeline described above.
 The top level of the project contains all such scripts.
