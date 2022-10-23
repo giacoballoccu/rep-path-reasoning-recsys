@@ -13,7 +13,7 @@ def main(args):
             TRANSE : 'models/embeddings/transe/train_transe.py',
             PGPR : 'models/PGPR/train_agent.py',
             CAFE : 'models/CAFE/train_neural_symbol.py',
-            UCPR : 'models/UCPR/src/train.py',
+            UCPR : 'models/UCPR/train.py',
             KGAT : 'models/knowledge_aware/KGAT/main.py',
             CKE : 'models/knowledge_aware/CKE/main.py',
             CFKG : 'models/knowledge_aware/CFKG/main.py',

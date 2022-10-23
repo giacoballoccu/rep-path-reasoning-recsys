@@ -12,7 +12,7 @@ def main(args):
     test_files = {
             PGPR : 'models/PGPR/test_agent.py',
             CAFE : 'models/CAFE/execute_neural_symbol.py',
-            UCPR : 'models/UCPR/src/test.py',
+            UCPR : 'models/UCPR/test.py',
             KGAT : 'models/knowledge_aware/KGAT/test.py',
             CKE : 'models/knowledge_aware/CKE/test.py',
             CFKG : 'models/knowledge_aware/CFKG/test.py',

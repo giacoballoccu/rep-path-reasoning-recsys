@@ -13,7 +13,7 @@ def main():
             TRANSE: 'models/embeddings/transe/preprocess.py',
             PGPR : 'models/PGPR/preprocess.py',
             CAFE : 'models/CAFE/preprocess.py',
-            UCPR : 'models/UCPR/preprocess/preprocess.py',
+            UCPR : 'models/UCPR/preprocess.py',
             KGAT : '',
             CKE : '',
             CFKG : '',
