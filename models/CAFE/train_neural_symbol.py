@@ -34,10 +34,10 @@ def set_logger(logname):
 
 def train(args):
     train_dataloader = OnlinePathLoader(args.dataset, args.batch_size, topk=args.topk_candidates)
-    #valid_dataloader = OnlinePathLoader(args.dataset, args.batch_size, topk=args.topk_candidates)
+    valid_dataloader = OnlinePathLoader(args.dataset, args.batch_size, topk=args.topk_candidates)
     metapaths = train_dataloader.kg.metapaths
 
-    #"?????????????????????????????????????????????????????"
+    
     kg_embeds = load_embed(args.dataset) if train else None
 
     model = create_symbolic_model(args, train_dataloader.kg, train=True, pretrain_embeds=kg_embeds)
@@ -90,7 +90,7 @@ def train(args):
             first_iterate = False
             splits_to_compute.insert(0, ('valid', valid_dataloader))
         for split_name, dataloader in splits_to_compute:                    
-            if split_name == 'valid':
+            if split_name == 'valid' and epoch%5 == 0:
                 model.eval()
             else:
                 model.train()
