@@ -114,7 +114,7 @@ def main(args):
         CMD = ["python3", TRAIN_FILE_NAME]
 
         for k,v in configuration.items():
-                if k == 'wandb':
+                if k == 'wandb' and v:
                     CMD.extend([f'--{k}'])
                 elif isinstance(v,list):
                     cmd_args = [f'--{k}'] + [f" {val} " for val in v]
