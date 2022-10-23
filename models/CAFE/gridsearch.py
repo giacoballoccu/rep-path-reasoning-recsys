@@ -57,7 +57,7 @@ def main(args):
 
 
     chosen_hyperparam_grid = {"batch_size": [64], 
-           "dataset": ['ml1m', 'lfm1m'] 
+           "dataset": [args.dataset],#['ml1m', 'lfm1m'] 
             "deep_module": [True], 
             "do_execute": [False], 
             "do_infer": [False], 
@@ -155,6 +155,7 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
+    parser.add_argument('--dataset', type=str, default=LFM1M, help='One of {ml1m, lfm1m}')
     parser.add_argument("--wandb", action="store_true", help="If passed, will log to Weights and Biases.")
     parser.add_argument(
         "--wandb_entity",

@@ -56,7 +56,7 @@ def main(args):
 
 
     chosen_hyperparam_grid = {'batch_size': [64],
-         'dataset': ['lfm1m','ml1m'],
+         'dataset': [args.dataset],#['lfm1m','ml1m'],
          'embed_size': [100, 200],
          'epochs': [40],
          'gpu': ['0'],
@@ -68,6 +68,27 @@ def main(args):
          'seed': [123],
          'steps_per_checkpoint': [200],
          'weight_decay': [0, 5e-4]}
+
+    def prompt():
+        answer = input("Continue (deletes content)? (y/n)")
+        if answer.upper() in ["Y", "YES"]:
+            return True
+        elif answer.upper() in ["N", "NO"]:
+            return False
+    def can_run(dataset_name):
+        if len(os.listdir(BEST_CFG_DIR[dataset_name])) > 0:
+            print(f'Action required: WARNING {dataset_name} best hyper parameters folder is not empty')
+            if not prompt():
+                print('Content not deleted, To run grid search re-run the script and confirm deletion')
+                return False
+            else:
+                shutil.rmtree(BEST_CFG_DIR[dataset_name])
+                print('Content deleted\n Start grid search')
+        return True
+    for dataset_name in chosen_hyperparam_grid['dataset']:
+        if not can_run(dataset_name):
+            return 
+
     hparam_grids = ParameterGrid(chosen_hyperparam_grid)
     print('num_experiments: ', len(hparam_grids))
 
@@ -101,6 +122,7 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
+    parser.add_argument('--dataset', type=str, default=LFM1M, help='One of {ml1m, lfm1m}')
     parser.add_argument("--wandb", action="store_true", help="If passed, will log to Weights and Biases.")
     parser.add_argument(
         "--wandb_entity",

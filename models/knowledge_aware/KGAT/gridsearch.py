@@ -59,7 +59,7 @@ def main(args):
     "alg_type": ["kgat", 'bi'], 
     "batch_size": [1024], 
     "batch_size_kg": [2048],  
-    "dataset": ["ml1m", 'lfm1m'], 
+    "dataset": [args.dataset],#["ml1m", 'lfm1m'], 
     "embed_size": [64,128], 
     "epoch": [150], 
     "gpu_id": [0], 
@@ -146,6 +146,7 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
+    parser.add_argument('--dataset', type=str, default=LFM1M, help='One of {ml1m, lfm1m}')
     parser.add_argument("--wandb", action="store_true", help="If passed, will log to Weights and Biases.")
     parser.add_argument(
         "--wandb_entity",
