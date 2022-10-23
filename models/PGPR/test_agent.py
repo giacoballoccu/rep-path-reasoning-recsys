@@ -12,7 +12,8 @@ from functools import reduce
 from models.PGPR.kg_env import BatchKGEnvironment
 from models.PGPR.train_agent import ActorCritic
 from models.PGPR.pgpr_utils import *
-
+import warnings
+warnings.filterwarnings("ignore", category=DeprecationWarning)   
 
 def evaluate(dataset_name, topk_matches, test_user_products):
     """Compute metrics for predicted recommendations.

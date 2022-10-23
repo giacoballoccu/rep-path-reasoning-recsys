@@ -6,6 +6,7 @@ import torch
 
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=DeprecationWarning)
+warnings.filterwarnings("ignore", category=DeprecationWarning)       
 import os
 import argparse
 from collections import namedtuple
