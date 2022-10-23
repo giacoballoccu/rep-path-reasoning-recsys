@@ -4,9 +4,9 @@ Tensorflow Implementation of Knowledge Graph Attention Network (KGAT) model in:
 Wang Xiang et al. KGAT: Knowledge Graph Attention Network for Recommendation. In KDD 2019.
 @author: Xiang Wang (xiangwang@u.nus.edu)
 '''
-import models.traditional.metrics as metrics
+import models.knowledge_aware.metrics as metrics
 from parser import parse_args
-from models.traditional.load_data import Data
+from models.knowledge_aware.load_data import Data
 import multiprocessing
 import heapq
 import numpy as np
