@@ -39,6 +39,7 @@ class KnowledgeGraph(object):
         self._load_knowledge(dataset)
         self._clean()
         self.top_matches = None
+        self.compute_degrees()
 
     def _load_entities(self, dataset):
         if self.verbose:
