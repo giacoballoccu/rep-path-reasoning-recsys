@@ -41,7 +41,7 @@ g = torch.Generator(device='cpu')
 g.manual_seed(MANUAL_SEED)
 
 
-ds = CFKG_loader(args=args, path=args.data_path + args.dataset)
+ds = CFKG_loader(args=args, path=DATA_DIR[args.dataset])
 data_generator['dataset'] = ds
 data_generator['loader'] = DataLoader(ds,
                 batch_size=ds.batch_size,

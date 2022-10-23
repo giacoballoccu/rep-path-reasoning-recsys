@@ -55,6 +55,7 @@ RIPPLE = 'ripple'
 BPRMF = "bprmf"
 NFM = "nfm"
 KNOWLEDGE_AWARE_METHODS = [CKE, CFKG, KGAT, RIPPLE, NFM, BPRMF]
+FM = "fm"
 """
 Path reasoning methods
 """
@@ -64,6 +65,10 @@ UCPR = 'ucpr'
 MLR = 'mlr'
 PATH_REASONING_METHODS = [PGPR, UCPR, CAFE, MLR]
 
+
+
+TRANSE = 'transe'
+EMBEDDING_METHODS = [TRANSE]
 
 def ensure_dataset_name(dataset_name):
     if dataset_name not in DATASETS:
@@ -136,7 +141,7 @@ DATASET_SENSIBLE_ATTRIBUTE_MATRIX = {
 def get_dataset_id2model_kg_id(dataset_name, model_name, what="user"):
     model_data_dir = get_model_data_dir(model_name, dataset_name)
     if model_name in KNOWLEDGE_AWARE_METHODS:
-        model_data_dir = get_model_data_dir(KGAT, dataset_name)
+        model_data_dir = get_model_data_dir(model_name, dataset_name)
     file = open(os.path.join(model_data_dir, f"mappings/{what}_mapping.txt"), "r")
     csv_reader = csv.reader(file, delimiter='\t')
     dataset_pid2model_kg_pid = {}
@@ -229,7 +234,7 @@ def load_labels(dataset_name, model_name, split=TRAIN): #TODO MAKE IT AGNOSITC W
                 user_products[int(row[0])] = [int(pid) for pid in row[1:]]
     elif model_name in [KGAT, CKE, CFKG]:
         user_products = {}
-        model_data_dir = get_model_data_dir(KGAT, dataset_name)
+        model_data_dir = get_model_data_dir(model_name, dataset_name)
         label_path = os.path.join(model_data_dir, f"{split}.txt")
         with open(label_path, 'rt') as f:
             reader = csv.reader(f, delimiter=" ")

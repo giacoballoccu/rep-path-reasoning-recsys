@@ -135,8 +135,8 @@ def main():
 
 
     args = parser.parse_args()
-    os.makedirs(LOG_DIR, exist_ok=True)
-    with open(f'{TRANSE_HPARAMS_FILE}', 'w') as f:
+    os.makedirs(LOG_DATASET_DIR[args.dataset], exist_ok=True)
+    with open(os.path.join(LOG_DATASET_DIR[args.dataset], f'{TRANSE_HPARAMS_FILE}'), 'w') as f:
         import json
         import copy
         args_dict = dict()

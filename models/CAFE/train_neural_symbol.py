@@ -37,7 +37,7 @@ def train(args):
     #valid_dataloader = OnlinePathLoader(args.dataset, args.batch_size, topk=args.topk_candidates)
     metapaths = train_dataloader.kg.metapaths
 
-    "?????????????????????????????????????????????????????"
+    #"?????????????????????????????????????????????????????"
     kg_embeds = load_embed(args.dataset) if train else None
 
     model = create_symbolic_model(args, train_dataloader.kg, train=True, pretrain_embeds=kg_embeds)
@@ -69,8 +69,8 @@ def train(args):
     metrics.register('avg_valid_rankloss')     
 
     loaders = {'train': train_dataloader,
-                'valid': train_dataloader
-                }#valid_dataloader}
+                'valid': valid_dataloader
+                }
 
     step_counter = {
                 'train': 0,
@@ -86,13 +86,10 @@ def train(args):
     for epoch in range(1, args.epochs + 1):
 
         splits_to_compute = list(loaders.items())
-        #if first_iterate:
-        #    first_iterate = False
-        #    splits_to_compute.insert(0, ('valid', valid_dataloader))
-        for split_name, dataloader in splits_to_compute:
-            if split_name == 'valid':
-                # skip temporarily
-                continue                        
+        if first_iterate:
+            first_iterate = False
+            splits_to_compute.insert(0, ('valid', valid_dataloader))
+        for split_name, dataloader in splits_to_compute:                    
             if split_name == 'valid':
                 model.eval()
             else:

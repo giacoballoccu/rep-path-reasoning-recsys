@@ -36,7 +36,8 @@ VALID_METRICS_FILE_NAME = 'valid_metrics.json'
 
 OPTIM_HPARAMS_METRIC = 'valid_reward'
 OPTIM_HPARAMS_LAST_K = 100 # last 100 episodes
-LOG_DIR = f'{ROOT_DIR}/results/'
+LOG_DIR = f'{ROOT_DIR}/results'
+
 
 LOG_DATASET_DIR = {
     ML1M: f'{LOG_DIR}/{ML1M}/{MODEL}',
@@ -44,15 +45,16 @@ LOG_DATASET_DIR = {
     CELL: f'{LOG_DIR}/{CELL}/{MODEL}',
 }
 
+# for compatibility, CFG_DIR, BEST_CFG_DIR have been modified s,t, they are independent from the dataset
 CFG_DIR = {
-    ML1M: f'{LOG_DIR}/{ML1M}/hparams_cfg',
-    LFM1M: f'{LOG_DIR}/{LFM1M}/hparams_cfg',
-    CELL: f'{LOG_DIR}/{CELL}/hparams_cfg',
+    ML1M: f'{LOG_DATASET_DIR[ML1M]}/hparams_cfg',
+    LFM1M: f'{LOG_DATASET_DIR[LFM1M]}/hparams_cfg',
+    CELL: f'{LOG_DATASET_DIR[CELL]}/hparams_cfg',
 }
 BEST_CFG_DIR = {
-    ML1M: f'{LOG_DIR}/{ML1M}/best_hparams_cfg',
-    LFM1M: f'{LOG_DIR}/{LFM1M}/best_hparams_cfg',
-    CELL: f'{LOG_DIR}/{CELL}/best_hparams_cfg',
+    ML1M: f'{LOG_DATASET_DIR[ML1M]}/best_hparams_cfg',
+    LFM1M: f'{LOG_DATASET_DIR[LFM1M]}/best_hparams_cfg',
+    CELL: f'{LOG_DATASET_DIR[CELL]}/best_hparams_cfg',
 }
 TEST_METRICS_FILE_NAME = 'test_metrics.json'
 RECOM_METRICS_FILE_NAME = 'recommender_metrics.json'
@@ -87,7 +89,7 @@ BEST_CFG_FILE_PATH = {
     CELL: f'{BEST_CFG_DIR[CELL]}/{CONFIG_FILE_NAME}',
 }
 
-TRANSE_HPARAMS_FILE = f'{LOG_DIR}/transe_{MODEL}_hparams_file.json'
+TRANSE_HPARAMS_FILE = f'transe_{MODEL}_hparams_file.json'
 HPARAMS_FILE = f'{MODEL}_hparams_file.json'
 
 # Model result directories.

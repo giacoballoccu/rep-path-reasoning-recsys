@@ -25,17 +25,17 @@ TMP_DIR = {
 OPTIM_HPARAMS_METRIC = 'valid_ndcg'
 VALID_METRICS_FILE_NAME = 'valid_metrics.json'
 
-LOG_DIR = f'{ROOT_DIR}/results/{MODEL}'
+LOG_DIR = f'{ROOT_DIR}/results'
 
 CFG_DIR = {
-    ML1M: f'{LOG_DIR}/{ML1M}/hparams_cfg',
-    LFM1M: f'{LOG_DIR}/{LFM1M}/hparams_cfg',
-    CELL: f'{LOG_DIR}/{CELL}/hparams_cfg',
+    ML1M: f'{LOG_DIR}/{ML1M}/{MODEL}/hparams_cfg',
+    LFM1M: f'{LOG_DIR}/{LFM1M}/{MODEL}/hparams_cfg',
+    CELL: f'{LOG_DIR}/{CELL}/{MODEL}/hparams_cfg',
 }
 BEST_CFG_DIR = {
-    ML1M: f'{LOG_DIR}/{ML1M}/best_hparams_cfg',
-    LFM1M: f'{LOG_DIR}/{LFM1M}/best_hparams_cfg',
-    CELL: f'{LOG_DIR}/{CELL}/best_hparams_cfg',
+    ML1M: f'{LOG_DIR}/{ML1M}/{MODEL}/best_hparams_cfg',
+    LFM1M: f'{LOG_DIR}/{LFM1M}/{MODEL}/best_hparams_cfg',
+    CELL: f'{LOG_DIR}/{CELL}/{MODEL}/best_hparams_cfg',
 }
 TEST_METRICS_FILE_NAME = 'test_metrics.json'
 TEST_METRICS_FILE_PATH = {
@@ -69,15 +69,3 @@ def makedirs(dataset_name):
     os.makedirs(CFG_DIR[dataset_name], exist_ok=True)
 
 
-def load_pretrained_data(args):
-    pre_model = 'mf'
-    if args.pretrain == -2:
-        pre_model = 'kgat'
-    pretrain_path = os.path.join(args.data_path, args.dataset, "preprocessed", "kgat", "pretrain", model.model_type,
-                                 f"{pre_model}.npz")
-    try:
-        pretrain_data = np.load(pretrain_path)
-        print('load the pretrained bprmf model parameters.')
-    except Exception:
-        pretrain_data = None
-    return pretrain_data

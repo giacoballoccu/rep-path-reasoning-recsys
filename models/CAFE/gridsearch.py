@@ -56,13 +56,13 @@ def save_best(best_metrics, test_metrics, grid):
 def main(args):
 
 
-    chosen_hyperparam_grid = {"batch_size": [64],#128], 
-           "dataset": ["ml1m"], #['ml1m', 'lfm1m'] 
+    chosen_hyperparam_grid = {"batch_size": [64], 
+           "dataset": ['ml1m', 'lfm1m'] 
             "deep_module": [True], 
             "do_execute": [False], 
             "do_infer": [False], 
             "embed_size": [100,200], 
-            "epochs": [20], #[20],
+            "epochs": [20], 
             "gpu": [0], 
             "lr": [0.1], 
             "name": ["neural_symbolic_model"],
@@ -77,6 +77,25 @@ def main(args):
 
 
 
+    def prompt():
+        answer = input("Continue (deletes content)? (y/n)")
+        if answer.upper() in ["Y", "YES"]:
+            return True
+        else if answer.upper() in ["N", "NO"]:
+            return False
+    def can_run(dataset_name):
+        if len(os.listdir(BEST_CFG_DIR[dataset_name])) > 0:
+            print(f'Action required: WARNING {dataset_name} best hyper parameters folder is not empty')
+            if not prompt():
+                print('Content not deleted, To run grid search re-run the script and confirm deletion')
+                return False
+            else:
+                shutil.rmtree(BEST_CFG_DIR[dataset_name])
+                print('Content deleted\n Start grid search')
+        return True
+    for dataset_name in chosen_hyperparam_grid['dataset']:
+        if not can_run(dataset_name):
+            return 
 
 
     hparam_grids = ParameterGrid(chosen_hyperparam_grid)

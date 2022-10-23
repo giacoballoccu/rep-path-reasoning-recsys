@@ -24,18 +24,6 @@ from models.utils import MetricsLogger
 os.environ['TF_CPP_MIN_LOG_LEVEL']='2'
 
 
-def load_pretrained_data(args):
-    pre_model = 'mf'
-    if args.pretrain == -2:
-        pre_model = 'kgat'
-    pretrain_path = os.path.join(args.data_path, args.dataset, "preprocessed", "kgat", "pretrain", model.model_type,
-                                 f"{pre_model}.npz")
-    try:
-        pretrain_data = np.load(pretrain_path)
-        print('load the pretrained bprmf model parameters.')
-    except Exception:
-        pretrain_data = None
-    return pretrain_data
 
 
 if __name__ == '__main__':
@@ -102,16 +90,8 @@ if __name__ == '__main__':
 
     t0 = time()
 
-    """
-    *********************************************************
-    Use the pretrained data to initialize the embeddings.
-    """
-    if args.pretrain in [-1, -2]:
-        pretrain_data = load_pretrained_data(args)
-    else:
-        pretrain_data = None
 
-    model = KGAT(data_config=config, pretrain_data=pretrain_data, args=args)
+    model = KGAT(data_config=config, pretrain_data=None, args=args)
 
     saver = tf.train.Saver()
 
@@ -129,32 +109,9 @@ if __name__ == '__main__':
     config.gpu_options.allow_growth = True
     sess = tf.Session(config=config)
 
-    """
-    *********************************************************
-    Reload the model parameters to fine tune.
-    """
-    if args.pretrain == 1:
-        pretrain_path = os.path.join(TMP_DIR[args.dataset], "weights")
 
-
-        ckpt = tf.train.get_checkpoint_state(os.path.dirname(pretrain_path + '/checkpoint'))
-        if ckpt and ckpt.model_checkpoint_path:
-            sess.run(tf.global_variables_initializer())
-            saver.restore(sess, ckpt.model_checkpoint_path)
-            print('load the pretrained model parameters from: ', pretrain_path)
-
-
-
-        else:
-            sess.run(tf.global_variables_initializer())
-            cur_best_pre_0 = 0.
-            print('without pretraining.')
-    else:
-        sess.run(tf.global_variables_initializer())
-        cur_best_pre_0 = 0.
-        print('without pretraining.')
-
-
+    sess.run(tf.global_variables_initializer())
+    cur_best_pre_0 = 0.
 
     """
     *********************************************************
@@ -278,8 +235,11 @@ if __name__ == '__main__':
         t2 = time()
         users_to_test = list(data_generator['dataset'].test_user_dict.keys())
 
-        ret,_ = test(sess, model, users_to_test, drop_flag=False, batch_test_flag=batch_test_flag)
-
+        ret, top_k = test(sess, model, users_to_test, drop_flag=False, batch_test_flag=batch_test_flag)
+        topk_path = f'{TMP_DIR[args.dataset]}/item_topk.pkl'
+        with open(topk_path, 'wb') as f:
+            pickle.dump(top_k, f)
+            print('Saved topK to: ', topk_path)
         """
         *********************************************************
         Performance logging.
@@ -319,7 +279,7 @@ if __name__ == '__main__':
                         ret['ndcg'][0], ret['ndcg'][-1])
             print(perf_str)
 
-        cur_best_pre_0, stopping_step, should_stop = early_stopping(ret['recall'][0], cur_best_pre_0,
+        cur_best_pre_0, stopping_step, should_stop = early_stopping(ret['ndcg'][0], cur_best_pre_0,
                                                                     stopping_step, expected_order='acc', flag_step=1000)
 
         # *********************************************************

@@ -40,8 +40,8 @@ def seed_worker(worker_id):
 g = torch.Generator(device='cpu')
 g.manual_seed(MANUAL_SEED)
 
-kgat_a_ds = KGAT_loader(args=args, path=args.data_path + args.dataset)
-kgat_ds = Data(args=args, path=args.data_path + args.dataset)
+kgat_a_ds = KGAT_loader(args=args, path=DATA_DIR[args.dataset])
+kgat_ds = Data(args=args, path=DATA_DIR[args.dataset])
 data_generator['A_dataset'] = kgat_a_ds
 data_generator['dataset'] = kgat_ds
 data_generator['A_loader'] = DataLoader(kgat_a_ds,

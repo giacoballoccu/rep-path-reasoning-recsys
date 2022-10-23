@@ -1,56 +1,67 @@
 # T-REX_TextualRecEXp
 
 
-# Usage
+# Overview
 The base workflow is:
 1. Dataset creation
-2. Dataset **reprocessing** and **formatting** with respect to selected model
+2. Dataset **preprocessing** and **formatting** with respect to the selected model
 3. Training(or hyperparameter search) of the **TransE embedding model**
 4. Training(or hyperparameter search) of the **Recommender model**
 5. Test of the quality of the recommender model
+6. Evaluation of the metrics
 
-## Dataset creation
-For each dataset run from the top level folder
+## Dependencies and Installation
+Required **pytorch** and **tensorflow**, both with gpu version.
+Clone the repo, enter into it.
+All other dependencies can then be installed by means of the env_setup.sh script located at the top level of the project
+```bash
+bash env_setup.sh
+```
+The above environment setup includes download of the datasets and their preliminary setup.
+
+Alternatively, the data can be downloaded from the following drive:
+```bash
+https://drive.google.com/file/d/1VUVkU1RLaJWUVqReox6cT6N9dcQ6nTd7/view?usp=sharing
+```
+# Usage
+To **facilitate the use of the codebase**, a set of scripts are provided to seamlessly execute all stages of the machine learning pipeline described above.
+The top level of the project contains all such scripts.
+
+### 1. Bulk dataset creation
+```bash
+./build_datasets.sh
+```
+### 2. Bulk dataset preprocessing
+```python
+python3 prepare_datasets.py
+```
+### 3. Models
+Available DATASET_NAME values **{lfm1m, ml1m}**
+Available MODEL_NAME values:
+- path based methods **{cafe, pgpr, ucpr}**
+- knowledge aware methods **{kgat, cfkg, cke}**
+- embedding methods **{transe}**
+
+The following variables can be used. Alternatively the provided dataset and model names can be manually written as command line arguments to the scripts that follow (thus substituting the $x expression with the actual name)
 ```bash
 export DATASET_NAME=...
-python3 map_dataset.py --data $DATASET_NAME --model MODEL_NAME
+export MODEL_NAME=...
+```
+#### 3.1 Training
+
+```python
+python3 train.py --model $MODEL_NAME --dataset $DATASET_NAME
+```
+#### 3.2 Hyper parameter tuning
+
+```python
+python3 gridsearch.py --model $MODEL_NAME --dataset $DATASET_NAME
 ```
 
-Available DATASET_NAME values **{lfm1m, ml1m}**
-Available MODEL_NAME values **{cafe, pgpr, ucpr}**
-## Dataset preprocessing and formatting
-Then, each dataset has to be processed and formatted according to the specifications of each model.
-To achieve this, run from within each folder models/MODEL_NAME
-```bash
-python3 preprocess.py --data $DATASET_NAME
-```
-## Train embedding model
-```bash
-python3 train_transe.py --dataset $DATASET_NAME
-```
-### (Optional) Hyperparameter optimization of the embedding model  
-In order to properly track all configurations, additional logging functionalities are provided by means of wandb.
-To perform wandb logging, use the below arguments, otherwise run transe_gridsearch.py without any additional command line arguments.
-```bash
-python3 transe_gridsearch.py --wandb --wandb_entity YOUR_WANDB_ACCOUNT_NAME 
-```
-Note:
-1) As a approximation we selected the best hyper paramter setting as the ones used by the model that achieves the best i) average total validation reward of the last 100 episode for PGPR, UCPR as well agreed practice in RL literature \cite{10.5555/3312046, Schulman2017ProximalPO} ii) validation loss for CAFE.
-2) In order to use wandb, you have to already be logged in from the command line.
-It can be done by simply running, with your API_KEY obtained by register for free to their service.
-```bash
-wandb login [OPTIONS] [KEY]
-```
-## Train Recommender
-```bash
-python3 train.py --dataset $DATASET_NAME 
-```
-#### (Optional)Hyperparameter optimization of the recommender model 
-```bash
-python3 gridsearch.py --dataset $DATASET_NAME 
+#### 4. Test
+Note, the test phase does not support testing of the embedding models, although their metrics are gathered during training.
+The main purpose of the test phase is to evaluate the metrics on each embedding model.
+```python
+python3 test.py --model $MODEL_NAME --dataset $DATASET_NAME
 ```
 
-## Test 
-```bash
-python3 test.py --dataset $DATASET_NAME 
-```

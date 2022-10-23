@@ -40,8 +40,8 @@ def seed_worker(worker_id):
 g = torch.Generator(device='cpu')
 g.manual_seed(MANUAL_SEED)
 
-cke_a_ds = CKE_loader(args=args, path=args.data_path + args.dataset)
-cke_ds = Data(args=args, path=args.data_path + args.dataset)
+cke_a_ds = CKE_loader(args=args, path=DATA_DIR[args.dataset])
+cke_ds = Data(args=args, path=DATA_DIR[args.dataset])
 data_generator['A_dataset'] = cke_a_ds
 data_generator['dataset'] = cke_ds
 data_generator['A_loader'] = DataLoader(cke_a_ds,

@@ -20,7 +20,7 @@ ML1M = 'ml1m'
 LFM1M = 'lfm1m'
 CELL = 'cellphones'
 
-ROOT_DIR = os.environ('TREX_DATA_ROOT') if 'TREX_DATA_ROOT' in os.environ else '../..'
+ROOT_DIR = os.environ('TREX_DATA_ROOT') if 'TREX_DATA_ROOT' in os.environ else '../../..'
 
 # STILL NOT SUPPORTED = beauty, cell, cloth
 BEAUTY_CORE ='beauty'
@@ -29,7 +29,7 @@ CLOTH_CORE = 'cloth'
 # retro compatiblity 
 MOVIE_CORE = 'ml1m'
 AZ_BOOK_CORE = 'book'
-MODEL = 'ucpr'
+MODEL = 'transe'
 # Dataset directories.
 DATASET_DIR = {
     ML1M: f'{ROOT_DIR}/data/{ML1M}/preprocessed/{MODEL}',
@@ -49,9 +49,8 @@ VALID_METRICS_FILE_NAME = 'valid_metrics.json'
 
 TRANSE_OPT_METRIC = 'valid_loss'
 #OPTIM_HPARAMS_METRIC = 'avg_valid_reward'
-OPTIM_HPARAMS_METRIC = 'valid_reward'
-OPTIM_HPARAMS_LAST_K = 100 # last 100 episodes
-#OPTIM_HPARAMS_METRIC = 'ndcg'
+OPTIM_HPARAMS_METRIC = 'valid_loss'
+
 LOG_DIR = f'{ROOT_DIR}/results'
 
 
@@ -146,38 +145,6 @@ TRANSE_HPARAMS_FILE = f'transe_{MODEL}_hparams_file.json'
 HPARAMS_FILE = f'{MODEL}_hparams_file.json'
 
 
-
-
-SAVE_MODEL_DIR = {
-    ML1M: f'{LOG_DATASET_DIR[ML1M]}/save',
-    LFM1M: f'{LOG_DATASET_DIR[LFM1M]}/save',
-    CELL: f'{LOG_DATASET_DIR[CELL]}/save',
-}
-
-
-EVALUATION = {
-    ML1M: f'{LOG_DATASET_DIR[ML1M]}/eva_pre',
-    LFM1M: f'{LOG_DATASET_DIR[LFM1M]}/eva_pre',
-    CELL: f'{LOG_DATASET_DIR[CELL]}/eva_pre',
-}
-
-EVALUATION_2 = {
-    ML1M: f'{LOG_DATASET_DIR[ML1M]}/eval',
-    LFM1M: f'{LOG_DATASET_DIR[LFM1M]}/eval',
-    CELL: f'{LOG_DATASET_DIR[CELL]}/eval',
-}
-
-CASE_ST = {
-    ML1M: f'{LOG_DATASET_DIR[ML1M]}/case_st',
-    LFM1M: f'{LOG_DATASET_DIR[LFM1M]}/case_st',
-    CELL: f'{LOG_DATASET_DIR[CELL]}/case_st',
-}
-
-TEST = {
-    ML1M: f'{LOG_DATASET_DIR[ML1M]}/test',
-    LFM1M: f'{LOG_DATASET_DIR[LFM1M]}/test',
-    CELL: f'{LOG_DATASET_DIR[CELL]}/test',
-}
 
 
 

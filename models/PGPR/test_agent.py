@@ -183,12 +183,6 @@ def predict_paths(policy_file, path_file, args):
     pickle.dump(predicts, open(path_file, 'wb'))
 
 def save_output(dataset_name, pred_paths):
-    #if not os.path.isdir("../../results/"):
-    #    os.makedirs("../../results/")
-
-    #extracted_path_dir = "../../results/" + dataset_name
-    #if not os.path.isdir(extracted_path_dir):
-    #    os.makedirs(extracted_path_dir)
 
     extracted_path_dir = LOG_DATASET_DIR[dataset_name]#extracted_path_dir + "/pgpr"
     if not os.path.isdir(extracted_path_dir):

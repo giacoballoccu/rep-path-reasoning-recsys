@@ -10,11 +10,6 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Run CKE.")
     parser.add_argument('--weights_path', nargs='?', default='',
                         help='Store model path.')
-    parser.add_argument('--data_path', nargs='?', default=f'./../../../data/',
-                        help='Input data path.')
-    parser.add_argument('--proj_path', nargs='?', default='./../../../',
-                        help='Project path.')
-
     parser.add_argument('--dataset', nargs='?', default='ml1m',
                         help='Choose a dataset from {ml1m, lfm1m}')
     parser.add_argument('--pretrain', type=int, default=0,

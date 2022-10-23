@@ -46,9 +46,7 @@ def ndcg_at_k(r, k, method=1):
 
 
 def save_output(dataset_name, pred_paths):
-    #if not os.path.isdir(SAVE_MODEL_DIR[dataset_name]):
-    #    os.makedirs(SAVE_MODEL_DIR[dataset_name])
-    #extracted_path_dir = SAVE_MODEL_DIR[dataset_name]
+
     extracted_path_dir = LOG_DATASET_DIR[dataset_name]
     if not os.path.isdir(extracted_path_dir):
         os.makedirs(extracted_path_dir)

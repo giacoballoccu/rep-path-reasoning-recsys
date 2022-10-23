@@ -28,12 +28,16 @@ def main():
         # Kgat mapper holds correct also for cfkg
         MapperKGAT(args)
     elif args.model == BPRMF:
-        # Kgat mapper holds correct also for cfkg
+        # Kgat mapper holds correct also for bprmf
         MapperKGAT(args)        
     elif args.model == NFM:
-        # Kgat mapper holds correct also for cfkg
+        # Kgat mapper holds correct also for nfm
         MapperKGAT(args)        
-
+    elif args.model == FM:
+        # Kgat mapper holds correct also for fm
+        MapperKGAT(args)  
+    elif args.model == TRANSE:
+        MapperUCPR(args)          
 
     elif args.model == MLR:
         pass
