@@ -112,14 +112,32 @@ For the explanation quality metrics we suggest to refer to the original papers w
 - **Fidelity:** [Explanation Mining: Post Hoc Interpretability of Latent Factor Models for Recommendation Systems](https://dl.acm.org/doi/10.1145/3219819.3220072)
 
 #### 7. Hyper parameters
-# lfm1m
+
 ## Ucpr
 ## pgpr
+- hidden
+- ent_weight: weight of the entropy loss that quantifies entropy in the action distribution 
 ## cafe
+- embed_size: size of the embedding of entities and relations for neural modules employed by CAFE's symbolic model
+- rank_weight: weight of the ranking loss component in the total loss.
 
-# ml1m
 ## kgat 
+- adj_type  (weighting technique applied to each connection on the KG adjacency matrix A )
+    -  bilateral (bi), pre and post multiply A by the inverse of the square root of the diagonal matrix of out degrees of each node (--adj_type bi)
+    -  single (si), pre multiply A by the inverse of the of the diagonal matrix of out degrees of each node (--adj_type si)
+- embed_size (size of user and  entity embeddings)   (--embed_size 128)
+- kge_size (size of the relation embeddings)  (--kge_size 128)
 ## cke
+- adj_type  (weighting technique applied to each connection on the KG adjacency matrix A )
+    -  bilateral (bi), pre and post multiply A by the inverse of the square root of the diagonal matrix of out degrees of each node (--adj_type bi)
+    -  single (si), pre multiply A by the inverse of the of the diagonal matrix of out degrees of each node (--adj_type si)
+- embed_size (size of user and  entity embeddings)   (--embed_size 128)
+- kge_size (size of the relation embeddings)  (--kge_size 128)
 ## cfkg
-
+- lr (learning rate) (..lr 0.0001) 
+- adj_type  (weighting technique applied to each connection on the KG adjacency matrix A )
+    -  bilateral (bi), pre and post multiply A by the inverse of the square root of the diagonal matrix of out degrees of each node (--adj_type bi)
+    -  single (si), pre multiply A by the inverse of the of the diagonal matrix of out degrees of each node (--adj_type si)
+- embed_size (size of user and  entity embeddings)   (--embed_size 128)
+- kge_size (size of the relation embeddings)  (--kge_size 128)
 
