@@ -83,3 +83,14 @@ Knowledge aware models generate the topK by default after each epoch of training
 python3 evaluate.py --model $MODEL_NAME --dataset $DATASET_NAME
 ```
 
+
+#### 6. Hyper parameters
+# lfm1m
+## Ucpr
+## pgpr
+## cafe
+
+# ml1m
+## kgat 
+## cke
+## cfkg
