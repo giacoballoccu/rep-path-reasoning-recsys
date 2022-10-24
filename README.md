@@ -1,5 +1,5 @@
 # T-REX_TextualRecEXp
-
+This is the repository for the paper "Knowledge is Power, Understanding is Impact: Utility and Beyond Goals, Explanation Quality, and Fairness in Path Reasoning Recommendation".
 
 # Overview
 The base workflow is:
@@ -69,7 +69,7 @@ python3 test.py --model $MODEL_NAME --dataset $DATASET_NAME
 
 
 #### 5. Evaluation
-As last step, with the computed top10 or the paths predicted by the models, evaluation can be run to obtain the evaluation metrics.
+As last step, with the computed top-k or the paths predicted by the models, evaluation can be run to obtain the evaluation metrics.
 
 Note that this step requires training of the models and at least a testing phase for path reasoning models.
 
@@ -83,8 +83,35 @@ Knowledge aware models generate the topK by default after each epoch of training
 python3 evaluate.py --model $MODEL_NAME --dataset $DATASET_NAME
 ```
 
+Flags such as `evaluate_overall_fidelity` and `evaluate_path_quality` decide whether or not evaluate the path quality prospectives, this prospectives can be computed only for methods capable of producing reasoning paths. By default the recommendation quality metrics are evaluated. In the following section we collect the metrics currently adopted by our evaluate.py
 
-#### 6. Hyper parameters
+#### 6. Metrics 
+This list collects the formulas and short descriptions of the metrics currently implemented by our evaluation module. All recommendation metrics are calculated for a user top-k and the results reported on the paper are obtained as the average value across all the user base.
+
+##### 6.1 Recommendation Quality
+- **NDCG:** The extent to which the recommended products are useful for the user. Weights the position of the item in the top-k.
+$$NDCG@k=\frac{DCG@k}{IDCG@k}$$ where:
+$$DCG@k=\sum_{i=1}^{k}\frac{rel_i}{log_2(i+1)}=rel_1+\sum_{i=2}^{k}\frac{rel_i}{log_2(i+1)}$$
+$$IDCG@k = \text{sort descending}(rel)$$
+- **MMR:** The extent to which the first recommended product is useful for the user.
+$$MMR = \frac{1}{\text{first hit position}}$$
+- **Coverage:** Proportion of items recommended among all the item catalog.
+$$\frac{| \text{Unique Recommended items}|}{| \text{Items in Catalog} |}$$
+- **Diversity:** Proportion of genres covered by the recommended items among the recommended items. 
+$$\frac{| \text{Unique Genres} |}{| \text{Recommended items} |}$$
+- **Novelty:** Inverse of popularity of the items recommended to the user
+$$\frac{\sum_{i \in I}| 1 - \text{Pop}(i) |}{| \text{Recommended items} |}$$
+- **Serendipity:** Proportion of items which may be surprising for the user, calculated as the the proportion of items recommended by the benchmarked models that are not recommended by a prevedible baseline. In our case the baseline was MostPop.
+$$\frac{| \text{Recommended items} \cup \text{Recommended items by most pop} |}{| \text{Recommended items} |}$$
+##### 6.1 Explanation (Path) Quality
+For the explanation quality metrics we suggest to refer to the original papers which provide detailed formalizations of the prospectives.
+- **LIR, SEP, ETD:** [Post Processing Recommender Systems with Knowledge Graphs for Recency, Popularity, and Diversity of Explanations](https://dl.acm.org/doi/10.1145/3477495.3532041)
+- **LID, SED, PTC:** [Reinforcement Recommendation Reasoning through Knowledge Graphs for Explanation Path Quality
+](https://arxiv.org/abs/2209.04954)
+- **PPC** (named by us, refered in the paper as path diversity): [Fairness-Aware Explainable Recommendation over Knowledge Graphs](https://dl.acm.org/doi/10.1145/3397271.3401051)
+- **Fidelity:** [Explanation Mining: Post Hoc Interpretability of Latent Factor Models for Recommendation Systems](https://dl.acm.org/doi/10.1145/3219819.3220072)
+
+#### 7. Hyper parameters
 # lfm1m
 ## Ucpr
 ## pgpr
@@ -94,3 +121,5 @@ python3 evaluate.py --model $MODEL_NAME --dataset $DATASET_NAME
 ## kgat 
 ## cke
 ## cfkg
+
+
