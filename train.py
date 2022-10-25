@@ -7,7 +7,7 @@ import subprocess
 from utils import *
 
 
-def main(args):
+def main(args, model_params):
 
     train_files = {
             TRANSE : 'models/embeddings/transe/train_transe.py',
@@ -30,7 +30,8 @@ def main(args):
     if args.wandb:
         CMD.append('--wandb')
         CMD.extend( ['--wandb_entity', args.wandb_entity ] )
-
+    if len(model_params):
+        CMD.extend(model_params)
     subprocess.call(CMD, cwd=os.path.dirname(TRAIN_FILE_NAME)  )
 
 
@@ -46,7 +47,9 @@ if __name__ == '__main__':
         type=str,
         help="Entity name to push to the wandb logged data, in case args.wandb is specified.",
     )    
-    args = parser.parse_args()
-    main(args)
+    #parser.add_argument('rest', nargs=argparse.REMAINDER)
+    args, model_params = parser.parse_known_args()
+    
+    main(args, model_params)
                  
     
