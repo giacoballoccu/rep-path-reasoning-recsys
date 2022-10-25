@@ -111,34 +111,33 @@ For the explanation quality metrics we suggest to refer to the original papers w
 - **PPC** (named by us, refered in the paper as path diversity): [Fairness-Aware Explainable Recommendation over Knowledge Graphs](https://dl.acm.org/doi/10.1145/3397271.3401051)
 - **Fidelity:** [Explanation Mining: Post Hoc Interpretability of Latent Factor Models for Recommendation Systems](https://dl.acm.org/doi/10.1145/3219819.3220072)
 
-#### 7. Hyper parameters
 
-#### 6. Hyper parameters
+#### 7. Hyper parameters
 The hyper parameters that have been considered in the grid search are listed below, alongside a brief description and its codename used in the experiments:
 
-## Ucpr
+## UCPR
 - embed_size : size of the state embedding of the employed lstm memory model, as well as the relation embedding size.
 - hidden :  number of hidden units of each layer of the shared embedding neural network, that is used as a backbone by the actor and the critic prediction heads
-## pgpr
+## PGPR
 - hidden : number of hidden units of each layer of the shared embedding neural network, that is used as a backbone by the actor and the critic prediction heads
 - ent_weight: weight of the entropy loss that quantifies entropy in the action distribution 
-## cafe
+## CAFE
 - embed_size: size of the embedding of entities and relations for neural modules employed by CAFE's symbolic model
 - rank_weight: weight of the ranking loss component in the total loss.
 
-## kgat 
+## KGAT
 - adj_type  (weighting technique applied to each connection on the KG adjacency matrix A )
     -  bilateral (bi), pre and post multiply A by the inverse of the square root of the diagonal matrix of out degrees of each node (--adj_type bi)
     -  single (si), pre multiply A by the inverse of the of the diagonal matrix of out degrees of each node (--adj_type si)
 - embed_size (size of user and  entity embeddings)   (--embed_size 128)
 - kge_size (size of the relation embeddings)  (--kge_size 128)
-## cke
+## CKE
 - adj_type  (weighting technique applied to each connection on the KG adjacency matrix A )
     -  bilateral (bi), pre and post multiply A by the inverse of the square root of the diagonal matrix of out degrees of each node (--adj_type bi)
     -  single (si), pre multiply A by the inverse of the of the diagonal matrix of out degrees of each node (--adj_type si)
 - embed_size (size of user and  entity embeddings)   (--embed_size 128)
 - kge_size (size of the relation embeddings)  (--kge_size 128)
-## cfkg
+## CFKG
 - lr (learning rate) (..lr 0.0001) 
 - adj_type  (weighting technique applied to each connection on the KG adjacency matrix A )
     -  bilateral (bi), pre and post multiply A by the inverse of the square root of the diagonal matrix of out degrees of each node (--adj_type bi)
@@ -147,4 +146,58 @@ The hyper parameters that have been considered in the grid search are listed bel
 - kge_size (size of the relation embeddings)  (--kge_size 128)
 
 
+#### Optimal hyper parameters:
+Each model is configured with a set of optimal hyper parameters, according to the dataset upon which it is trained. 
+In order to train a given model with customized hyper parameters, it is necessary to set them from command line while running the script train.py described in section 3.1.
+Each can be set by adding as new command line arguments the pair (--param_name param_value) while also specifying the model_name and the dataset to use.
+##### LFM1M
+## UCPR
+- embed_size  100
+- hidden [64,32]
+## PGPR
+- hidden [512,256]
+- ent_weight 0.001
+## CAFE
+- embed_size 200
+- rank_weight 1.0
 
+## KGAT
+- adj_type si
+- embed_size 128
+- kge_size 128
+## CKE
+- adj_type  si
+- embed_size 32
+- kge_size 64
+## CFKG
+- lr
+- adj_type 0.01
+- embed_size 64
+- kge_size 64
+
+
+##### ML1M
+
+## UCPR
+- embed_size  100
+- hidden [64,32]
+## PGPR
+- hidden [512,256]
+- ent_weight 0.001
+## CAFE
+- embed_size 200
+- rank_weight 1.0
+
+## KGAT
+- adj_type si
+- embed_size 64
+- kge_size 64
+## CKE
+- adj_type si
+- embed_size 64
+- kge_size  128
+## CFKG
+- lr 0.01
+- adj_type  si  
+- embed_size 128
+- kge_size  64
