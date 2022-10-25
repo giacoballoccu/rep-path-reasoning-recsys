@@ -21,7 +21,7 @@ The above environment setup includes download of the datasets and their prelimin
 
 Alternatively, the data can be downloaded from the following drive:
 ```bash
-https://drive.google.com/file/d/1VUVkU1RLaJWUVqReox6cT6N9dcQ6nTd7/view?usp=sharing
+https://drive.google.com/file/d/14WaIJHgsUuPkW8_XzN6PeBjZq15Zdt4V/view?usp=sharing
 ```
 The setup also downloads automatically the pretrained weights for the embeddings.
 
