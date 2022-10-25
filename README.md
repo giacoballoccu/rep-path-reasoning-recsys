@@ -116,37 +116,37 @@ For the explanation quality metrics we suggest to refer to the original papers w
 The hyper parameters that have been considered in the grid search are listed below, alongside a brief description and its codename used in the experiments:
 
 ###### UCPR
-- embed_size : size of the state embedding of the employed lstm memory model, as well as the relation embedding size.
-- hidden :  number of hidden units of each layer of the shared embedding neural network, that is used as a backbone by the actor and the critic prediction heads
+- embed_size: size of the state embedding of the employed lstm memory model, as well as the relation embedding size.
+- hidden:  number of hidden units of each layer of the shared embedding neural network, that is used as a backbone by the actor and the critic prediction heads
 ###### PGPR
-- hidden : number of hidden units of each layer of the shared embedding neural network, that is used as a backbone by the actor and the critic prediction heads
+- hidden: number of hidden units of each layer of the shared embedding neural network, that is used as a backbone by the actor and the critic prediction heads
 - ent_weight: weight of the entropy loss that quantifies entropy in the action distribution 
 ###### CAFE
 - embed_size: size of the embedding of entities and relations for neural modules employed by CAFE's symbolic model
 - rank_weight: weight of the ranking loss component in the total loss.
 
 ###### KGAT
-- adj_type  (weighting technique applied to each connection on the KG adjacency matrix A )
-    -  bilateral (bi), pre and post multiply A by the inverse of the square root of the diagonal matrix of out degrees of each node (--adj_type bi)
-    -  single (si), pre multiply A by the inverse of the of the diagonal matrix of out degrees of each node (--adj_type si)
-- embed_size (size of user and  entity embeddings)   (--embed_size 128)
-- kge_size (size of the relation embeddings)  (--kge_size 128)
+- adj_type: weighting technique applied to each connection on the KG adjacency matrix A 
+    -  bilateral (bi), pre and post multiply A by the inverse of the square root of the diagonal matrix of out degrees of each node 
+    -  single (si), pre multiply A by the inverse of the of the diagonal matrix of out degrees of each node 
+- embed_size: size of user and  entity embeddings 
+- kge_size: size of the relation embeddings
 ###### CKE
 - adj_type  (weighting technique applied to each connection on the KG adjacency matrix A )
-    -  bilateral (bi), pre and post multiply A by the inverse of the square root of the diagonal matrix of out degrees of each node (--adj_type bi)
-    -  single (si), pre multiply A by the inverse of the of the diagonal matrix of out degrees of each node (--adj_type si)
-- embed_size (size of user and  entity embeddings)   (--embed_size 128)
-- kge_size (size of the relation embeddings)  (--kge_size 128)
+    -  bilateral (bi), pre and post multiply A by the inverse of the square root of the diagonal matrix of out degrees of each node
+    -  single (si), pre multiply A by the inverse of the of the diagonal matrix of out degrees of each node 
+- embed_size (size of user and  entity embeddings)   
+- kge_size (size of the relation embeddings)  
 ###### CFKG
-- lr (learning rate) (..lr 0.0001) 
-- adj_type  (weighting technique applied to each connection on the KG adjacency matrix A )
+- lr: learning rate
+- adj_type: weighting technique applied to each connection on the KG adjacency matrix A 
     -  bilateral (bi), pre and post multiply A by the inverse of the square root of the diagonal matrix of out degrees of each node (--adj_type bi)
     -  single (si), pre multiply A by the inverse of the of the diagonal matrix of out degrees of each node (--adj_type si)
-- embed_size (size of user and  entity embeddings)   (--embed_size 128)
-- kge_size (size of the relation embeddings)  (--kge_size 128)
+- embed_size: size of user and  entity embeddings
+- kge_size: size of the relation embeddings
 
 
-###### Optimal hyper parameters:
+### Optimal hyper parameters:
 Each model is configured with a set of optimal hyper parameters, according to the dataset upon which it is trained. 
 In order to train a given model with customized hyper parameters, it is necessary to set them from command line while running the script train.py described in section 3.1.
 Each can be set by adding as new command line arguments the pair (--param_name param_value) while also specifying the model_name and the dataset to use.
