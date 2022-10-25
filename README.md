@@ -103,47 +103,50 @@ $$\frac{| \text{Unique Genres} |}{| \text{Recommended items} |}$$
 $$\frac{\sum_{i \in I}| 1 - \text{Pop}(i) |}{| \text{Recommended items} |}$$
 - **Serendipity:** Proportion of items which may be surprising for the user, calculated as the the proportion of items recommended by the benchmarked models that are not recommended by a prevedible baseline. In our case the baseline was MostPop.
 $$\frac{| \text{Recommended items} \cup \text{Recommended items by most pop} |}{| \text{Recommended items} |}$$
-##### 6.1 Explanation (Path) Quality
+##### 6.2 Explanation (Path) Quality
 For the explanation quality metrics we suggest to refer to the original papers which provide detailed formalizations of the prospectives.
 - **LIR, SEP, ETD:** [Post Processing Recommender Systems with Knowledge Graphs for Recency, Popularity, and Diversity of Explanations](https://dl.acm.org/doi/10.1145/3477495.3532041)
 - **LID, SED, PTC:** [Reinforcement Recommendation Reasoning through Knowledge Graphs for Explanation Path Quality
 ](https://arxiv.org/abs/2209.04954)
 - **PPC** (named by us, refered in the paper as path diversity): [Fairness-Aware Explainable Recommendation over Knowledge Graphs](https://dl.acm.org/doi/10.1145/3397271.3401051)
 - **Fidelity:** [Explanation Mining: Post Hoc Interpretability of Latent Factor Models for Recommendation Systems](https://dl.acm.org/doi/10.1145/3219819.3220072)
-
-
+##### 6.3 Fairness 
+- **Provider Fairnes:** we computed the average exposure given to products of providers in a given demographic group. The provider for MovieLens is the director of the movie while for LastFM the provider is the artist of the song.
+$$\frac{\sum_{i \in I} \text{Provider Exposure}(i)}{| \text{Recommended Items} |}$$
+- **Consumer Fairness:** Is defined as demographic parity for metric $Q$. $G$ is the set of demographic class (e.g. Gender group), while $g$ is the demographic groups grouping user by their attribute (e.g. Male, Female).
+$$\Delta Q (G_1, G_2, Q) = \frac{1}{|G_1|} \sum_{u \in G_1} Q(u) - \mathop{} \frac{1}{|G_2|} \sum_{u \in G_2} Q(u)$$
 ##### 7. Hyper parameters
 The hyper parameters that have been considered in the grid search are listed below, alongside a brief description and its codename used in the experiments:
 
 ###### UCPR
-- embed_size: size of the state embedding of the employed lstm memory model, as well as the relation embedding size.
-- hidden:  number of hidden units of each layer of the shared embedding neural network, that is used as a backbone by the actor and the critic prediction heads
+- `embed_size`: size of the state embedding of the employed lstm memory model, as well as the relation embedding size.
+- `hidden`:  number of hidden units of each layer of the shared embedding neural network, that is used as a backbone by the actor and the critic prediction heads
 ###### PGPR
-- hidden: number of hidden units of each layer of the shared embedding neural network, that is used as a backbone by the actor and the critic prediction heads
-- ent_weight: weight of the entropy loss that quantifies entropy in the action distribution 
+- `hidden`: number of hidden units of each layer of the shared embedding neural network, that is used as a backbone by the actor and the critic prediction heads
+- `ent_weight`: weight of the entropy loss that quantifies entropy in the action distribution 
 ###### CAFE
-- embed_size: size of the embedding of entities and relations for neural modules employed by CAFE's symbolic model
-- rank_weight: weight of the ranking loss component in the total loss.
+- `embed_size`: size of the embedding of entities and relations for neural modules employed by CAFE's symbolic model
+- `rank_weight`: weight of the ranking loss component in the total loss.
 
 ###### KGAT
-- adj_type: weighting technique applied to each connection on the KG adjacency matrix A 
-    -  bilateral (bi), pre and post multiply A by the inverse of the square root of the diagonal matrix of out degrees of each node 
-    -  single (si), pre multiply A by the inverse of the of the diagonal matrix of out degrees of each node 
-- embed_size: size of user and  entity embeddings 
-- kge_size: size of the relation embeddings
+- `adj_type`: weighting technique applied to each connection on the KG adjacency matrix A 
+    -  `bilateral (bi)`, pre and post multiply A by the inverse of the square root of the diagonal matrix of out degrees of each node 
+    -  `single (si)`, pre multiply A by the inverse of the of the diagonal matrix of out degrees of each node 
+- `embed_size`: size of user and  entity embeddings 
+- `kge_size`: size of the relation embeddings
 ###### CKE
-- adj_type  (weighting technique applied to each connection on the KG adjacency matrix A )
-    -  bilateral (bi), pre and post multiply A by the inverse of the square root of the diagonal matrix of out degrees of each node
-    -  single (si), pre multiply A by the inverse of the of the diagonal matrix of out degrees of each node 
-- embed_size (size of user and  entity embeddings)   
-- kge_size (size of the relation embeddings)  
+- `adj_type`  (weighting technique applied to each connection on the KG adjacency matrix A )
+    -  `bilateral (bi)`, pre and post multiply A by the inverse of the square root of the diagonal matrix of out degrees of each node
+    -  `single (si)`, pre multiply A by the inverse of the of the diagonal matrix of out degrees of each node 
+- `embed_size` (size of user and  entity embeddings)   
+- `kge_size` (size of the relation embeddings)  
 ###### CFKG
-- lr: learning rate
-- adj_type: weighting technique applied to each connection on the KG adjacency matrix A 
-    -  bilateral (bi), pre and post multiply A by the inverse of the square root of the diagonal matrix of out degrees of each node (--adj_type bi)
-    -  single (si), pre multiply A by the inverse of the of the diagonal matrix of out degrees of each node (--adj_type si)
-- embed_size: size of user and  entity embeddings
-- kge_size: size of the relation embeddings
+- `lr`: learning rate
+- `adj_type`: weighting technique applied to each connection on the KG adjacency matrix A 
+    -  `bilateral (bi)`, pre and post multiply A by the inverse of the square root of the diagonal matrix of out degrees of each node (--adj_type bi)
+    -  `single (si)`, pre multiply A by the inverse of the of the diagonal matrix of out degrees of each node (--adj_type si)
+- `embed_size`: size of user and  entity embeddings
+- `kge_size`: size of the relation embeddings
 
 
 ### Optimal hyper parameters:
