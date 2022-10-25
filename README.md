@@ -117,8 +117,10 @@ For the explanation quality metrics we suggest to refer to the original papers w
 The hyper parameters that have been considered in the grid search are listed below, alongside a brief description and its codename used in the experiments:
 
 ## Ucpr
+- embed_size : size of the state embedding of the employed lstm memory model, as well as the relation embedding size.
+- hidden :  number of hidden units of each layer of the shared embedding neural network, that is used as a backbone by the actor and the critic prediction heads
 ## pgpr
-- hidden
+- hidden : number of hidden units of each layer of the shared embedding neural network, that is used as a backbone by the actor and the critic prediction heads
 - ent_weight: weight of the entropy loss that quantifies entropy in the action distribution 
 ## cafe
 - embed_size: size of the embedding of entities and relations for neural modules employed by CAFE's symbolic model
