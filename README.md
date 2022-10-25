@@ -150,7 +150,7 @@ The hyper parameters that have been considered in the grid search are listed bel
 Each model is configured with a set of optimal hyper parameters, according to the dataset upon which it is trained. 
 In order to train a given model with customized hyper parameters, it is necessary to set them from command line while running the script train.py described in section 3.1.
 Each can be set by adding as new command line arguments the pair (--param_name param_value) while also specifying the model_name and the dataset to use.
-##### LFM1M
+### LFM1M
 ###### UCPR
 - embed_size  100
 - hidden [64,32]
@@ -176,7 +176,7 @@ Each can be set by adding as new command line arguments the pair (--param_name p
 - kge_size 64
 
 
-##### ML1M
+### ML1M
 
 ###### UCPR
 - embed_size  100
