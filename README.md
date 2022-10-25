@@ -113,6 +113,9 @@ For the explanation quality metrics we suggest to refer to the original papers w
 
 #### 7. Hyper parameters
 
+#### 6. Hyper parameters
+The hyper parameters that have been considered in the grid search are listed below, alongside a brief description and its codename used in the experiments:
+
 ## Ucpr
 ## pgpr
 - hidden
@@ -140,4 +143,6 @@ For the explanation quality metrics we suggest to refer to the original papers w
     -  single (si), pre multiply A by the inverse of the of the diagonal matrix of out degrees of each node (--adj_type si)
 - embed_size (size of user and  entity embeddings)   (--embed_size 128)
 - kge_size (size of the relation embeddings)  (--kge_size 128)
+
+
 
