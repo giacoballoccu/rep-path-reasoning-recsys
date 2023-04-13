@@ -23,18 +23,42 @@ from models.UCPR.utils import *
 SavedAction = namedtuple('SavedAction', ['log_prob', 'value'])
 
 
-class UCPR(AC_lstm_mf_dummy):
+class UCPR(nn.Module):
     def __init__(self, args, user_triplet_set, rela_2_index, act_dim, gamma=0.99, hidden_sizes=[512, 256]):
-        super().__init__(args, user_triplet_set, rela_2_index, act_dim, gamma, hidden_sizes)
+        super(UCPR,self).__init__()#super().__init__(args, user_triplet_set, rela_2_index, act_dim, gamma, hidden_sizes)
+        self.args = args        
+        self.act_dim = act_dim
+        self.device = args.device
+        self.gamma = gamma
+        self.p_hop = args.p_hop
+        self.hidden_sizes = hidden_sizes
+        self.n_memory = args.n_memory
+        self.rela_2_index = rela_2_index
+
+        self.embed_size = args.embed_size
+ 
+        self.user_triplet_set = user_triplet_set
+
+
+        self.kg = load_kg(args.dataset)
+        self.dataset_name = self.kg.dataset_name
+
+
+
 
         self.l2_weight = args.l2_weight
         self.sub_batch_size = args.sub_batch_size
+        self.device = args.device
 
         self.scalar = nn.Parameter(torch.Tensor([args.lambda_num]), requires_grad=True)
         print('args.lambda_num = ', args.lambda_num)
-
+        #print(torch.ones(max(self.user_triplet_set) * 2 + 1, 1, self.embed_size).shape)
+        #print('qqqq')
+        #print(self.dummy_rela)
         self.dummy_rela = torch.ones(max(self.user_triplet_set) * 2 + 1, 1, self.embed_size)
+        #print('aaaa',self.dummy_rela)
         self.dummy_rela = nn.Parameter(self.dummy_rela, requires_grad=True).to(self.device)
+        #print('sssss')
         self.dummy_rela_emb = nn.Embedding(max(self.user_triplet_set) * 2 + 1, self.embed_size * self.embed_size).to(self.device)
 
 
@@ -86,14 +110,14 @@ class UCPR(AC_lstm_mf_dummy):
         self.v_query = []
         self.t_u_query = []
         for i in range(self.reasoning_step):
-            self.rn_state_tr_query.append(nn.Linear(self.embed_size * 2, self.embed_size).cuda())
-            self.update_rn_state.append(nn.Linear(self.embed_size * 2, self.embed_size).cuda())
-            self.rn_query_st_tr.append(nn.Linear(self.embed_size * (self.p_hop), self.embed_size).cuda())
+            self.rn_state_tr_query.append(nn.Linear(self.embed_size * 2, self.embed_size).to(self.device))
+            self.update_rn_state.append(nn.Linear(self.embed_size * 2, self.embed_size).to(self.device))
+            self.rn_query_st_tr.append(nn.Linear(self.embed_size * (self.p_hop), self.embed_size).to(self.device))
 
-            self.rh_query.append(nn.Linear(self.embed_size, self.embed_size, bias=False).cuda())
-            self.o_r_query.append(nn.Linear(self.embed_size, self.embed_size, bias=False).cuda())
-            self.v_query.append(nn.Linear(self.embed_size, self.embed_size, bias=False).cuda())
-            self.t_u_query.append(nn.Linear(self.embed_size, self.embed_size, bias=False).cuda())
+            self.rh_query.append(nn.Linear(self.embed_size, self.embed_size, bias=False).to(self.device))
+            self.o_r_query.append(nn.Linear(self.embed_size, self.embed_size, bias=False).to(self.device))
+            self.v_query.append(nn.Linear(self.embed_size, self.embed_size, bias=False).to(self.device))
+            self.t_u_query.append(nn.Linear(self.embed_size, self.embed_size, bias=False).to(self.device))
 
         self.rn_state_tr_query = nn.ModuleList(self.rn_state_tr_query)
         self.update_rn_state = nn.ModuleList(self.update_rn_state)
@@ -104,7 +128,7 @@ class UCPR(AC_lstm_mf_dummy):
         self.v_query = nn.ModuleList(self.v_query)
         self.t_u_query = nn.ModuleList(self.t_u_query)
 
-        self.rn_cal_state_prop = nn.Linear(self.embed_size, 1, bias=False).cuda()
+        self.rn_cal_state_prop = nn.Linear(self.embed_size, 1, bias=False).to(self.device)#cuda()
 
     def bulid_mode_user(self):
 
@@ -112,7 +136,7 @@ class UCPR(AC_lstm_mf_dummy):
         
         self.update_us_tr = []
         for hop in range(self.p_hop):
-            self.update_us_tr.append(nn.Linear(self.embed_size * 2, self.embed_size).cuda())
+            self.update_us_tr.append(nn.Linear(self.embed_size * 2, self.embed_size).to(self.device))
         self.update_us_tr = nn.ModuleList(self.update_us_tr)
 
         self.cal_state_prop = nn.Linear(self.embed_size * 3, 1)
@@ -140,8 +164,9 @@ class UCPR(AC_lstm_mf_dummy):
             self.memories_t[i] = th.cat([th.cat([self.kg_emb.lookup_emb(u_set[0], type_index = torch.LongTensor([u_set[1]]).to(self.device))
                                  for u_set in self.user_triplet_set[user][i][2]], 0).unsqueeze(0) for user in self.uids], 0)
 
+        
         self.prev_state_h, self.prev_state_c = self.state_lstm.set_up_hidden_state(len(self.uids))
-
+        #print('OOOOOO', self.prev_state_h, isinstance(self.prev_state_h,nn.Parameter))
 
 
     def forward(self, inputs):
@@ -283,6 +308,10 @@ class UCPR(AC_lstm_mf_dummy):
             #print(selc_entitiy.shape)
             self.update_query_embedding(selc_entitiy)
         #print('Prev state: ', all_state.shape, self.prev_state_h.shape,  self.prev_state_c.shape)
+        #print('AAAAAAA', self.prev_state_h)
+        #_,x1,_ = self.state_lstm(all_state, 
+        #            self.prev_state_h,  self.prev_state_c)
+        #print(x1, isinstance(x1,nn.Parameter))
         state_output, self.prev_state_h, self.prev_state_c = self.state_lstm(all_state, 
                     self.prev_state_h,  self.prev_state_c)
         #print('New state: ', state_output.shape, self.prev_state_h.shape,  self.prev_state_c.shape)
@@ -346,7 +375,9 @@ class UCPR(AC_lstm_mf_dummy):
         
         return [enti_emb, next_action_state]
 
-
+    def action_encoder(self, relation_emb, entitiy_emb):
+        action_embedding = th.cat([relation_emb, entitiy_emb], -1)
+        return action_embedding
     def _get_state_update(self, index, path):
         """Return state of numpy vector: [user_embed, curr_node_embed, last_node_embed, last_relation]."""
         if len(path) == 1:

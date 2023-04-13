@@ -51,8 +51,11 @@ class Dataset(object):
         relation_filename_edict = edict()
         relation_names = []
         for relation_file in relation_filenames:
+            if relation_file == '.DS_Store':
+                continue
             name = relation_file.split(".")[0]
             relation_names.append(name)
+
             relation_filename_edict[name] = relation_file
 
         self.relation2entity = {}
@@ -135,7 +138,9 @@ class Dataset(object):
         - `et_distrib`: frequency of entity_tail vocab.
         """
         product_relations = edict()
+
         for rel_name, rel_filename in relation_filename_edict.items():
+            
             entity_name = self.relation2entity[rel_name]
             product_relations[rel_name] = (rel_filename, getattr(self, entity_name))
         #E.g:

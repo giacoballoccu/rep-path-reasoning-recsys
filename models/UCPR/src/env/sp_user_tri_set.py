@@ -21,6 +21,15 @@ from functools import partial
 
 from models.UCPR.utils import *
 
+
+
+# initialize worker processes
+def init_worker(shared_kg, shared_args):
+    # declare scope of a new global variable
+    global g_kg, g_args
+    g_kg = shared_kg
+    g_args = shared_args
+
 def kg_based_get_user_triplet_set(args, kg, user_list, p_hop, n_memory):
     args_tmp = {'p_hop': p_hop, 'n_memory': n_memory}
 
@@ -34,18 +43,18 @@ def kg_based_get_user_triplet_set(args, kg, user_list, p_hop, n_memory):
             user_history_dict[user] = [[USER, user]]
 
 
-    global g_kg, g_args
-    g_args = args
-    g_kg = kg
+    
+    #g_args = args
+    #g_kg = kg
 
-    with mp.Pool(processes=min(mp.cpu_count(), 5)) as pool:
+    with mp.Pool(initializer=init_worker, initargs=(kg,args,),processes=min(mp.cpu_count(), 5)) as pool:
         job = partial(_kg_based_get_user_triplet_set, p_hop=max(1,args_tmp['p_hop']), 
             KG_RELATION = KG_RELATION, n_memory=args_tmp['n_memory'], n_neighbor=16)
         for u, u_r_set in pool.starmap(job, user_history_dict.items()):
             user_triplet_set[u] = u_r_set
 
-    #del g_kg, g_et_idx2ty, g_args
-    del g_kg, g_args
+    
+    #del g_kg, g_args
     return user_triplet_set
 def _kg_based_get_user_triplet_set(user, history, p_hop=2, KG_RELATION = None, n_memory=32, n_neighbor=16):
     ret = []

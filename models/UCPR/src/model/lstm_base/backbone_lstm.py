@@ -50,6 +50,7 @@ class EncoderRNN_batch(nn.Module):
     def blank_state(self, batch_size):
         hidden0 = torch.zeros(1, batch_size, self.hidden_size)
         # hidden0 = hidden0.to(self.device)
+        #print(self.state_rg,'zzzzzzzzzzzzzzzzzz')
         return nn.Parameter(hidden0, requires_grad = self.state_rg).to(self.device)
 
     def forward(self, input_state, hm, cm):
@@ -73,6 +74,9 @@ class KGState_LSTM(nn.Module):
         # print('history_seq = ', history_seq.shape)
         # input()
         output, hn, cn = self.policy_lstm(history_seq, hm, cm)
+        output=nn.Parameter(output, requires_grad=True)
+        hn=nn.Parameter(hn, requires_grad=True)
+        cn=nn.Parameter(cn, requires_grad=True)
         return output, hn, cn
 
 

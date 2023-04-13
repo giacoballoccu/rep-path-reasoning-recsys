@@ -108,7 +108,7 @@ class BatchKGEnvironment(object):
         self.args.sp_user_filter = self.total_user_list[:800]
 
         self.embeds = load_embed(dataset_str)
-        print(self.embeds.keys())
+        
         self.embed_size = self.embeds[USER].shape[1]
         self.embeds[SELF_LOOP] = (np.zeros(self.embed_size), 0.0)
 

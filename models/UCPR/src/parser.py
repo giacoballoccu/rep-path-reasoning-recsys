@@ -128,7 +128,7 @@ def parse_args():
     args.tri_pro_rm = (args.tri_pro_rm == 1)
 
     # os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
-    args.device = torch.device('cuda:0') if torch.cuda.is_available() else 'cpu'
+    args.device = torch.device('cuda:0') if torch.cuda.is_available()  else 'cpu'
 
 
     if args.dataset in [BEAUTY_CORE, CELL_CORE, CLOTH_CORE]: 
