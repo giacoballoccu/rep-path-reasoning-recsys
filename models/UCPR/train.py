@@ -189,6 +189,8 @@ def train(args):
             'valid':0
     }
     first_iterate = True
+    
+    print(model.state_dict())
     for epoch in range(0, args.epochs + 1):
         splits_to_compute = list(loaders.items())
         if first_iterate:
@@ -279,6 +281,7 @@ def train(args):
             policy_file = '{}/policy_model_epoch_{}.ckpt'.format(TMP_DIR[args.dataset], epoch)
             logger.info("Save model to " + policy_file)
             torch.save(model.state_dict(), policy_file)
+            print(model.state_dict())
             #metrics.push_model(policy_file, f'{MODEL}_{args.dataset}_{epoch}')
 
     makedirs(args.dataset)

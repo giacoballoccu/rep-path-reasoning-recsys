@@ -293,7 +293,24 @@ class UCPR(nn.Module):
             self.memories_h[i] = th.cat(new_memories_h[i], 0).to(self.device)
             self.memories_r[i] = th.cat(new_memories_r[i], 0).to(self.device)
             self.memories_t[i] = th.cat(new_memories_t[i], 0).to(self.device)
+    def update_path_info(self, up_date_hop):
 
+        new_uids = []
+
+        for row in up_date_hop:
+            new_uids.append(self.uids[row])
+
+        self.uids = new_uids
+
+        new_prev_state_h = []
+        new_prev_state_c = []
+
+        for row in up_date_hop:
+            new_prev_state_h.append(self.prev_state_h[:,row,:].unsqueeze(1))
+            new_prev_state_c.append(self.prev_state_c[:,row,:].unsqueeze(1))
+
+        self.prev_state_h = nn.Parameter(th.cat(new_prev_state_h, 1)).to(self.device)
+        self.prev_state_c = nn.Parameter(th.cat(new_prev_state_c, 1)).to(self.device)
     def generate_st_emb(self, batch_path, up_date_hop = None):
         if up_date_hop != None:
             self.update_path_info(up_date_hop)

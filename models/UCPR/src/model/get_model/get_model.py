@@ -21,7 +21,7 @@ elif args.model == 'UCPR':
 
 elif args.model == 'baseline':
     Memory_Model = ActorCritic
-
+print(args.model)
 # ********************* model select *****************************
 
 KGEnvironment = BatchKGEnvironment#BatchKGEnvironment if args.dataset == ML1M else BatchKGEnvironment 

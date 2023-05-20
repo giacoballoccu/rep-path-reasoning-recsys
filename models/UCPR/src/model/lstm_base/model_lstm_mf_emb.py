@@ -139,8 +139,8 @@ class AC_lstm_mf_dummy(nn.Module):
             new_prev_state_h.append(self.prev_state_h[:,row,:].unsqueeze(1))
             new_prev_state_c.append(self.prev_state_c[:,row,:].unsqueeze(1))
 
-        self.prev_state_h = th.cat(new_prev_state_h, 1).to(self.device)
-        self.prev_state_c = th.cat(new_prev_state_c, 1).to(self.device)
+        self.prev_state_h = nn.Parameter(th.cat(new_prev_state_h, 1)).to(self.device)
+        self.prev_state_c = nn.Parameter(th.cat(new_prev_state_c, 1)).to(self.device)
 
     def generate_st_emb(self, batch_path, up_date_hop = None):
         if up_date_hop != None:

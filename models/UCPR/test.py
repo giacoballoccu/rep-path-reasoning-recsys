@@ -26,6 +26,8 @@ from models.UCPR.src.model.get_model.get_model import *
 from models.UCPR.src.parser import parse_args
 from models.UCPR.src.para_setting import parameter_path, parameter_path_th
 import collections
+
+
 def dcg_at_k(r, k, method=1):
     r = np.asfarray(r)[:k]
     if r.size:
@@ -216,9 +218,9 @@ def batch_beam_search(args, env, model, uids, device, topk=[25, 5, 1]):
                 new_index_pool.append(index_ori)
                 new_idx.append(row)
 
-        print(len(new_path_pool))
-        print(len(new_idx))
-        print()
+        #print(len(new_path_pool))
+        #print(len(new_idx))
+        #print()
         path_pool = new_path_pool
         probs_pool = new_probs_pool
         index_ori_list = new_index_pool
@@ -233,15 +235,19 @@ def predict_paths(args, policy_file, path_file, train_labels, test_labels, prete
     print('Predicting paths...')
         
     env = KG_Env(args, Dataset(args), args.max_acts, max_path_len=args.max_path_len, state_history=args.state_history)
+
     print(policy_file)
     print('Loading pretrain')
     pretrain_sd = torch.load(policy_file)
     print('Loading model')
     model = Memory_Model(args, env.user_triplet_set, env.rela_2_index, 
-                            env.act_dim, gamma=args.gamma, hidden_sizes=args.hidden).to(args.device)
+                            env.act_dim, 
+                            gamma=args.gamma, 
+                            hidden_sizes=args.hidden).to(args.device)
     model_sd = model.state_dict()
     model_sd.update(pretrain_sd)
-    model.load_state_dict(model_sd)
+
+    model.load_state_dict(model_sd, strict=False)
     print('Model loaded')
     test_uids = list(test_labels.keys())
     test_uids = [uid for uid in test_uids if uid in train_labels and uid in env.user_list]
@@ -256,7 +262,7 @@ def predict_paths(args, policy_file, path_file, train_labels, test_labels, prete
         # print(' bar state/text_uid = ', start_idx, '/', len(test_uids), end = '\r')
         end_idx = min(start_idx + batch_size, len(test_uids))
         batch_uids = test_uids[start_idx:end_idx]
-        print(f'{start_idx}/{ len(test_uids)}')
+        #print(f'{start_idx}/{ len(test_uids)}')
         paths, probs = batch_beam_search(args, env, model, batch_uids, args.device, topk=args.topk)
         all_paths.extend(paths)
         all_probs.extend(probs)
@@ -485,8 +491,8 @@ def test(args, train_labels, valid_labels, test_labels, best_recall, pretest = 1
     print('start predict')
 
 
-    policy_file = args.policy_path  #args.save_model_dir + '/policy_model_epoch_{}.ckpt'.format(35)#args.eva_epochs)
-    path_file = os.path.join(TMP_DIR[args.dataset], 'policy_paths_epoch{}_{}.pkl'.format(args.eva_epochs, args.topk_string)) #args.save_model_dir + '/' + 'pre' + str(pretest) + 'policy_paths_epoch{}_{}.pkl'.format(args.eva_epochs, args.topk_string)
+    policy_file = os.path.join(TMP_DIR[args.dataset], 'policy_model_epoch_{}.ckpt'.format(args.best_model_epoch)) #args.policy_path  #args.save_model_dir + '/policy_model_epoch_{}.ckpt'.format(35)#args.eva_epochs)
+    path_file = os.path.join(TMP_DIR[args.dataset], 'policy_paths_epoch{}_{}.pkl'.format(args.best_model_epoch, args.topk_string)) #args.save_model_dir + '/' + 'pre' + str(pretest) + 'policy_paths_epoch{}_{}.pkl'.format(args.eva_epochs, args.topk_string)
     
 
     #if args.dataset in [BEAUTY_CORE, CELL_CORE, CLOTH_CORE]: 
@@ -532,7 +538,7 @@ if __name__ == '__main__':
     best_recall = 0
 
 
-    args.eva_epochs = args.best_model_epoch
+    #args.eva_epochs = args.best_model_epoch
     test(args, train_labels, valid_labels, test_labels, best_recall, pretest = 0)
 
 
