@@ -1,5 +1,15 @@
 # T-REX_TextualRecEXp
-This is the repository for the paper "Knowledge is Power, Understanding is Impact: Utility and Beyond Goals, Explanation Quality, and Fairness in Path Reasoning Recommendation" accepted at The 45th European Conference on Information Retrieval (ECIR) 2023.
+
+If this repository IS useful for your research, we would appreciate an acknowledgment by citing our ECIR '23 paper:
+
+```
+Balloccu, G., Boratto, L., Cancedda, C., Fenu, G., Marras, M. (2023). 
+Knowledge is Power, Understanding is Impact: Utility and Beyond Goals, Explanation Quality,   
+and Fairness in Path Reasoning Recommendation. In: , et al. Advances in Information Retrieval. 
+ECIR 2023. Lecture Notes in Computer Science, vol 13982. Springer, 
+Cham. https://doi.org/10.1007/978-3-031-28241-6_1
+```
+
 # Overview
 The base workflow is:
 1. Dataset creation
