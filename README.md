@@ -89,7 +89,7 @@ After paths are computed, creation of the topK is computationally inexpensive.
 Knowledge aware models generate the topK by default after each epoch of training.
 
 ```python
-python3 evaluate.py --model $MODEL_NAME --dataset $DATASET_NAME
+python3 evaluate.py --model $MODEL_NAME --data $DATASET_NAME
 ```
 
 Flags such as `evaluate_overall_fidelity` and `evaluate_path_quality` decide whether or not evaluate the path quality prospectives, this prospectives can be computed only for methods capable of producing reasoning paths. By default the recommendation quality metrics are evaluated. In the following section we collect the metrics currently adopted by our evaluate.py
